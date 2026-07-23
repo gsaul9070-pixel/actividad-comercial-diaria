@@ -1,18 +1,17 @@
-ACTUALIZACIÓN SIN ACCESOS
+ACTUALIZACIÓN ACCESO DIRECTO V2
 
-1. Reemplaza en GitHub:
-   - index.html
-   - app-firebase.js
-   - dashboard.html
-   - dashboard.js
-   - firebase-config.js
+Reemplaza en GitHub:
+- index.html
+- app-firebase.js
+- dashboard.html
+- dashboard.js
+- firebase-config.js
 
-2. En Firebase > Firestore > Reglas:
-   - Copia el contenido de firestore.rules
-   - Presiona Publicar
+Esta versión:
+- Quita completamente las pantallas de acceso.
+- Abre la captura directamente.
+- Abre el dashboard directamente.
+- Agrega control para evitar que el navegador conserve la versión anterior.
 
-3. Espera 1 a 3 minutos y actualiza con Ctrl + F5.
-
-IMPORTANTE:
-El portal y el dashboard quedan abiertos. Cualquier persona con los enlaces
-puede consultar, editar o eliminar información.
+No es necesario volver a cambiar las reglas de Firestore.
+Después de subir, espera el deployment verde de GitHub Pages y abre con Ctrl + F5.
