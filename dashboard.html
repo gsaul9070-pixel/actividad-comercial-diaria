@@ -1,253 +1,150 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
-
-import {
-  firebaseConfig,
-  REPORTS_COLLECTION
-} from "./firebase-config.js";
-
-const EMPLOYEE_DIRECTORY = {
-  "130257": {
-    "employeeNumber": "130257",
-    "name": "CORREA CERON MARIA DEL CARMEN",
-    "role": "advisor",
-    "active": true
-  },
-  "152642": {
-    "employeeNumber": "152642",
-    "name": "ALVAREZ SOLIS CLAUDIA IVETT",
-    "role": "advisor",
-    "active": true
-  },
-  "158311": {
-    "employeeNumber": "158311",
-    "name": "RAMIREZ BLANCO ARACELI GUADALUPE",
-    "role": "advisor",
-    "active": true
-  },
-  "161328": {
-    "employeeNumber": "161328",
-    "name": "GUERRERO VILLEGAS ELSA GABRIELA",
-    "role": "advisor",
-    "active": true
-  },
-  "162129": {
-    "employeeNumber": "162129",
-    "name": "MEZA MELO CLAUDIA GUADALUPE",
-    "role": "advisor",
-    "active": true
-  },
-  "164641": {
-    "employeeNumber": "164641",
-    "name": "MENDOZA SANTIAGO ADRIANA",
-    "role": "advisor",
-    "active": true
-  },
-  "165555": {
-    "employeeNumber": "165555",
-    "name": "SALAS TORRES RUBI ANAKAREN",
-    "role": "advisor",
-    "active": true
-  },
-  "169527": {
-    "employeeNumber": "169527",
-    "name": "PATIÑO SILVA FERNANDA MONSERRAT",
-    "role": "advisor",
-    "active": true
-  },
-  "169884": {
-    "employeeNumber": "169884",
-    "name": "SOTO DOMINGUEZ DAYANI SHERLIN GUADALUPE",
-    "role": "advisor",
-    "active": true
-  },
-  "171033": {
-    "employeeNumber": "171033",
-    "name": "REYNA ORTIZ ROSA NANCY",
-    "role": "advisor",
-    "active": true
-  },
-  "171155": {
-    "employeeNumber": "171155",
-    "name": "VEGA LUNA MARIA DE JESUS",
-    "role": "advisor",
-    "active": true
-  },
-  "172247": {
-    "employeeNumber": "172247",
-    "name": "GARCIA BERLANGA BRENDA BERENICE",
-    "role": "advisor",
-    "active": true
-  },
-  "172852": {
-    "employeeNumber": "172852",
-    "name": "BLANCO TORRES GILDA YAMILY",
-    "role": "advisor",
-    "active": true
-  },
-  "173151": {
-    "employeeNumber": "173151",
-    "name": "ANGUIANO BERLANGA FRANCISCO DE JESUS",
-    "role": "advisor",
-    "active": true
-  },
-  "173159": {
-    "employeeNumber": "173159",
-    "name": "MORALES LEYVA KARLA SAMANTA",
-    "role": "advisor",
-    "active": true
-  },
-  "502488": {
-    "employeeNumber": "502488",
-    "name": "RAMOS MARTINEZ LAURA GEORGINA",
-    "role": "advisor",
-    "active": true
-  }
-};
-
-const authScreen = document.getElementById("authScreen");
-const appRoot = document.getElementById("appRoot");
-const loginForm = document.getElementById("loginForm");
-const loginButton = document.getElementById("loginButton");
-const loginError = document.getElementById("loginError");
-
-function showError(message){
-  loginError.textContent = message;
-  loginError.classList.add("show");
-}
-
-function clearError(){
-  loginError.textContent = "";
-  loginError.classList.remove("show");
-}
-
-function normalizeEmployee(value){
-  return String(value || "").replace(/\D/g,"");
-}
-
-function currentLocalDate(){
-  const date = new Date();
-  const offset = date.getTimezoneOffset();
-  return new Date(date.getTime() - offset * 60000).toISOString().slice(0,10);
-}
-
-function reportDocumentId(employeeNumber, date){
-  return `${employeeNumber}_${date}`;
-}
-
-const hasPlaceholder = Object.values(firebaseConfig).some(value =>
-  String(value).includes("REEMPLAZAR")
-);
-
-if(hasPlaceholder){
-  showError("Falta colocar la configuración real de Firebase.");
-  loginButton.disabled = true;
-} else {
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  function openEmployeeSession(profile){
-    window.currentUserProfile = {
-      uid: `employee-${profile.employeeNumber}`,
-      ...profile
-    };
-
-    window.prepareAdvisorSession(window.currentUserProfile);
-    authScreen.classList.add("hidden");
-    appRoot.classList.remove("hidden");
-    window.resetCommercialFormForSession();
-    window.prepareAdvisorSession(window.currentUserProfile);
-  }
-
-  loginForm.addEventListener("submit", event=>{
-    event.preventDefault();
-    clearError();
-
-    const employeeNumber = normalizeEmployee(
-      document.getElementById("loginEmployee").value
-    );
-
-    const profile = EMPLOYEE_DIRECTORY[employeeNumber];
-
-    if(!profile || profile.active !== true){
-      showError("Número de empleado no reconocido o acceso desactivado.");
-      return;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dashboard Actividad Comercial</title>
+  <style>
+    :root{
+      --primary:#123A63;--primary2:#1C5D99;--accent:#0E9F6E;
+      --danger:#D64545;--warning:#F59E0B;--bg:#F3F6FA;
+      --card:#fff;--text:#1F2937;--muted:#6B7280;--line:#DCE3EC;
+      --shadow:0 10px 28px rgba(18,58,99,.10)
     }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .hidden{display:none!important}
+    button,.button{border:0;border-radius:11px;padding:10px 13px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .primary{background:var(--primary);color:#fff}.soft{background:#EAF2F8;color:var(--primary)}
+    .accent{background:var(--accent);color:#fff}.danger{background:#FDECEC;color:var(--danger)}
+    .auth{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(145deg,#EAF2F8,#F8FAFC)}
+    .auth-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 18px 55px rgba(18,58,99,.16)}
+    .auth-card h1{margin:0 0 8px;color:var(--primary)}.auth-card p{color:var(--muted);line-height:1.45}
+    label{font-size:13px;font-weight:800;display:block;margin-bottom:6px}
+    input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:11px;font:inherit;outline:none;background:#fff}
+    input:focus,select:focus,textarea:focus{border-color:var(--primary2);box-shadow:0 0 0 3px rgba(28,93,153,.12)}
+    .error{display:none;margin-top:12px;padding:11px;border-radius:11px;background:#FFF0F0;border:1px solid #F2BABA;color:#A62F2F;font-weight:700}.error.show{display:block}
+    .app{max-width:1500px;margin:auto;padding:18px}
+    .top{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-radius:22px;padding:22px;display:flex;justify-content:space-between;gap:16px;align-items:center;box-shadow:var(--shadow)}
+    .top h1{margin:0 0 5px}.top p{margin:0;opacity:.88}
+    .top-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .tabs{display:flex;gap:8px;margin:14px 0}.tab.active{background:var(--primary);color:#fff}.tab{background:#fff;color:var(--primary);border:1px solid var(--line)}
+    .panel{display:none}.panel.active{display:block}
+    .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:14px 0}
+    .kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+    .kpi span{color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase}.kpi strong{display:block;color:var(--primary);font-size:30px;margin-top:7px}
+    .filters{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;box-shadow:var(--shadow)}
+    .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:14px;box-shadow:var(--shadow)}
+    .card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.card h2{margin:0;color:var(--primary);font-size:20px}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px}
+    table{width:100%;border-collapse:collapse;font-size:13px;min-width:1050px}
+    th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    th{background:#EDF3F8;color:#233B55;position:sticky;top:0;z-index:1}
+    tr.cancelled{opacity:.55;text-decoration:line-through}
+    .badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}
+    .pending{background:#FFF4D8;color:#865B00}.reviewed{background:#E8F8F0;color:#087554}.cancelled-badge{background:#FDECEC;color:#A62F2F}
+    .actions{display:flex;gap:6px;flex-wrap:wrap}
+    .empty{text-align:center;padding:32px;color:var(--muted)}
+    .missing{display:flex;gap:8px;flex-wrap:wrap}.missing span{background:#FFF4D8;color:#7A5410;padding:7px 9px;border-radius:999px;font-size:12px;font-weight:700}
+    .modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;place-items:center;padding:18px;z-index:9999}.modal.show{display:grid}
+    .modal-card{width:min(1080px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:20px;padding:20px}
+    .modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.detail-box{background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:11px}.detail-box strong{display:block;color:var(--primary);font-size:12px;margin-bottom:4px}
+    .client-table{min-width:900px}
+    @media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:650px){.app{padding:9px}.top{align-items:flex-start;flex-direction:column}.kpis{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <section id="authScreen" class="auth">
+    <div class="auth-card">
+      <h1>Dashboard Gerencial</h1>
+      <p>Acceso exclusivo para usuarios con rol de gerente.</p>
+      <form id="loginForm">
+        <label for="employee">Usuario gerencial</label>
+        <input id="employee" type="email" inputmode="email" autocomplete="username" placeholder="correo@empresa.com" required>
+        <label for="password" style="margin-top:13px">Contraseña</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+        <button id="loginButton" class="primary" style="width:100%;margin-top:18px" type="submit">Ingresar al dashboard</button>
+        <div id="loginError" class="error"></div>
+      </form>
+    </div>
+  </section>
 
-    loginButton.disabled = true;
-    loginButton.textContent = "Ingresando…";
-    openEmployeeSession(profile);
-    loginButton.disabled = false;
-    loginButton.textContent = "Ingresar";
-  });
+  <main id="app" class="app hidden">
+    <header class="top">
+      <div>
+        <h1>Dashboard de Actividad Comercial</h1>
+        <p id="managerName">Administración gerencial en tiempo real</p>
+      </div>
+      <div class="top-actions">
+        <a class="button soft" href="index.html">Abrir captura</a>
+        <button class="accent" onclick="window.exportDashboardExcel()">Descargar Excel</button>
+        <button class="danger" onclick="window.logoutManager()">Cerrar sesión</button>
+      </div>
+    </header>
 
-  window.logoutCommercialUser = function(){
-    if(confirm("¿Deseas cerrar la sesión?")){
-      window.currentUserProfile = null;
-      window.location.reload();
-    }
-  };
+    <div class="tabs">
+      <button class="tab active" data-panel="summaryPanel">Resumen y reportes</button>
+      <button class="tab" data-panel="staffPanel">Personal autorizado</button>
+    </div>
 
-  window.saveFinalizedReportToFirebase = async function(data){
-    const profile = window.currentUserProfile;
+    <section id="summaryPanel" class="panel active">
+      <div class="kpis">
+        <div class="kpi"><span>Reportes</span><strong id="kpiReports">0</strong></div>
+        <div class="kpi"><span>Asesores activos</span><strong id="kpiActive">0</strong></div>
+        <div class="kpi"><span>Reportaron hoy</span><strong id="kpiReported">0</strong></div>
+        <div class="kpi"><span>Contactos</span><strong id="kpiContacts">0</strong></div>
+        <div class="kpi"><span>Citas</span><strong id="kpiAppointments">0</strong></div>
+        <div class="kpi"><span>Trámites</span><strong id="kpiProcedures">0</strong></div>
+      </div>
 
-    if(!profile || profile.role !== "advisor"){
-      throw new Error("La sesión del asesor no está disponible.");
-    }
+      <div class="filters">
+        <div><label>Desde</label><input id="dateFrom" type="date"></div>
+        <div><label>Hasta</label><input id="dateTo" type="date"></div>
+        <div><label>Asesor</label><select id="advisorFilter"><option value="">Todos</option></select></div>
+        <div><label>Estado</label><select id="statusFilter"><option value="">Todos</option><option value="pending">Pendiente de revisión</option><option value="reviewed">Revisado</option><option value="cancelled">Anulado</option></select></div>
+        <div><label>Buscar</label><input id="searchFilter" placeholder="Nombre, empresa, NSS o teléfono"></div>
+      </div>
 
-    const reportDate = currentLocalDate();
-    const reportId = reportDocumentId(profile.employeeNumber, reportDate);
-    const reportRef = doc(db, REPORTS_COLLECTION, reportId);
+      <div class="card">
+        <div class="card-head"><h2>Pendientes de reportar hoy</h2><span id="missingCount" class="badge pending">0</span></div>
+        <div id="missingAdvisors" class="missing"></div>
+      </div>
 
-    const clients = (data.clients || []).map(client=>({
-      ...client,
-      points: Number(client.points || 0)
-    }));
+      <div class="card">
+        <div class="card-head"><h2>Reportes registrados</h2><span id="visibleCount"></span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Asesor</th><th>Medio / lugar</th><th>Contactos</th><th>Citas</th><th>Clientes</th><th>Trámites</th><th>Revisión</th><th>Acciones</th></tr></thead>
+            <tbody id="reportsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-    const procedureCount = clients.filter(
-      client => client.result === "Trámite realizado"
-    ).length;
+    <section id="staffPanel" class="panel">
+      <div class="card">
+        <div class="card-head"><h2>Personal autorizado</h2><span id="staffCount"></span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>No. empleado</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Administración</th></tr></thead>
+            <tbody id="staffBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
 
-    const payload = {
-      advisorUid: `employee-${profile.employeeNumber}`,
-      advisorName: profile.name,
-      advisorEmployeeNumber: profile.employeeNumber,
-      advisorRole: "advisor",
-      createdDate: reportDate,
-      createdAt: serverTimestamp(),
-      createdAtLocal: data.createdAt,
-      prospecting: data.prospecting,
-      activityPlace: data.activityPlace,
-      activitySchedule: data.activitySchedule,
-      contacts: Number(data.peopleContacted || 0),
-      appointmentsGenerated: Number(data.appointmentsGenerated || 0),
-      activityDescription: data.activityDescription,
-      clients,
-      clientCount: clients.length,
-      procedureCount,
-      plan: {
-        date: data.promiseDate,
-        place: data.promisePlace,
-        method: data.promiseMethod,
-        schedule: data.promiseSchedule,
-        contactGoal: Number(data.contactGoal || 0),
-        appointmentGoal: Number(data.appointmentGoal || 0),
-        description: data.promiseDescription
-      },
-      status: "finalized",
-      reviewStatus: "pending",
-      reviewedAt: null,
-      reviewedBy: null,
-      updatedAt: serverTimestamp()
-    };
+  <div id="detailModal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head"><h2 id="detailTitle">Detalle</h2><button class="danger" onclick="document.getElementById('detailModal').classList.remove('show')">Cerrar</button></div>
+      <div id="detailContent"></div>
+    </div>
+  </div>
 
-    // setDoc falla si las reglas detectan que ya existe ese reporte.
-    await setDoc(reportRef, payload);
-    return reportId;
-  };
-}
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script type="module" src="dashboard.js"></script>
+</body>
+</html>

@@ -1,150 +1,495 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Dashboard Actividad Comercial</title>
-  <style>
-    :root{
-      --primary:#123A63;--primary2:#1C5D99;--accent:#0E9F6E;
-      --danger:#D64545;--warning:#F59E0B;--bg:#F3F6FA;
-      --card:#fff;--text:#1F2937;--muted:#6B7280;--line:#DCE3EC;
-      --shadow:0 10px 28px rgba(18,58,99,.10)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  updateDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+import {
+  firebaseConfig,
+  USERS_COLLECTION,
+  REPORTS_COLLECTION,
+  AUTH_EMAIL_DOMAIN
+} from "./firebase-config.js";
+
+const state = { reports: [], users: [], manager: null };
+const authScreen = document.getElementById("authScreen");
+const appElement = document.getElementById("app");
+const loginError = document.getElementById("loginError");
+const loginButton = document.getElementById("loginButton");
+
+const digits = value => String(value || "").replace(/\D/g,"");
+const employeeEmail = number => `${number}@${AUTH_EMAIL_DOMAIN}`;
+const localISO = () => {
+  const d = new Date(), offset = d.getTimezoneOffset();
+  return new Date(d.getTime() - offset * 60000).toISOString().slice(0,10);
+};
+const esc = value => String(value ?? "")
+  .replaceAll("&","&amp;").replaceAll("<","&lt;")
+  .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
+const formatDate = value => {
+  if(!value) return "—";
+  const p = String(value).slice(0,10).split("-");
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : value;
+};
+const timestampText = value => {
+  if(!value) return "—";
+  try{
+    const d = value.toDate ? value.toDate() : new Date(value);
+    return d.toLocaleString("es-MX");
+  }catch{return "—";}
+};
+const showError = message => {
+  loginError.textContent = message;
+  loginError.classList.add("show");
+};
+const reviewLabel = report => {
+  if(report.status === "cancelled") return '<span class="badge cancelled-badge">Anulado</span>';
+  if(report.reviewStatus === "reviewed") return '<span class="badge reviewed">Revisado</span>';
+  return '<span class="badge pending">Pendiente</span>';
+};
+const reportSearchText = report => [
+  report.advisorName, report.advisorEmployeeNumber, report.activityPlace,
+  report.prospecting, report.activityDescription,
+  ...(report.clients || []).flatMap(c=>[
+    c.name,c.nss,c.curp,c.phone,c.company,c.afore,c.notes
+  ])
+].join(" ").toLowerCase();
+
+if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZAR"))){
+  showError("Falta colocar la configuración real de Firebase en firebase-config.js.");
+  loginButton.disabled = true;
+} else {
+  const firebaseApp = initializeApp(firebaseConfig);
+  const auth = getAuth(firebaseApp);
+  const db = getFirestore(firebaseApp);
+  let unsubscribeReports = null;
+  let unsubscribeUsers = null;
+
+  document.getElementById("loginForm").addEventListener("submit", async event=>{
+    event.preventDefault();
+    loginError.classList.remove("show");
+    loginButton.disabled = true;
+    loginButton.textContent = "Validando…";
+
+    try{
+      const managerEmail = document.getElementById("employee").value.trim().toLowerCase();
+      const password = document.getElementById("password").value;
+
+      if(!managerEmail || !password){
+        throw new Error("Completa el usuario gerencial y la contraseña.");
+      }
+
+      await signInWithEmailAndPassword(auth, managerEmail, password);
+    }catch(error){
+      console.error(error);
+      showError("Usuario gerencial o contraseña incorrectos.");
+      loginButton.disabled = false;
+      loginButton.textContent = "Ingresar al dashboard";
     }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    .hidden{display:none!important}
-    button,.button{border:0;border-radius:11px;padding:10px 13px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
-    button:disabled{opacity:.5;cursor:not-allowed}
-    .primary{background:var(--primary);color:#fff}.soft{background:#EAF2F8;color:var(--primary)}
-    .accent{background:var(--accent);color:#fff}.danger{background:#FDECEC;color:var(--danger)}
-    .auth{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(145deg,#EAF2F8,#F8FAFC)}
-    .auth-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 18px 55px rgba(18,58,99,.16)}
-    .auth-card h1{margin:0 0 8px;color:var(--primary)}.auth-card p{color:var(--muted);line-height:1.45}
-    label{font-size:13px;font-weight:800;display:block;margin-bottom:6px}
-    input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:11px;font:inherit;outline:none;background:#fff}
-    input:focus,select:focus,textarea:focus{border-color:var(--primary2);box-shadow:0 0 0 3px rgba(28,93,153,.12)}
-    .error{display:none;margin-top:12px;padding:11px;border-radius:11px;background:#FFF0F0;border:1px solid #F2BABA;color:#A62F2F;font-weight:700}.error.show{display:block}
-    .app{max-width:1500px;margin:auto;padding:18px}
-    .top{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-radius:22px;padding:22px;display:flex;justify-content:space-between;gap:16px;align-items:center;box-shadow:var(--shadow)}
-    .top h1{margin:0 0 5px}.top p{margin:0;opacity:.88}
-    .top-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .tabs{display:flex;gap:8px;margin:14px 0}.tab.active{background:var(--primary);color:#fff}.tab{background:#fff;color:var(--primary);border:1px solid var(--line)}
-    .panel{display:none}.panel.active{display:block}
-    .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:14px 0}
-    .kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
-    .kpi span{color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase}.kpi strong{display:block;color:var(--primary);font-size:30px;margin-top:7px}
-    .filters{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;box-shadow:var(--shadow)}
-    .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:14px;box-shadow:var(--shadow)}
-    .card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.card h2{margin:0;color:var(--primary);font-size:20px}
-    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px}
-    table{width:100%;border-collapse:collapse;font-size:13px;min-width:1050px}
-    th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-    th{background:#EDF3F8;color:#233B55;position:sticky;top:0;z-index:1}
-    tr.cancelled{opacity:.55;text-decoration:line-through}
-    .badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}
-    .pending{background:#FFF4D8;color:#865B00}.reviewed{background:#E8F8F0;color:#087554}.cancelled-badge{background:#FDECEC;color:#A62F2F}
-    .actions{display:flex;gap:6px;flex-wrap:wrap}
-    .empty{text-align:center;padding:32px;color:var(--muted)}
-    .missing{display:flex;gap:8px;flex-wrap:wrap}.missing span{background:#FFF4D8;color:#7A5410;padding:7px 9px;border-radius:999px;font-size:12px;font-weight:700}
-    .modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;place-items:center;padding:18px;z-index:9999}.modal.show{display:grid}
-    .modal-card{width:min(1080px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:20px;padding:20px}
-    .modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.detail-box{background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:11px}.detail-box strong{display:block;color:var(--primary);font-size:12px;margin-bottom:4px}
-    .client-table{min-width:900px}
-    @media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:650px){.app{padding:9px}.top{align-items:flex-start;flex-direction:column}.kpis{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
-  </style>
-</head>
-<body>
-  <section id="authScreen" class="auth">
-    <div class="auth-card">
-      <h1>Dashboard Gerencial</h1>
-      <p>Acceso exclusivo para usuarios con rol de gerente.</p>
-      <form id="loginForm">
-        <label for="employee">Usuario gerencial</label>
-        <input id="employee" type="email" inputmode="email" autocomplete="username" placeholder="correo@empresa.com" required>
-        <label for="password" style="margin-top:13px">Contraseña</label>
-        <input id="password" type="password" autocomplete="current-password" required>
-        <button id="loginButton" class="primary" style="width:100%;margin-top:18px" type="submit">Ingresar al dashboard</button>
-        <div id="loginError" class="error"></div>
-      </form>
-    </div>
-  </section>
+  });
 
-  <main id="app" class="app hidden">
-    <header class="top">
-      <div>
-        <h1>Dashboard de Actividad Comercial</h1>
-        <p id="managerName">Administración gerencial en tiempo real</p>
+  onAuthStateChanged(auth, async user=>{
+    if(!user){
+      unsubscribeReports?.();
+      unsubscribeUsers?.();
+      authScreen.classList.remove("hidden");
+      appElement.classList.add("hidden");
+      loginButton.disabled = false;
+      loginButton.textContent = "Ingresar al dashboard";
+      return;
+    }
+
+    try{
+      const profileRef = doc(db, USERS_COLLECTION, user.uid);
+      let profileSnap = await getDoc(profileRef);
+
+      if(!profileSnap.exists()){
+        const managerEmail = String(user.email || "").toLowerCase();
+
+        if(managerEmail !== "jacquelinne.santos@profuturo.com.mx"){
+          throw new Error("Usuario no autorizado.");
+        }
+
+        await setDoc(profileRef,{
+          employeeNumber:"143561",
+          name:"SANTOS GUTIERREZ JACQUELINNE ADRIANA",
+          role:"manager",
+          active:true,
+          mustChangePassword:false,
+          authEmail:managerEmail,
+          accessMode:"username_password",
+          createdAt:serverTimestamp(),
+          updatedAt:serverTimestamp()
+        });
+
+        profileSnap = await getDoc(profileRef);
+      }
+
+      const profile = {uid:user.uid,...profileSnap.data()};
+      if(profile.active !== true || profile.role !== "manager"){
+        await signOut(auth);
+        throw new Error("Este acceso es exclusivo para gerentes.");
+      }
+
+      state.manager = profile;
+      document.getElementById("managerName").textContent =
+        `${profile.name} · Empleado ${profile.employeeNumber}`;
+      authScreen.classList.add("hidden");
+      appElement.classList.remove("hidden");
+
+      unsubscribeReports = onSnapshot(
+        query(collection(db, REPORTS_COLLECTION), orderBy("createdAt","desc")),
+        snapshot=>{
+          state.reports = snapshot.docs.map(item=>({id:item.id,...item.data()}));
+          renderAll();
+        },
+        error=>console.error("Reportes:",error)
+      );
+
+      unsubscribeUsers = onSnapshot(
+        collection(db, USERS_COLLECTION),
+        snapshot=>{
+          state.users = snapshot.docs
+            .map(item=>({uid:item.id,...item.data()}))
+            .sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+          renderAll();
+        },
+        error=>console.error("Usuarios:",error)
+      );
+    }catch(error){
+      console.error(error);
+      showError(error.message || "No fue posible validar el acceso.");
+    }
+  });
+
+  function filteredReports(){
+    const from = document.getElementById("dateFrom").value;
+    const to = document.getElementById("dateTo").value;
+    const advisor = document.getElementById("advisorFilter").value;
+    const status = document.getElementById("statusFilter").value;
+    const search = document.getElementById("searchFilter").value.trim().toLowerCase();
+
+    return state.reports.filter(report=>{
+      const date = report.createdDate || "";
+      const computedStatus = report.status === "cancelled"
+        ? "cancelled"
+        : (report.reviewStatus === "reviewed" ? "reviewed" : "pending");
+
+      return (!from || date >= from)
+        && (!to || date <= to)
+        && (!advisor || report.advisorUid === advisor)
+        && (!status || computedStatus === status)
+        && (!search || reportSearchText(report).includes(search));
+    });
+  }
+
+  function renderAll(){
+    renderAdvisorFilter();
+    renderKPIs();
+    renderMissing();
+    renderReports();
+    renderStaff();
+  }
+
+  function renderAdvisorFilter(){
+    const select = document.getElementById("advisorFilter");
+    const current = select.value;
+    const advisors = state.users.filter(u=>u.role === "advisor" && u.active);
+
+    select.innerHTML = '<option value="">Todos</option>' +
+      advisors.map(u=>`<option value="${u.uid}">${esc(u.name)}</option>`).join("");
+    select.value = current;
+  }
+
+  function renderKPIs(){
+    const today = localISO();
+    const activeAdvisors = state.users.filter(u=>u.role === "advisor" && u.active);
+    const todayReports = state.reports.filter(
+      r=>r.createdDate === today && r.status !== "cancelled"
+    );
+    const reported = new Set(todayReports.map(r=>r.advisorUid));
+    const visible = filteredReports().filter(r=>r.status !== "cancelled");
+
+    document.getElementById("kpiReports").textContent = visible.length;
+    document.getElementById("kpiActive").textContent = activeAdvisors.length;
+    document.getElementById("kpiReported").textContent = reported.size;
+    document.getElementById("kpiContacts").textContent =
+      visible.reduce((sum,r)=>sum + Number(r.contacts || 0),0);
+    document.getElementById("kpiAppointments").textContent =
+      visible.reduce((sum,r)=>sum + Number(r.appointmentsGenerated || 0),0);
+    document.getElementById("kpiProcedures").textContent =
+      visible.reduce((sum,r)=>sum + Number(r.procedureCount || 0),0);
+  }
+
+  function renderMissing(){
+    const today = localISO();
+    const reported = new Set(
+      state.reports
+        .filter(r=>r.createdDate === today && r.status !== "cancelled")
+        .map(r=>r.advisorUid)
+    );
+
+    const missing = state.users.filter(
+      u=>u.role === "advisor" && u.active && !reported.has(u.uid)
+    );
+
+    document.getElementById("missingCount").textContent = missing.length;
+    document.getElementById("missingAdvisors").innerHTML =
+      missing.length
+        ? missing.map(u=>`<span>${esc(u.employeeNumber)} · ${esc(u.name)}</span>`).join("")
+        : '<span style="background:#E8F8F0;color:#087554">Todos los asesores activos han reportado.</span>';
+  }
+
+  function renderReports(){
+    const rows = filteredReports();
+    document.getElementById("visibleCount").textContent = `${rows.length} registro(s)`;
+    const body = document.getElementById("reportsBody");
+
+    if(!rows.length){
+      body.innerHTML = '<tr><td colspan="9" class="empty">No hay reportes con los filtros seleccionados.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = rows.map(report=>`
+      <tr class="${report.status === "cancelled" ? "cancelled" : ""}">
+        <td>${formatDate(report.createdDate)}<br><small>${esc(report.createdAtLocal || "")}</small></td>
+        <td><strong>${esc(report.advisorName)}</strong><br>${esc(report.advisorEmployeeNumber)}</td>
+        <td>${esc(report.prospecting)}<br><small>${esc(report.activityPlace)}</small></td>
+        <td>${Number(report.contacts || 0)}</td>
+        <td>${Number(report.appointmentsGenerated || 0)}</td>
+        <td>${Number(report.clientCount || (report.clients || []).length)}</td>
+        <td>${Number(report.procedureCount || 0)}</td>
+        <td>${reviewLabel(report)}</td>
+        <td>
+          <div class="actions">
+            <button class="soft" onclick="window.openReportDetail('${report.id}')">Ver</button>
+            ${report.status !== "cancelled" && report.reviewStatus !== "reviewed"
+              ? `<button class="accent" onclick="window.markReviewed('${report.id}')">Revisar</button>` : ""}
+            ${report.status !== "cancelled"
+              ? `<button class="danger" onclick="window.cancelReport('${report.id}')">Anular</button>` : ""}
+          </div>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  function renderStaff(){
+    document.getElementById("staffCount").textContent = `${state.users.length} usuario(s)`;
+    document.getElementById("staffBody").innerHTML = state.users.map(user=>`
+      <tr>
+        <td>${esc(user.employeeNumber)}</td>
+        <td><strong>${esc(user.name)}</strong></td>
+        <td><span class="badge ${user.role === "manager" ? "reviewed" : "pending"}">${user.role === "manager" ? "Gerente" : "Asesor"}</span></td>
+        <td><span class="badge ${user.active ? "reviewed" : "cancelled-badge"}">${user.active ? "Activo" : "Inactivo"}</span></td>
+        <td>${timestampText(user.lastLoginAt)}</td>
+        <td>
+          <div class="actions">
+            <button class="soft" onclick="window.toggleUser('${user.uid}',${!user.active})">${user.active ? "Desactivar" : "Activar"}</button>
+            ${user.uid !== state.manager?.uid
+              ? `<button class="soft" onclick="window.toggleRole('${user.uid}','${user.role === "manager" ? "advisor" : "manager"}')">${user.role === "manager" ? "Cambiar a asesor" : "Cambiar a gerente"}</button>`
+              : ""}
+          </div>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  window.openReportDetail = function(id){
+    const report = state.reports.find(r=>r.id === id);
+    if(!report) return;
+
+    document.getElementById("detailTitle").textContent =
+      `${report.advisorName} · ${formatDate(report.createdDate)}`;
+
+    const clients = report.clients || [];
+    document.getElementById("detailContent").innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-box"><strong>Medio</strong>${esc(report.prospecting)}</div>
+        <div class="detail-box"><strong>Lugar</strong>${esc(report.activityPlace)}</div>
+        <div class="detail-box"><strong>Horario</strong>${esc(report.activitySchedule || "—")}</div>
+        <div class="detail-box"><strong>Contactos</strong>${Number(report.contacts || 0)}</div>
+        <div class="detail-box"><strong>Citas</strong>${Number(report.appointmentsGenerated || 0)}</div>
+        <div class="detail-box"><strong>Revisión</strong>${reviewLabel(report)}</div>
       </div>
-      <div class="top-actions">
-        <a class="button soft" href="index.html">Abrir captura</a>
-        <button class="accent" onclick="window.exportDashboardExcel()">Descargar Excel</button>
-        <button class="danger" onclick="window.logoutManager()">Cerrar sesión</button>
-      </div>
-    </header>
 
-    <div class="tabs">
-      <button class="tab active" data-panel="summaryPanel">Resumen y reportes</button>
-      <button class="tab" data-panel="staffPanel">Personal autorizado</button>
-    </div>
+      <h3>Actividad realizada</h3>
+      <p>${esc(report.activityDescription)}</p>
 
-    <section id="summaryPanel" class="panel active">
-      <div class="kpis">
-        <div class="kpi"><span>Reportes</span><strong id="kpiReports">0</strong></div>
-        <div class="kpi"><span>Asesores activos</span><strong id="kpiActive">0</strong></div>
-        <div class="kpi"><span>Reportaron hoy</span><strong id="kpiReported">0</strong></div>
-        <div class="kpi"><span>Contactos</span><strong id="kpiContacts">0</strong></div>
-        <div class="kpi"><span>Citas</span><strong id="kpiAppointments">0</strong></div>
-        <div class="kpi"><span>Trámites</span><strong id="kpiProcedures">0</strong></div>
-      </div>
-
-      <div class="filters">
-        <div><label>Desde</label><input id="dateFrom" type="date"></div>
-        <div><label>Hasta</label><input id="dateTo" type="date"></div>
-        <div><label>Asesor</label><select id="advisorFilter"><option value="">Todos</option></select></div>
-        <div><label>Estado</label><select id="statusFilter"><option value="">Todos</option><option value="pending">Pendiente de revisión</option><option value="reviewed">Revisado</option><option value="cancelled">Anulado</option></select></div>
-        <div><label>Buscar</label><input id="searchFilter" placeholder="Nombre, empresa, NSS o teléfono"></div>
+      <h3>Clientes registrados</h3>
+      <div class="table-wrap">
+        <table class="client-table">
+          <thead><tr><th>Cliente</th><th>NSS / CURP</th><th>Teléfono</th><th>Empresa</th><th>Puntos</th><th>AFORE</th><th>Resultado</th><th>Observación</th></tr></thead>
+          <tbody>${clients.map(c=>`
+            <tr>
+              <td>${esc(c.name)}</td>
+              <td>${esc(c.nss)}<br>${esc(c.curp)}</td>
+              <td>${esc(c.phone)}</td>
+              <td>${esc(c.company)}</td>
+              <td>${Number(c.points || 0)}</td>
+              <td>${esc(c.afore)}</td>
+              <td>${esc(c.result)}</td>
+              <td>${esc(c.notes)}${c.appointment ? `<br><strong>Cita:</strong> ${formatDate(c.appointment)}`:""}</td>
+            </tr>
+          `).join("")}</tbody>
+        </table>
       </div>
 
-      <div class="card">
-        <div class="card-head"><h2>Pendientes de reportar hoy</h2><span id="missingCount" class="badge pending">0</span></div>
-        <div id="missingAdvisors" class="missing"></div>
+      <h3>Plan de trabajo</h3>
+      <div class="detail-grid">
+        <div class="detail-box"><strong>Fecha</strong>${formatDate(report.plan?.date)}</div>
+        <div class="detail-box"><strong>Lugar</strong>${esc(report.plan?.place)}</div>
+        <div class="detail-box"><strong>Medio</strong>${esc(report.plan?.method)}</div>
+        <div class="detail-box"><strong>Horario</strong>${esc(report.plan?.schedule || "—")}</div>
+        <div class="detail-box"><strong>Meta contactos</strong>${Number(report.plan?.contactGoal || 0)}</div>
+        <div class="detail-box"><strong>Meta citas</strong>${Number(report.plan?.appointmentGoal || 0)}</div>
       </div>
+      <p>${esc(report.plan?.description)}</p>
+      ${report.cancellationReason ? `<h3>Motivo de anulación</h3><p>${esc(report.cancellationReason)}</p>`:""}
+    `;
+    document.getElementById("detailModal").classList.add("show");
+  };
 
-      <div class="card">
-        <div class="card-head"><h2>Reportes registrados</h2><span id="visibleCount"></span></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Fecha</th><th>Asesor</th><th>Medio / lugar</th><th>Contactos</th><th>Citas</th><th>Clientes</th><th>Trámites</th><th>Revisión</th><th>Acciones</th></tr></thead>
-            <tbody id="reportsBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+  window.markReviewed = async function(id){
+    if(!confirm("¿Marcar este reporte como revisado?")) return;
+    await updateDoc(doc(db, REPORTS_COLLECTION, id),{
+      reviewStatus:"reviewed",
+      reviewedAt:serverTimestamp(),
+      reviewedBy:state.manager.uid,
+      reviewedByName:state.manager.name,
+      updatedAt:serverTimestamp()
+    });
+  };
 
-    <section id="staffPanel" class="panel">
-      <div class="card">
-        <div class="card-head"><h2>Personal autorizado</h2><span id="staffCount"></span></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>No. empleado</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Administración</th></tr></thead>
-            <tbody id="staffBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  </main>
+  window.cancelReport = async function(id){
+    const reason = prompt("Escribe el motivo de la anulación:");
+    if(!reason?.trim()) return;
 
-  <div id="detailModal" class="modal">
-    <div class="modal-card">
-      <div class="modal-head"><h2 id="detailTitle">Detalle</h2><button class="danger" onclick="document.getElementById('detailModal').classList.remove('show')">Cerrar</button></div>
-      <div id="detailContent"></div>
-    </div>
-  </div>
+    await updateDoc(doc(db, REPORTS_COLLECTION, id),{
+      status:"cancelled",
+      cancellationReason:reason.trim(),
+      cancelledAt:serverTimestamp(),
+      cancelledBy:state.manager.uid,
+      cancelledByName:state.manager.name,
+      updatedAt:serverTimestamp()
+    });
+  };
 
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script type="module" src="dashboard.js"></script>
-</body>
-</html>
+  window.toggleUser = async function(uid, active){
+    const user = state.users.find(u=>u.uid === uid);
+    if(!user) return;
+    if(!confirm(`${active ? "Activar" : "Desactivar"} a ${user.name}?`)) return;
+
+    await updateDoc(doc(db, USERS_COLLECTION, uid),{
+      active,
+      updatedAt:serverTimestamp()
+    });
+  };
+
+  window.toggleRole = async function(uid, role){
+    const user = state.users.find(u=>u.uid === uid);
+    if(!user) return;
+    const roleLabel = role === "manager" ? "Gerente" : "Asesor";
+    if(!confirm(`Cambiar a ${user.name} al rol ${roleLabel}?`)) return;
+
+    await updateDoc(doc(db, USERS_COLLECTION, uid),{
+      role,
+      updatedAt:serverTimestamp()
+    });
+  };
+
+  window.logoutManager = async function(){
+    await signOut(auth);
+    window.location.reload();
+  };
+
+  window.exportDashboardExcel = function(){
+    const reports = filteredReports();
+
+    const reportRows = reports.map(r=>({
+      "Fecha":r.createdDate,
+      "Fecha y hora local":r.createdAtLocal,
+      "Número de empleado":r.advisorEmployeeNumber,
+      "Asesor":r.advisorName,
+      "Medio de prospección":r.prospecting,
+      "Lugar":r.activityPlace,
+      "Horario":r.activitySchedule,
+      "Contactos":Number(r.contacts || 0),
+      "Citas generadas":Number(r.appointmentsGenerated || 0),
+      "Clientes":Number(r.clientCount || (r.clients || []).length),
+      "Trámites realizados":Number(r.procedureCount || 0),
+      "Descripción":r.activityDescription,
+      "Estado":r.status === "cancelled" ? "Anulado" : "Finalizado",
+      "Revisión":r.reviewStatus === "reviewed" ? "Revisado" : "Pendiente",
+      "Plan - fecha":r.plan?.date,
+      "Plan - lugar":r.plan?.place,
+      "Plan - medio":r.plan?.method,
+      "Plan - horario":r.plan?.schedule,
+      "Plan - meta contactos":Number(r.plan?.contactGoal || 0),
+      "Plan - meta citas":Number(r.plan?.appointmentGoal || 0),
+      "Plan - descripción":r.plan?.description,
+      "Motivo de anulación":r.cancellationReason || ""
+    }));
+
+    const clientRows = reports.flatMap(r=>(r.clients || []).map(c=>({
+      "Fecha":r.createdDate,
+      "Número de empleado":r.advisorEmployeeNumber,
+      "Asesor":r.advisorName,
+      "Cliente":c.name,
+      "CURP":c.curp,
+      "NSS":c.nss,
+      "Teléfono":c.phone,
+      "Correo o dirección":c.email,
+      "Empresa":c.company,
+      "Puntos":Number(c.points || 0),
+      "AFORE":c.afore,
+      "Resultado":c.result,
+      "Fecha posible de cita":c.appointment,
+      "Observación":c.notes,
+      "Estado del reporte":r.status === "cancelled" ? "Anulado" : "Finalizado"
+    })));
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook,XLSX.utils.json_to_sheet(reportRows),"Reportes");
+    XLSX.utils.book_append_sheet(workbook,XLSX.utils.json_to_sheet(clientRows),"Clientes");
+    XLSX.writeFile(
+      workbook,
+      `Actividad_Comercial_Dashboard_${localISO()}.xlsx`,
+      {compression:true}
+    );
+  };
+
+  ["dateFrom","dateTo","advisorFilter","statusFilter","searchFilter"].forEach(id=>{
+    document.getElementById(id).addEventListener(
+      id === "searchFilter" ? "input" : "change",
+      renderAll
+    );
+  });
+
+  document.querySelectorAll(".tab").forEach(button=>{
+    button.addEventListener("click",()=>{
+      document.querySelectorAll(".tab").forEach(item=>item.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(panel=>panel.classList.remove("active"));
+      button.classList.add("active");
+      document.getElementById(button.dataset.panel).classList.add("active");
+    });
+  });
+
+  const today = localISO();
+  document.getElementById("dateFrom").value = today.slice(0,8) + "01";
+  document.getElementById("dateTo").value = today;
+}
