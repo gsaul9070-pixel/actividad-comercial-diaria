@@ -21,9 +21,12 @@ service cloud.firestore {
         && currentUser().role == "manager";
     }
 
-    function isInitialManagerAccount() {
+    function isAuthorizedManagerAccount() {
       return signedIn()
-        && request.auth.token.email == "jacquelinne.santos@profuturo.com.mx";
+        && (
+          request.auth.token.email == "jacquelinne.santos@profuturo.com.mx"
+          || request.auth.token.email == "gsaul9070@gmail.com"
+        );
     }
 
     function advisorPath(employeeNumber) {
@@ -38,9 +41,8 @@ service cloud.firestore {
 
     match /commercial_users/{userId} {
       allow create: if request.auth.uid == userId
-        && isInitialManagerAccount()
-        && request.resource.data.employeeNumber == "143561"
-        && request.resource.data.name == "SANTOS GUTIERREZ JACQUELINNE ADRIANA"
+        && isAuthorizedManagerAccount()
+        && request.resource.data.authEmail == request.auth.token.email
         && request.resource.data.role == "manager"
         && request.resource.data.active == true;
 

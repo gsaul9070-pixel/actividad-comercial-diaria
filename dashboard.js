@@ -28,6 +28,17 @@ import {
   SETTINGS_COLLECTION
 } from "./firebase-config.js";
 
+const MANAGER_ACCOUNTS = {
+  "jacquelinne.santos@profuturo.com.mx": {
+    employeeNumber:"143561",
+    name:"SANTOS GUTIERREZ JACQUELINNE ADRIANA"
+  },
+  "gsaul9070@gmail.com": {
+    employeeNumber:"ADMIN-02",
+    name:"SAUL GUAJARDO"
+  }
+};
+
 const INITIAL_ADVISORS = [
   {
     "employeeNumber": "130257",
@@ -317,16 +328,18 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       const profileRef = doc(db, USERS_COLLECTION, user.uid);
       let profileSnap = await getDoc(profileRef);
 
+      const managerEmail = String(user.email || "").toLowerCase();
+      const authorizedManager = MANAGER_ACCOUNTS[managerEmail];
+
+      if(!authorizedManager){
+        await signOut(auth);
+        throw new Error("Este correo no está autorizado como gerente.");
+      }
+
       if(!profileSnap.exists()){
-        const managerEmail = String(user.email || "").toLowerCase();
-
-        if(managerEmail !== "jacquelinne.santos@profuturo.com.mx"){
-          throw new Error("Usuario no autorizado.");
-        }
-
         await setDoc(profileRef,{
-          employeeNumber:"143561",
-          name:"SANTOS GUTIERREZ JACQUELINNE ADRIANA",
+          employeeNumber:authorizedManager.employeeNumber,
+          name:authorizedManager.name,
           role:"manager",
           active:true,
           mustChangePassword:false,
@@ -350,7 +363,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       await seedInitialAdvisors();
 
       document.getElementById("managerName").textContent =
-        `${profile.name} · Empleado ${profile.employeeNumber}`;
+        `${profile.name} · Administrador`;
 
       authScreen.classList.add("hidden");
       appElement.classList.remove("hidden");
