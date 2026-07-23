@@ -18,42 +18,57 @@
     button:disabled{opacity:.5;cursor:not-allowed}
     .primary{background:var(--primary);color:#fff}.soft{background:#EAF2F8;color:var(--primary)}
     .accent{background:var(--accent);color:#fff}.danger{background:#FDECEC;color:var(--danger)}
+    .warning{background:#FFF4D8;color:#865B00}
     .auth{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(145deg,#EAF2F8,#F8FAFC)}
     .auth-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 18px 55px rgba(18,58,99,.16)}
     .auth-card h1{margin:0 0 8px;color:var(--primary)}.auth-card p{color:var(--muted);line-height:1.45}
     label{font-size:13px;font-weight:800;display:block;margin-bottom:6px}
     input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:11px;font:inherit;outline:none;background:#fff}
     input:focus,select:focus,textarea:focus{border-color:var(--primary2);box-shadow:0 0 0 3px rgba(28,93,153,.12)}
+    textarea{min-height:88px;resize:vertical}
     .error{display:none;margin-top:12px;padding:11px;border-radius:11px;background:#FFF0F0;border:1px solid #F2BABA;color:#A62F2F;font-weight:700}.error.show{display:block}
+    .success{display:none;margin-top:12px;padding:11px;border-radius:11px;background:#E8F8F0;border:1px solid #BDEAD6;color:#087554;font-weight:700}.success.show{display:block}
     .app{max-width:1500px;margin:auto;padding:18px}
     .top{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-radius:22px;padding:22px;display:flex;justify-content:space-between;gap:16px;align-items:center;box-shadow:var(--shadow)}
     .top h1{margin:0 0 5px}.top p{margin:0;opacity:.88}
     .top-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .tabs{display:flex;gap:8px;margin:14px 0}.tab.active{background:var(--primary);color:#fff}.tab{background:#fff;color:var(--primary);border:1px solid var(--line)}
+    .tabs{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}.tab.active{background:var(--primary);color:#fff}.tab{background:#fff;color:var(--primary);border:1px solid var(--line)}
     .panel{display:none}.panel.active{display:block}
     .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:14px 0}
     .kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
     .kpi span{color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase}.kpi strong{display:block;color:var(--primary);font-size:30px;margin-top:7px}
     .filters{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;box-shadow:var(--shadow)}
     .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:14px;box-shadow:var(--shadow)}
-    .card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.card h2{margin:0;color:var(--primary);font-size:20px}
+    .card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}.card h2{margin:0;color:var(--primary);font-size:20px}
     .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px}
     table{width:100%;border-collapse:collapse;font-size:13px;min-width:1050px}
     th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
     th{background:#EDF3F8;color:#233B55;position:sticky;top:0;z-index:1}
-    tr.cancelled{opacity:.55;text-decoration:line-through}
+    tr.cancelled{opacity:.58;text-decoration:line-through}
     .badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}
     .pending{background:#FFF4D8;color:#865B00}.reviewed{background:#E8F8F0;color:#087554}.cancelled-badge{background:#FDECEC;color:#A62F2F}
     .actions{display:flex;gap:6px;flex-wrap:wrap}
     .empty{text-align:center;padding:32px;color:var(--muted)}
     .missing{display:flex;gap:8px;flex-wrap:wrap}.missing span{background:#FFF4D8;color:#7A5410;padding:7px 9px;border-radius:999px;font-size:12px;font-weight:700}
     .modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;place-items:center;padding:18px;z-index:9999}.modal.show{display:grid}
-    .modal-card{width:min(1080px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:20px;padding:20px}
-    .modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.detail-box{background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:11px}.detail-box strong{display:block;color:var(--primary);font-size:12px;margin-bottom:4px}
+    .modal-card{width:min(1080px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:20px;padding:20px}
+    .modal-card.small{width:min(600px,100%)}
+    .modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+    .modal-head h2{margin:0;color:var(--primary)}
+    .detail-grid,.form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .form-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .full{grid-column:1/-1}
+    .detail-box{background:#F8FAFC;border:1px solid var(--line);border-radius:12px;padding:11px}.detail-box strong{display:block;color:var(--primary);font-size:12px;margin-bottom:4px}
     .client-table{min-width:900px}
+    .modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:16px}
+    .checkbox-row{display:flex;align-items:center;gap:9px;padding-top:25px}.checkbox-row input{width:18px;height:18px}
+    .client-editor{border:1px solid var(--line);background:#F8FAFC;border-radius:14px;padding:12px;margin-top:10px}
+    .client-editor-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+    .client-editor-head strong{color:var(--primary)}
+    .helper{color:var(--muted);font-size:12px;line-height:1.4}
     @media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:650px){.app{padding:9px}.top{align-items:flex-start;flex-direction:column}.kpis{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
+    @media(max-width:760px){.form-grid,.form-grid.two,.detail-grid{grid-template-columns:1fr}}
+    @media(max-width:650px){.app{padding:9px}.top{align-items:flex-start;flex-direction:column}.kpis{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -87,7 +102,7 @@
 
     <div class="tabs">
       <button class="tab active" data-panel="summaryPanel">Resumen y reportes</button>
-      <button class="tab" data-panel="staffPanel">Personal autorizado</button>
+      <button class="tab" data-panel="staffPanel">Administrar asesores</button>
     </div>
 
     <section id="summaryPanel" class="panel active">
@@ -126,10 +141,16 @@
 
     <section id="staffPanel" class="panel">
       <div class="card">
-        <div class="card-head"><h2>Personal autorizado</h2><span id="staffCount"></span></div>
+        <div class="card-head">
+          <div>
+            <h2>Asesores autorizados</h2>
+            <span id="staffCount"></span>
+          </div>
+          <button class="accent" onclick="window.openAddAdvisor()">+ Agregar asesor</button>
+        </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>No. empleado</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Administración</th></tr></thead>
+            <thead><tr><th>No. empleado</th><th>Nombre</th><th>Estado</th><th>Tipo de acceso</th><th>Acciones</th></tr></thead>
             <tbody id="staffBody"></tbody>
           </table>
         </div>
@@ -139,8 +160,129 @@
 
   <div id="detailModal" class="modal">
     <div class="modal-card">
-      <div class="modal-head"><h2 id="detailTitle">Detalle</h2><button class="danger" onclick="document.getElementById('detailModal').classList.remove('show')">Cerrar</button></div>
+      <div class="modal-head"><h2 id="detailTitle">Detalle</h2><button class="danger" type="button" onclick="window.closeModal('detailModal')">Cerrar</button></div>
       <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <div id="advisorModal" class="modal">
+    <div class="modal-card small">
+      <div class="modal-head">
+        <h2 id="advisorModalTitle">Agregar asesor</h2>
+        <button class="danger" type="button" onclick="window.closeModal('advisorModal')">Cerrar</button>
+      </div>
+      <form id="advisorForm">
+        <input id="advisorOriginalNumber" type="hidden">
+        <div class="form-grid two">
+          <div>
+            <label for="advisorEmployeeNumber">Número de empleado</label>
+            <input id="advisorEmployeeNumber" inputmode="numeric" maxlength="10" required>
+          </div>
+          <div class="checkbox-row">
+            <input id="advisorActive" type="checkbox" checked>
+            <label for="advisorActive" style="margin:0">Acceso activo</label>
+          </div>
+          <div class="full">
+            <label for="advisorName">Nombre completo</label>
+            <input id="advisorName" maxlength="160" required>
+          </div>
+        </div>
+        <p class="helper">Al guardar, el asesor podrá ingresar a la captura usando únicamente su número de empleado.</p>
+        <div id="advisorError" class="error"></div>
+        <div id="advisorSuccess" class="success"></div>
+        <div class="modal-actions">
+          <button class="soft" type="button" onclick="window.closeModal('advisorModal')">Cancelar</button>
+          <button id="advisorSaveButton" class="primary" type="submit">Guardar asesor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="reportEditModal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Editar reporte</h2>
+        <button class="danger" type="button" onclick="window.closeModal('reportEditModal')">Cerrar</button>
+      </div>
+      <form id="reportEditForm">
+        <input id="editReportOriginalId" type="hidden">
+        <div class="form-grid">
+          <div>
+            <label for="editReportDate">Fecha</label>
+            <input id="editReportDate" type="date" required>
+          </div>
+          <div>
+            <label for="editReportAdvisor">Asesor</label>
+            <select id="editReportAdvisor" required></select>
+          </div>
+          <div>
+            <label for="editReportProspecting">Medio de prospección</label>
+            <input id="editReportProspecting" required>
+          </div>
+          <div>
+            <label for="editReportPlace">Lugar</label>
+            <input id="editReportPlace" required>
+          </div>
+          <div>
+            <label for="editReportSchedule">Horario</label>
+            <input id="editReportSchedule">
+          </div>
+          <div>
+            <label for="editReportStatus">Estado</label>
+            <select id="editReportStatus">
+              <option value="finalized">Finalizado</option>
+              <option value="cancelled">Anulado</option>
+            </select>
+          </div>
+          <div>
+            <label for="editReportContacts">Contactos</label>
+            <input id="editReportContacts" type="number" min="0" required>
+          </div>
+          <div>
+            <label for="editReportAppointments">Citas generadas</label>
+            <input id="editReportAppointments" type="number" min="0" required>
+          </div>
+          <div>
+            <label for="editReportReview">Revisión</label>
+            <select id="editReportReview">
+              <option value="pending">Pendiente</option>
+              <option value="reviewed">Revisado</option>
+            </select>
+          </div>
+          <div class="full">
+            <label for="editReportDescription">Descripción de la actividad</label>
+            <textarea id="editReportDescription" required></textarea>
+          </div>
+          <div class="full">
+            <label for="editCancellationReason">Motivo de anulación</label>
+            <textarea id="editCancellationReason" placeholder="Solo aplica cuando el estado es Anulado"></textarea>
+          </div>
+        </div>
+
+        <h3>Plan de trabajo</h3>
+        <div class="form-grid">
+          <div><label for="editPlanDate">Fecha</label><input id="editPlanDate" type="date"></div>
+          <div><label for="editPlanPlace">Lugar</label><input id="editPlanPlace"></div>
+          <div><label for="editPlanMethod">Medio</label><input id="editPlanMethod"></div>
+          <div><label for="editPlanSchedule">Horario</label><input id="editPlanSchedule"></div>
+          <div><label for="editPlanContactGoal">Meta de contactos</label><input id="editPlanContactGoal" type="number" min="0"></div>
+          <div><label for="editPlanAppointmentGoal">Meta de citas</label><input id="editPlanAppointmentGoal" type="number" min="0"></div>
+          <div class="full"><label for="editPlanDescription">Descripción</label><textarea id="editPlanDescription"></textarea></div>
+        </div>
+
+        <div class="card-head" style="margin-top:18px">
+          <h3 style="margin:0;color:var(--primary)">Clientes registrados</h3>
+          <button class="accent" type="button" onclick="window.addReportClient()">+ Agregar cliente</button>
+        </div>
+        <div id="editClientsContainer"></div>
+
+        <div id="reportEditError" class="error"></div>
+        <div id="reportEditSuccess" class="success"></div>
+        <div class="modal-actions">
+          <button class="soft" type="button" onclick="window.closeModal('reportEditModal')">Cancelar</button>
+          <button id="reportEditSaveButton" class="primary" type="submit">Guardar cambios</button>
+        </div>
+      </form>
     </div>
   </div>
 

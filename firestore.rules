@@ -26,23 +26,14 @@ service cloud.firestore {
         && request.auth.token.email == "jacquelinne.santos@profuturo.com.mx";
     }
 
-    function validAdvisor(number, name) {
-      return (number == "130257" && name == "CORREA CERON MARIA DEL CARMEN")
-        || (number == "152642" && name == "ALVAREZ SOLIS CLAUDIA IVETT")
-        || (number == "158311" && name == "RAMIREZ BLANCO ARACELI GUADALUPE")
-        || (number == "161328" && name == "GUERRERO VILLEGAS ELSA GABRIELA")
-        || (number == "162129" && name == "MEZA MELO CLAUDIA GUADALUPE")
-        || (number == "164641" && name == "MENDOZA SANTIAGO ADRIANA")
-        || (number == "165555" && name == "SALAS TORRES RUBI ANAKAREN")
-        || (number == "169527" && name == "PATIÑO SILVA FERNANDA MONSERRAT")
-        || (number == "169884" && name == "SOTO DOMINGUEZ DAYANI SHERLIN GUADALUPE")
-        || (number == "171033" && name == "REYNA ORTIZ ROSA NANCY")
-        || (number == "171155" && name == "VEGA LUNA MARIA DE JESUS")
-        || (number == "172247" && name == "GARCIA BERLANGA BRENDA BERENICE")
-        || (number == "172852" && name == "BLANCO TORRES GILDA YAMILY")
-        || (number == "173151" && name == "ANGUIANO BERLANGA FRANCISCO DE JESUS")
-        || (number == "173159" && name == "MORALES LEYVA KARLA SAMANTA")
-        || (number == "502488" && name == "RAMOS MARTINEZ LAURA GEORGINA");
+    function advisorPath(employeeNumber) {
+      return /databases/$(database)/documents/commercial_advisors/$(employeeNumber);
+    }
+
+    function validActiveAdvisor(employeeNumber, advisorName) {
+      return exists(advisorPath(employeeNumber))
+        && get(advisorPath(employeeNumber)).data.active == true
+        && get(advisorPath(employeeNumber)).data.name == advisorName;
     }
 
     match /commercial_users/{userId} {
@@ -57,15 +48,24 @@ service cloud.firestore {
         && (request.auth.uid == userId || isActiveManager());
 
       allow update: if isActiveManager();
-
       allow delete: if false;
+    }
+
+    match /commercial_settings/{settingId} {
+      allow read, create, update, delete: if isActiveManager();
+    }
+
+    match /commercial_advisors/{employeeNumber} {
+      allow get: if true;
+      allow list: if isActiveManager();
+      allow create, update, delete: if isActiveManager();
     }
 
     match /commercial_activity_reports/{reportId} {
       allow create: if request.auth == null
         && request.resource.data.status == "finalized"
         && request.resource.data.advisorRole == "advisor"
-        && validAdvisor(
+        && validActiveAdvisor(
           request.resource.data.advisorEmployeeNumber,
           request.resource.data.advisorName
         )
@@ -75,9 +75,7 @@ service cloud.firestore {
           + request.resource.data.createdDate
         );
 
-      allow read, update: if isActiveManager();
-
-      allow delete: if false;
+      allow read, update, delete: if isActiveManager();
     }
   }
 }
