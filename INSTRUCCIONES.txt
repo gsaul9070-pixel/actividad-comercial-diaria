@@ -1,19 +1,15 @@
-ACTUALIZACIÓN DE EMPLEADOS CON CONTRASEÑA
+ACTUALIZACIÓN DE BOTONES
 
 Reemplaza en GitHub:
 - index.html
-- app-firebase.js
 - dashboard.html
 - dashboard.js
 
 Cambios:
-1. En la captura se agregó "Administrar empleados".
-2. Permite agregar, editar, activar, desactivar y eliminar empleados.
-3. Los cambios se reflejan automáticamente en la captura y el dashboard.
-4. La administración de empleados requiere contraseña.
-5. Las modificaciones de reportes y empleados en el dashboard requieren
-   la misma contraseña.
-6. La autorización permanece activa 10 minutos para evitar solicitarla
-   en cada clic.
-
-No es necesario modificar las reglas de Firebase.
+1. Se quitaron de la captura los botones:
+   - Administrar empleados
+   - Abrir dashboard
+2. En el dashboard se colocaron:
+   - Administrar empleados (protegido con contraseña)
+   - Abrir captura
+3. No es necesario modificar las reglas de Firebase.

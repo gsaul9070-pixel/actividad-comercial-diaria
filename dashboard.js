@@ -1097,6 +1097,24 @@ if(Object.values(firebaseConfig).some(value =>
     );
   });
 
+  window.openEmployeeAdministration = async function(){
+    if(!await requireDashboardPassword("administrar empleados")) return;
+
+    document.querySelectorAll(".tab").forEach(
+      item=>item.classList.remove("active")
+    );
+    document.querySelectorAll(".panel").forEach(
+      panel=>panel.classList.remove("active")
+    );
+
+    const staffTab = document.querySelector(
+      '.tab[data-panel="staffPanel"]'
+    );
+    staffTab?.classList.add("active");
+    document.getElementById("staffPanel")?.classList.add("active");
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
+
   document.querySelectorAll(".tab").forEach(button=>{
     button.addEventListener("click",async ()=>{
       if(

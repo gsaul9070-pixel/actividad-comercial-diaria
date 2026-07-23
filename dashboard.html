@@ -82,8 +82,13 @@
         <p id="managerName">Acceso directo al dashboard en tiempo real</p>
       </div>
       <div class="top-actions">
+        <button class="soft" type="button"
+          onclick="window.openEmployeeAdministration()">
+          Administrar empleados 🔒
+        </button>
         <a class="button soft" href="index.html">Abrir captura</a>
-        <button class="accent" onclick="window.exportDashboardExcel()">Descargar Excel</button>
+        <button class="accent"
+          onclick="window.exportDashboardExcel()">Descargar Excel</button>
       </div>
     </header>
 
@@ -274,6 +279,6 @@
   </div>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script type="module" src="dashboard.js?v=20260723-04"></script>
+  <script type="module" src="dashboard.js?v=20260723-05"></script>
 </body>
 </html>
