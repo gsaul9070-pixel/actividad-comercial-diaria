@@ -1,7 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import {
   getAuth,
-  signInWithEmailAndPassword,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
@@ -166,6 +168,7 @@ const authScreen = document.getElementById("authScreen");
 const appElement = document.getElementById("app");
 const loginError = document.getElementById("loginError");
 const loginButton = document.getElementById("loginButton");
+const loginSuccess = document.getElementById("loginSuccess");
 
 const localISO = () => {
   const d = new Date(), offset = d.getTimezoneOffset();
@@ -290,26 +293,48 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
     await batch.commit();
   }
 
+  const managerEmailStorageKey = "commercialManagerEmailForSignIn";
+  const dashboardAccessUrl = `${window.location.origin}${window.location.pathname}`;
+  let processingEmailLink = isSignInWithEmailLink(auth, window.location.href);
+
   document.getElementById("loginForm").addEventListener("submit", async event=>{
     event.preventDefault();
     loginError.classList.remove("show");
+    loginSuccess.classList.remove("show");
     loginButton.disabled = true;
-    loginButton.textContent = "Validando…";
+    loginButton.textContent = "Enviando enlace…";
 
     try{
-      const managerEmail = document.getElementById("employee").value.trim().toLowerCase();
-      const password = document.getElementById("password").value;
+      const managerEmail = document.getElementById("employee").value
+        .trim()
+        .toLowerCase();
 
-      if(!managerEmail || !password){
-        throw new Error("Completa el usuario gerencial y la contraseña.");
+      if(!managerEmail){
+        throw new Error("Escribe el correo gerencial.");
       }
 
-      await signInWithEmailAndPassword(auth, managerEmail, password);
+      if(!MANAGER_ACCOUNTS[managerEmail]){
+        throw new Error("Este correo no está autorizado como gerente.");
+      }
+
+      await sendSignInLinkToEmail(auth, managerEmail,{
+        url:dashboardAccessUrl,
+        handleCodeInApp:true
+      });
+
+      localStorage.setItem(managerEmailStorageKey,managerEmail);
+      loginSuccess.textContent =
+        "Enlace enviado. Revisa tu correo y presiona el botón de acceso.";
+      loginSuccess.classList.add("show");
     }catch(error){
       console.error(error);
-      showLoginError("Usuario gerencial o contraseña incorrectos.");
+      const message = error?.code === "auth/unauthorized-continue-uri"
+        ? "El dominio de GitHub Pages todavía no está autorizado en Firebase."
+        : (error.message || "No fue posible enviar el enlace de acceso.");
+      showLoginError(message);
+    }finally{
       loginButton.disabled = false;
-      loginButton.textContent = "Ingresar al dashboard";
+      loginButton.textContent = "Enviar enlace de acceso";
     }
   });
 
@@ -319,8 +344,11 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       unsubscribeAdvisors?.();
       authScreen.classList.remove("hidden");
       appElement.classList.add("hidden");
-      loginButton.disabled = false;
-      loginButton.textContent = "Ingresar al dashboard";
+
+      if(!processingEmailLink){
+        loginButton.disabled = false;
+        loginButton.textContent = "Enviar enlace de acceso";
+      }
       return;
     }
 
@@ -344,7 +372,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
           active:true,
           mustChangePassword:false,
           authEmail:managerEmail,
-          accessMode:"username_password",
+          accessMode:"email_link_passwordless",
           createdAt:serverTimestamp(),
           updatedAt:serverTimestamp()
         });
@@ -392,6 +420,48 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       showLoginError(error.message || "No fue posible validar el acceso.");
     }
   });
+
+  async function completePasswordlessSignIn(){
+    if(!processingEmailLink) return;
+
+    loginError.classList.remove("show");
+    loginSuccess.textContent = "Validando el enlace de acceso…";
+    loginSuccess.classList.add("show");
+    loginButton.disabled = true;
+
+    try{
+      let managerEmail = localStorage.getItem(managerEmailStorageKey);
+
+      if(!managerEmail){
+        managerEmail = window.prompt(
+          "Confirma el correo gerencial al que se envió este enlace:"
+        );
+      }
+
+      managerEmail = String(managerEmail || "").trim().toLowerCase();
+
+      if(!MANAGER_ACCOUNTS[managerEmail]){
+        throw new Error("El correo no está autorizado como gerente.");
+      }
+
+      await signInWithEmailLink(auth,managerEmail,window.location.href);
+      localStorage.removeItem(managerEmailStorageKey);
+      window.history.replaceState({},document.title,dashboardAccessUrl);
+    }catch(error){
+      console.error(error);
+      processingEmailLink = false;
+      loginSuccess.classList.remove("show");
+      showLoginError(
+        error?.code === "auth/invalid-action-code"
+          ? "El enlace ya venció o ya fue utilizado. Solicita uno nuevo."
+          : (error.message || "No fue posible validar el enlace.")
+      );
+      loginButton.disabled = false;
+      loginButton.textContent = "Enviar enlace de acceso";
+    }
+  }
+
+  completePasswordlessSignIn();
 
   function filteredReports(){
     const from = document.getElementById("dateFrom").value;
