@@ -541,32 +541,14 @@
   </style>
 </head>
 <body>
-
-  <section id="authScreen" class="auth-screen">
-    <div class="auth-card">
-      <div class="auth-brand">AC</div>
-      <h1>Actividad Comercial</h1>
-      <p>Ingresa tu número de empleado para comenzar el reporte diario. No necesitas contraseña.</p>
-      <form id="loginForm">
-        <div class="field">
-          <label class="required" for="loginEmployee">Número de empleado</label>
-          <input id="loginEmployee" type="text" inputmode="numeric" autocomplete="username" maxlength="10" placeholder="Ej. 130257" required>
-        </div>
-        <button id="loginButton" class="btn-primary btn-full" type="submit" style="margin-top:18px">Ingresar</button>
-        <div id="loginError" class="auth-error"></div>
-      </form>
-    </div>
-  </section>
-
-
-  <main id="appRoot" class="app hidden">
+<main id="appRoot" class="app">
     <div class="session-bar no-print">
       <div class="session-person">
-        <strong id="sessionName">Usuario</strong>
-        <span id="sessionMeta"></span>
+        <strong id="sessionName">Selecciona un asesor</strong>
+        <span id="sessionMeta">Captura directa sin inicio de sesión</span>
       </div>
       <div class="session-actions">
-        <button class="btn-danger" type="button" onclick="window.logoutCommercialUser()">Cerrar sesión</button>
+        <a class="btn-soft" href="dashboard.html" style="text-decoration:none">Abrir dashboard</a>
       </div>
     </div>
 
@@ -604,8 +586,11 @@
             <input id="createdAt" type="text" readonly aria-readonly="true">
             <div class="locked-note">🔒 Se genera automáticamente y no puede modificarse.</div>
           </div>          <div class="field">
-            <label class="required" for="advisorName">Nombre del asesor</label>
-            <input id="advisorName" type="text" readonly aria-readonly="true" required>
+            <label class="required" for="advisorSelector">Nombre del asesor</label>
+            <select id="advisorSelector" required>
+              <option value="">Selecciona un asesor</option>
+            </select>
+            <input id="advisorName" type="hidden">
           </div>
           <div class="field">
             <label for="employeeNumber">Número de empleado</label>
@@ -1566,8 +1551,13 @@
       window.currentUserProfile = profile;
       $("advisorName").value = profile.name || "";
       $("employeeNumber").value = profile.employeeNumber || "";
-      $("sessionName").textContent = profile.name || "Usuario";
-      $("sessionMeta").textContent = `Empleado ${profile.employeeNumber || "N/D"} · ${profile.role === "manager" ? "Gerente" : "Asesor"}`;
+      if($("advisorSelector")){
+        $("advisorSelector").value = profile.employeeNumber || "";
+      }
+      $("sessionName").textContent = profile.name || "Selecciona un asesor";
+      $("sessionMeta").textContent = profile.employeeNumber
+        ? `Empleado ${profile.employeeNumber} · Captura directa`
+        : "Captura directa sin inicio de sesión";
       $("createdAt").value = nowLocalTimestamp();
       $("promiseDate").value = tomorrowISO();
     };
@@ -1603,6 +1593,10 @@
       if(window.currentUserProfile){
         $("advisorName").value = window.currentUserProfile.name || "";
         $("employeeNumber").value = window.currentUserProfile.employeeNumber || "";
+        if($("advisorSelector")){
+          $("advisorSelector").value =
+            window.currentUserProfile.employeeNumber || "";
+        }
       }
       $("descriptionCount").textContent = "0";
       showStep(1);
@@ -1642,7 +1636,7 @@
       if(reportFinalized) return;
 
       if(!window.currentUserProfile){
-        setStatus(5,"La sesión no está disponible. Vuelve a iniciar sesión.");
+        setStatus(5,"Selecciona un asesor antes de finalizar el reporte.");
         return;
       }
 

@@ -72,30 +72,15 @@
   </style>
 </head>
 <body>
-  <section id="authScreen" class="auth">
-    <div class="auth-card">
-      <h1>Dashboard Gerencial</h1>
-      <p>Escribe tu correo autorizado. Recibirás un enlace para ingresar sin contraseña.</p>
-      <form id="loginForm">
-        <label for="employee">Correo gerencial</label>
-        <input id="employee" type="email" inputmode="email" autocomplete="email" placeholder="correo@empresa.com" required>
-        <button id="loginButton" class="primary" style="width:100%;margin-top:18px" type="submit">Enviar enlace de acceso</button>
-        <div id="loginError" class="error"></div>
-        <div id="loginSuccess" class="success"></div>
-      </form>
-    </div>
-  </section>
-
-  <main id="app" class="app hidden">
+<main id="app" class="app">
     <header class="top">
       <div>
         <h1>Dashboard de Actividad Comercial</h1>
-        <p id="managerName">Administración gerencial en tiempo real</p>
+        <p id="managerName">Acceso directo al dashboard en tiempo real</p>
       </div>
       <div class="top-actions">
         <a class="button soft" href="index.html">Abrir captura</a>
         <button class="accent" onclick="window.exportDashboardExcel()">Descargar Excel</button>
-        <button class="danger" onclick="window.logoutManager()">Cerrar sesión</button>
       </div>
     </header>
 
@@ -149,7 +134,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>No. empleado</th><th>Nombre</th><th>Estado</th><th>Tipo de acceso</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>No. empleado</th><th>Nombre</th><th>Estado</th><th>Acciones</th></tr></thead>
             <tbody id="staffBody"></tbody>
           </table>
         </div>
@@ -179,14 +164,14 @@
           </div>
           <div class="checkbox-row">
             <input id="advisorActive" type="checkbox" checked>
-            <label for="advisorActive" style="margin:0">Acceso activo</label>
+            <label for="advisorActive" style="margin:0">Asesor activo</label>
           </div>
           <div class="full">
             <label for="advisorName">Nombre completo</label>
             <input id="advisorName" maxlength="160" required>
           </div>
         </div>
-        <p class="helper">Al guardar, el asesor podrá ingresar a la captura usando únicamente su número de empleado.</p>
+        <p class="helper">Al guardar, el asesor aparecerá en la lista de selección del portal de captura.</p>
         <div id="advisorError" class="error"></div>
         <div id="advisorSuccess" class="success"></div>
         <div class="modal-actions">

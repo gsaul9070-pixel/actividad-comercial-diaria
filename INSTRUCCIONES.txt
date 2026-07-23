@@ -1,0 +1,18 @@
+ACTUALIZACIÓN SIN ACCESOS
+
+1. Reemplaza en GitHub:
+   - index.html
+   - app-firebase.js
+   - dashboard.html
+   - dashboard.js
+   - firebase-config.js
+
+2. En Firebase > Firestore > Reglas:
+   - Copia el contenido de firestore.rules
+   - Presiona Publicar
+
+3. Espera 1 a 3 minutos y actualiza con Ctrl + F5.
+
+IMPORTANTE:
+El portal y el dashboard quedan abiertos. Cualquier persona con los enlaces
+puede consultar, editar o eliminar información.

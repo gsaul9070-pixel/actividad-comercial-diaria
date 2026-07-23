@@ -2,82 +2,23 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
+    // Esta versión no utiliza inicio de sesión.
+    // Cualquier persona con el enlace puede consultar y modificar los datos.
+
+    match /commercial_users/{document=**} {
+      allow read, write: if false;
     }
 
-    function currentUserPath() {
-      return /databases/$(database)/documents/commercial_users/$(request.auth.uid);
+    match /commercial_settings/{document=**} {
+      allow read, write: if true;
     }
 
-    function currentUser() {
-      return get(currentUserPath()).data;
+    match /commercial_advisors/{document=**} {
+      allow read, write: if true;
     }
 
-    function isActiveManager() {
-      return signedIn()
-        && exists(currentUserPath())
-        && currentUser().active == true
-        && currentUser().role == "manager";
-    }
-
-    function isAuthorizedManagerAccount() {
-      return signedIn()
-        && (
-          request.auth.token.email == "jacquelinne.santos@profuturo.com.mx"
-          || request.auth.token.email == "gsaul9070@gmail.com"
-        );
-    }
-
-    function advisorPath(employeeNumber) {
-      return /databases/$(database)/documents/commercial_advisors/$(employeeNumber);
-    }
-
-    function validActiveAdvisor(employeeNumber, advisorName) {
-      return exists(advisorPath(employeeNumber))
-        && get(advisorPath(employeeNumber)).data.active == true
-        && get(advisorPath(employeeNumber)).data.name == advisorName;
-    }
-
-    match /commercial_users/{userId} {
-      allow create: if request.auth.uid == userId
-        && isAuthorizedManagerAccount()
-        && request.resource.data.authEmail == request.auth.token.email
-        && request.resource.data.role == "manager"
-        && request.resource.data.active == true;
-
-      allow read: if signedIn()
-        && (request.auth.uid == userId || isActiveManager());
-
-      allow update: if isActiveManager();
-      allow delete: if false;
-    }
-
-    match /commercial_settings/{settingId} {
-      allow read, create, update, delete: if isActiveManager();
-    }
-
-    match /commercial_advisors/{employeeNumber} {
-      allow get: if true;
-      allow list: if isActiveManager();
-      allow create, update, delete: if isActiveManager();
-    }
-
-    match /commercial_activity_reports/{reportId} {
-      allow create: if request.auth == null
-        && request.resource.data.status == "finalized"
-        && request.resource.data.advisorRole == "advisor"
-        && validActiveAdvisor(
-          request.resource.data.advisorEmployeeNumber,
-          request.resource.data.advisorName
-        )
-        && reportId == (
-          request.resource.data.advisorEmployeeNumber
-          + "_"
-          + request.resource.data.createdDate
-        );
-
-      allow read, update, delete: if isActiveManager();
+    match /commercial_activity_reports/{document=**} {
+      allow read, write: if true;
     }
   }
 }

@@ -1,13 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import {
-  getAuth,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
-import {
   getFirestore,
   collection,
   doc,
@@ -24,22 +16,10 @@ import {
 
 import {
   firebaseConfig,
-  USERS_COLLECTION,
   ADVISORS_COLLECTION,
   REPORTS_COLLECTION,
   SETTINGS_COLLECTION
 } from "./firebase-config.js";
-
-const MANAGER_ACCOUNTS = {
-  "jacquelinne.santos@profuturo.com.mx": {
-    employeeNumber:"143561",
-    name:"SANTOS GUTIERREZ JACQUELINNE ADRIANA"
-  },
-  "gsaul9070@gmail.com": {
-    employeeNumber:"ADMIN-02",
-    name:"SAUL GUAJARDO"
-  }
-};
 
 const INITIAL_ADVISORS = [
   {
@@ -159,17 +139,18 @@ const INITIAL_ADVISORS = [
 const state = {
   reports: [],
   advisors: [],
-  manager: null,
+  manager: {
+    uid:"public-dashboard",
+    employeeNumber:"PUBLIC",
+    name:"ADMINISTRADOR GENERAL",
+    role:"manager",
+    active:true
+  },
   editingReportId: null,
   editingClientCounter: 0
 };
 
-const authScreen = document.getElementById("authScreen");
 const appElement = document.getElementById("app");
-const loginError = document.getElementById("loginError");
-const loginButton = document.getElementById("loginButton");
-const loginSuccess = document.getElementById("loginSuccess");
-
 const localISO = () => {
   const d = new Date(), offset = d.getTimezoneOffset();
   return new Date(d.getTime() - offset * 60000).toISOString().slice(0,10);
@@ -195,11 +176,6 @@ const timestampText = value => {
 };
 
 const normalizeEmployee = value => String(value || "").replace(/\D/g,"");
-
-const showLoginError = message => {
-  loginError.textContent = message;
-  loginError.classList.add("show");
-};
 
 const setBox = (id, message="", kind="error") => {
   const box = document.getElementById(id);
@@ -256,12 +232,15 @@ function advisorsForFilter(){
   return [...map.values()].sort((a,b)=>(a.name || "").localeCompare(b.name || ""));
 }
 
-if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZAR"))){
-  showLoginError("Falta colocar la configuración real de Firebase en firebase-config.js.");
-  loginButton.disabled = true;
+if(Object.values(firebaseConfig).some(value =>
+  String(value).includes("REEMPLAZAR")
+)){
+  appElement.classList.remove("hidden");
+  document.getElementById("managerName").textContent =
+    "Falta configurar Firebase en firebase-config.js";
+  alert("Falta colocar la configuración real de Firebase.");
 } else {
   const firebaseApp = initializeApp(firebaseConfig);
-  const auth = getAuth(firebaseApp);
   const db = getFirestore(firebaseApp);
   let unsubscribeReports = null;
   let unsubscribeAdvisors = null;
@@ -278,6 +257,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       const ref = doc(db, ADVISORS_COLLECTION, advisor.employeeNumber);
       batch.set(ref,{
         ...advisor,
+        accessMode:"public_selector",
         createdAt:serverTimestamp(),
         updatedAt:serverTimestamp()
       },{merge:true});
@@ -287,181 +267,48 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       completed:true,
       advisorCount:INITIAL_ADVISORS.length,
       completedAt:serverTimestamp(),
-      completedBy:state.manager?.uid || ""
+      completedBy:state.manager.uid
     });
 
     await batch.commit();
   }
 
-  const managerEmailStorageKey = "commercialManagerEmailForSignIn";
-  const dashboardAccessUrl = `${window.location.origin}${window.location.pathname}`;
-  let processingEmailLink = isSignInWithEmailLink(auth, window.location.href);
+  async function startPublicDashboard(){
+    appElement.classList.remove("hidden");
+    document.getElementById("managerName").textContent =
+      "Acceso directo · Administración en tiempo real";
 
-  document.getElementById("loginForm").addEventListener("submit", async event=>{
-    event.preventDefault();
-    loginError.classList.remove("show");
-    loginSuccess.classList.remove("show");
-    loginButton.disabled = true;
-    loginButton.textContent = "Enviando enlace…";
+    await seedInitialAdvisors();
 
-    try{
-      const managerEmail = document.getElementById("employee").value
-        .trim()
-        .toLowerCase();
+    unsubscribeAdvisors = onSnapshot(
+      collection(db, ADVISORS_COLLECTION),
+      snapshot=>{
+        state.advisors = snapshot.docs
+          .map(item=>({id:item.id,employeeNumber:item.id,...item.data()}))
+          .sort((a,b)=>(a.name || "").localeCompare(b.name || ""));
+        renderAll();
+      },
+      error=>console.error("Asesores:",error)
+    );
 
-      if(!managerEmail){
-        throw new Error("Escribe el correo gerencial.");
-      }
-
-      if(!MANAGER_ACCOUNTS[managerEmail]){
-        throw new Error("Este correo no está autorizado como gerente.");
-      }
-
-      await sendSignInLinkToEmail(auth, managerEmail,{
-        url:dashboardAccessUrl,
-        handleCodeInApp:true
-      });
-
-      localStorage.setItem(managerEmailStorageKey,managerEmail);
-      loginSuccess.textContent =
-        "Enlace enviado. Revisa tu correo y presiona el botón de acceso.";
-      loginSuccess.classList.add("show");
-    }catch(error){
-      console.error(error);
-      const message = error?.code === "auth/unauthorized-continue-uri"
-        ? "El dominio de GitHub Pages todavía no está autorizado en Firebase."
-        : (error.message || "No fue posible enviar el enlace de acceso.");
-      showLoginError(message);
-    }finally{
-      loginButton.disabled = false;
-      loginButton.textContent = "Enviar enlace de acceso";
-    }
-  });
-
-  onAuthStateChanged(auth, async user=>{
-    if(!user){
-      unsubscribeReports?.();
-      unsubscribeAdvisors?.();
-      authScreen.classList.remove("hidden");
-      appElement.classList.add("hidden");
-
-      if(!processingEmailLink){
-        loginButton.disabled = false;
-        loginButton.textContent = "Enviar enlace de acceso";
-      }
-      return;
-    }
-
-    try{
-      const profileRef = doc(db, USERS_COLLECTION, user.uid);
-      let profileSnap = await getDoc(profileRef);
-
-      const managerEmail = String(user.email || "").toLowerCase();
-      const authorizedManager = MANAGER_ACCOUNTS[managerEmail];
-
-      if(!authorizedManager){
-        await signOut(auth);
-        throw new Error("Este correo no está autorizado como gerente.");
-      }
-
-      if(!profileSnap.exists()){
-        await setDoc(profileRef,{
-          employeeNumber:authorizedManager.employeeNumber,
-          name:authorizedManager.name,
-          role:"manager",
-          active:true,
-          mustChangePassword:false,
-          authEmail:managerEmail,
-          accessMode:"email_link_passwordless",
-          createdAt:serverTimestamp(),
-          updatedAt:serverTimestamp()
-        });
-
-        profileSnap = await getDoc(profileRef);
-      }
-
-      const profile = {uid:user.uid,...profileSnap.data()};
-
-      if(profile.active !== true || profile.role !== "manager"){
-        await signOut(auth);
-        throw new Error("Este acceso es exclusivo para gerentes.");
-      }
-
-      state.manager = profile;
-      await seedInitialAdvisors();
-
-      document.getElementById("managerName").textContent =
-        `${profile.name} · Administrador`;
-
-      authScreen.classList.add("hidden");
-      appElement.classList.remove("hidden");
-
-      unsubscribeAdvisors = onSnapshot(
-        collection(db, ADVISORS_COLLECTION),
-        snapshot=>{
-          state.advisors = snapshot.docs
-            .map(item=>({id:item.id,employeeNumber:item.id,...item.data()}))
-            .sort((a,b)=>(a.name || "").localeCompare(b.name || ""));
-          renderAll();
-        },
-        error=>console.error("Asesores:",error)
-      );
-
-      unsubscribeReports = onSnapshot(
-        query(collection(db, REPORTS_COLLECTION), orderBy("createdAt","desc")),
-        snapshot=>{
-          state.reports = snapshot.docs.map(item=>({id:item.id,...item.data()}));
-          renderAll();
-        },
-        error=>console.error("Reportes:",error)
-      );
-    }catch(error){
-      console.error(error);
-      showLoginError(error.message || "No fue posible validar el acceso.");
-    }
-  });
-
-  async function completePasswordlessSignIn(){
-    if(!processingEmailLink) return;
-
-    loginError.classList.remove("show");
-    loginSuccess.textContent = "Validando el enlace de acceso…";
-    loginSuccess.classList.add("show");
-    loginButton.disabled = true;
-
-    try{
-      let managerEmail = localStorage.getItem(managerEmailStorageKey);
-
-      if(!managerEmail){
-        managerEmail = window.prompt(
-          "Confirma el correo gerencial al que se envió este enlace:"
+    unsubscribeReports = onSnapshot(
+      query(collection(db, REPORTS_COLLECTION),orderBy("createdAt","desc")),
+      snapshot=>{
+        state.reports = snapshot.docs.map(
+          item=>({id:item.id,...item.data()})
         );
-      }
-
-      managerEmail = String(managerEmail || "").trim().toLowerCase();
-
-      if(!MANAGER_ACCOUNTS[managerEmail]){
-        throw new Error("El correo no está autorizado como gerente.");
-      }
-
-      await signInWithEmailLink(auth,managerEmail,window.location.href);
-      localStorage.removeItem(managerEmailStorageKey);
-      window.history.replaceState({},document.title,dashboardAccessUrl);
-    }catch(error){
-      console.error(error);
-      processingEmailLink = false;
-      loginSuccess.classList.remove("show");
-      showLoginError(
-        error?.code === "auth/invalid-action-code"
-          ? "El enlace ya venció o ya fue utilizado. Solicita uno nuevo."
-          : (error.message || "No fue posible validar el enlace.")
-      );
-      loginButton.disabled = false;
-      loginButton.textContent = "Enviar enlace de acceso";
-    }
+        renderAll();
+      },
+      error=>console.error("Reportes:",error)
+    );
   }
 
-  completePasswordlessSignIn();
+  startPublicDashboard().catch(error=>{
+    console.error(error);
+    document.getElementById("managerName").textContent =
+      "No fue posible conectar con Firebase";
+    alert(error?.message || "No fue posible abrir el dashboard.");
+  });
 
   function filteredReports(){
     const from = document.getElementById("dateFrom").value;
@@ -1121,12 +968,6 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
 
     await deleteDoc(doc(db, REPORTS_COLLECTION, id));
   };
-
-  window.logoutManager = async function(){
-    await signOut(auth);
-    window.location.reload();
-  };
-
   window.exportDashboardExcel = function(){
     const reports = filteredReports();
 
@@ -1180,7 +1021,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       "Número de empleado":advisor.employeeNumber,
       "Nombre":advisor.name,
       "Estado":advisor.active ? "Activo" : "Inactivo",
-      "Tipo de acceso":"Número de empleado",
+      "Modalidad":"Selección directa",
       "Última actualización":timestampText(advisor.updatedAt)
     }));
 
