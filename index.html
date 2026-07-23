@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Actividad Comercial Diaria</title>
+  <style>
+    :root{
+      --primary:#123A63;
+      --primary-2:#1C5D99;
+      --accent:#0E9F6E;
+      --warning:#F59E0B;
+      --danger:#D64545;
+      --bg:#F4F7FB;
+      --card:#FFFFFF;
+      --text:#1F2937;
+      --muted:#6B7280;
+      --line:#DCE3EC;
+      --soft:#EAF2F8;
+      --radius:18px;
+      --shadow:0 10px 28px rgba(18,58,99,.10);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:Inter,Segoe UI,Arial,sans-serif;
+    }
+
+    .app{
+      max-width:980px;
+      margin:0 auto;
+      padding:18px;
+    }
+
+    .hero{
+      background:linear-gradient(135deg,var(--primary),var(--primary-2));
+      color:white;
+      border-radius:24px;
+      padding:24px;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hero:after{
+      content:"";
+      position:absolute;
+      width:180px;
+      height:180px;
+      border-radius:50%;
+      background:rgba(255,255,255,.08);
+      right:-55px;
+      top:-70px;
+    }
+
+    .hero h1{
+      margin:0 0 6px;
+      font-size:clamp(24px,4vw,38px);
+      letter-spacing:-.5px;
+    }
+
+    .hero p{
+      margin:0;
+      opacity:.9;
+      max-width:730px;
+      line-height:1.45;
+    }
+
+    .progress-wrap{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:8px;
+    }
+
+    .progress-step{
+      min-height:6px;
+      border-radius:999px;
+      background:rgba(255,255,255,.25);
+    }
+
+    .progress-step.active{background:#fff}
+
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:16px 0;
+    }
+
+    button, .button{
+      border:0;
+      border-radius:12px;
+      padding:12px 16px;
+      font-size:15px;
+      font-weight:700;
+      cursor:pointer;
+      transition:.2s ease;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      text-decoration:none;
+    }
+
+    button:hover,.button:hover{transform:translateY(-1px)}
+
+    button:disabled,
+    .button:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      transform:none!important;
+      filter:grayscale(.25);
+    }
+
+    body.report-finalized input,
+    body.report-finalized select,
+    body.report-finalized textarea{
+      pointer-events:none;
+      background:#F1F5F9;
+      color:#475569;
+    }
+
+    body.report-finalized .edit-only{
+      display:none!important;
+    }
+
+    .finalized-badge{
+      display:none;
+      padding:12px 14px;
+      border-radius:12px;
+      margin-bottom:12px;
+      background:#EAFBF3;
+      color:#087554;
+      border:1px solid #BDEAD6;
+      font-weight:800;
+    }
+
+    body.report-finalized .finalized-badge{
+      display:block;
+    }
+    .btn-primary{background:var(--primary);color:white}
+    .btn-accent{background:var(--accent);color:white}
+    .btn-soft{background:var(--soft);color:var(--primary)}
+    .btn-danger{background:#FDECEC;color:var(--danger)}
+    .btn-dark{background:#111827;color:white}
+    .btn-whatsapp{background:#1FAF5A;color:white}
+    .btn-email{background:#3B82F6;color:white}
+    .btn-full{width:100%}
+
+    .step{
+      display:none;
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:22px;
+      margin-top:14px;
+    }
+
+    .step.active{display:block}
+
+    .step-title{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:18px;
+    }
+
+    .step-number{
+      width:38px;
+      height:38px;
+      border-radius:12px;
+      background:var(--soft);
+      color:var(--primary);
+      font-weight:800;
+      display:grid;
+      place-items:center;
+      flex:none;
+    }
+
+    .step-title h2{margin:0 0 3px;font-size:22px}
+    .step-title p{margin:0;color:var(--muted);font-size:14px}
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:14px;
+    }
+
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:14px;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .field.full{grid-column:1/-1}
+
+    label{
+      font-size:13px;
+      font-weight:800;
+      color:#374151;
+    }
+
+    .required:after{
+      content:" *";
+      color:var(--danger);
+    }
+
+    input, select, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px 13px;
+      font:inherit;
+      color:var(--text);
+      background:#fff;
+      outline:none;
+      transition:.2s ease;
+    }
+
+    input:focus,select:focus,textarea:focus{
+      border-color:var(--primary-2);
+      box-shadow:0 0 0 3px rgba(28,93,153,.12);
+    }
+
+    input.duplicate-field{
+      border-color:var(--danger)!important;
+      background:#FFF4F4!important;
+      box-shadow:0 0 0 3px rgba(214,69,69,.12)!important;
+    }
+
+    textarea{min-height:100px;resize:vertical}
+
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
+    }
+
+    .counter{
+      text-align:right;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .chips{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .chip{
+      position:relative;
+    }
+
+    .chip input{
+      position:absolute;
+      opacity:0;
+      pointer-events:none;
+    }
+
+    .chip span{
+      display:inline-flex;
+      align-items:center;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:white;
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .chip input:checked + span{
+      color:white;
+      background:var(--primary);
+      border-color:var(--primary);
+    }
+
+    .client-card{
+      border:1px solid var(--line);
+      background:#FBFCFE;
+      border-radius:16px;
+      padding:16px;
+      margin-top:14px;
+    }
+
+    .client-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:12px;
+    }
+
+    .client-head h3{margin:0;font-size:17px}
+
+    .validity{
+      margin-top:14px;
+      border-radius:14px;
+      background:#F0FDF7;
+      border:1px solid #BDEAD6;
+      padding:14px;
+    }
+
+    .validity h4{margin:0 0 10px;color:#087554}
+
+    .check{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      margin:9px 0;
+      font-size:14px;
+      line-height:1.35;
+    }
+
+    .check input{
+      width:18px;
+      height:18px;
+      margin-top:1px;
+      flex:none;
+    }
+
+    .evidence-preview{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .evidence-preview img{
+      width:100%;
+      height:130px;
+      object-fit:cover;
+      border-radius:12px;
+      border:1px solid var(--line);
+    }
+
+    .summary{
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+    }
+
+    .summary-head{
+      background:var(--primary);
+      color:white;
+      padding:18px;
+    }
+
+    .summary-head h2{margin:0 0 4px}
+    .summary-head p{margin:0;opacity:.88}
+
+    .summary-body{padding:18px}
+
+    .summary-section{
+      margin-bottom:20px;
+      break-inside:avoid;
+    }
+
+    .summary-section h3{
+      margin:0 0 10px;
+      color:var(--primary);
+      border-bottom:2px solid var(--soft);
+      padding-bottom:7px;
+    }
+
+    .summary-table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+    }
+
+    .summary-table th,.summary-table td{
+      border:1px solid var(--line);
+      padding:8px;
+      text-align:left;
+      vertical-align:top;
+    }
+
+    .summary-table th{
+      background:#F2F6FA;
+      color:#334155;
+    }
+
+    .notice{
+      padding:13px;
+      border-radius:13px;
+      background:#FFF8E7;
+      border:1px solid #F7D68A;
+      color:#7A5410;
+      font-size:13px;
+      line-height:1.45;
+      margin-bottom:14px;
+    }
+
+    .status{
+      display:none;
+      padding:12px 14px;
+      border-radius:12px;
+      margin-top:12px;
+      font-size:14px;
+      font-weight:700;
+    }
+
+    .status.ok{
+      display:block;
+      background:#EAFBF3;
+      color:#087554;
+      border:1px solid #BDEAD6;
+    }
+
+    .status.error{
+      display:block;
+      background:#FFF0F0;
+      color:#A62F2F;
+      border:1px solid #F2BABA;
+    }
+
+    .nav{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:18px;
+    }
+
+    .muted-box{
+      background:#F8FAFC;
+      border:1px dashed var(--line);
+      border-radius:14px;
+      padding:14px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    input[readonly]{
+      background:#EEF3F8;
+      color:#475569;
+      cursor:not-allowed;
+      font-weight:700;
+    }
+
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button{
+      -webkit-appearance:none;
+      margin:0;
+    }
+
+    input[type=number]{
+      -moz-appearance:textfield;
+      appearance:textfield;
+    }
+
+    .locked-note{
+      display:flex;
+      align-items:center;
+      gap:7px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    .hidden{display:none!important}
+
+
+    .auth-screen{
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:20px;
+      background:
+        radial-gradient(circle at top right,rgba(28,93,153,.18),transparent 35%),
+        linear-gradient(145deg,#EDF4FB,#F8FAFC);
+    }
+    .auth-card{
+      width:min(440px,100%);
+      background:#fff;
+      border-radius:24px;
+      box-shadow:0 18px 55px rgba(18,58,99,.16);
+      padding:28px;
+      border:1px solid #DCE6F0;
+    }
+    .auth-brand{
+      width:58px;height:58px;border-radius:18px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--primary),var(--primary-2));
+      color:#fff;font-size:27px;margin-bottom:16px;
+    }
+    .auth-card h1{margin:0 0 6px;color:var(--primary);font-size:28px}
+    .auth-card p{margin:0 0 20px;color:var(--muted);line-height:1.45}
+    .auth-error{
+      display:none;margin-top:12px;padding:11px 13px;border-radius:12px;
+      background:#FFF0F0;color:#A62F2F;border:1px solid #F2BABA;
+      font-weight:700;font-size:13px;
+    }
+    .auth-error.show{display:block}
+    .session-bar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      background:#fff;border:1px solid var(--line);border-radius:16px;
+      padding:11px 14px;margin-bottom:12px;box-shadow:var(--shadow);
+    }
+    .session-person strong{display:block;color:var(--primary)}
+    .session-person span{font-size:12px;color:var(--muted)}
+    .session-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .password-modal{
+      position:fixed;inset:0;display:none;place-items:center;padding:20px;
+      background:rgba(15,23,42,.72);z-index:9999;
+    }
+    .password-modal.show{display:grid}
+    .password-card{
+      width:min(460px,100%);background:#fff;border-radius:22px;padding:25px;
+      box-shadow:0 22px 70px rgba(0,0,0,.28);
+    }
+    .password-card h2{margin:0 0 8px;color:var(--primary)}
+    .password-card p{color:var(--muted);line-height:1.45}
+    .firebase-saving{
+      display:none;margin-top:12px;padding:12px;border-radius:12px;
+      background:#EAF2F8;color:var(--primary);font-weight:800;
+    }
+    .firebase-saving.show{display:block}
+
+    @media(max-width:760px){
+      .app{padding:10px}
+      .hero{padding:20px 16px;border-radius:18px}
+      .step{padding:17px;border-radius:16px}
+      .grid,.grid-3{grid-template-columns:1fr}
+      .toolbar{display:grid;grid-template-columns:1fr 1fr}
+      .toolbar button{width:100%}
+      .nav{flex-direction:column-reverse}
+      .nav button{width:100%}
+      .summary-table{display:block;overflow-x:auto;white-space:nowrap}
+    }
+
+    @media print{
+      body{background:white}
+      .hero,.toolbar,.step:not(#step5),.nav,.no-print{display:none!important}
+      #step5{display:block!important;box-shadow:none;padding:0;margin:0}
+      .app{max-width:none;padding:0}
+      .summary{border:0}
+      .summary-head{border-radius:0}
+    }
+  </style>
+</head>
+<body>
+
+  <section id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-brand">AC</div>
+      <h1>Actividad Comercial</h1>
+      <p>Ingresa tu número de empleado para comenzar el reporte diario. No necesitas contraseña.</p>
+      <form id="loginForm">
+        <div class="field">
+          <label class="required" for="loginEmployee">Número de empleado</label>
+          <input id="loginEmployee" type="text" inputmode="numeric" autocomplete="username" maxlength="10" placeholder="Ej. 130257" required>
+        </div>
+        <button id="loginButton" class="btn-primary btn-full" type="submit" style="margin-top:18px">Ingresar</button>
+        <div id="loginError" class="auth-error"></div>
+      </form>
+    </div>
+  </section>
+
+
+  <main id="appRoot" class="app hidden">
+    <div class="session-bar no-print">
+      <div class="session-person">
+        <strong id="sessionName">Usuario</strong>
+        <span id="sessionMeta"></span>
+      </div>
+      <div class="session-actions">
+        <button class="btn-danger" type="button" onclick="window.logoutCommercialUser()">Cerrar sesión</button>
+      </div>
+    </div>
+
+    <header class="hero">
+      <h1>Actividad Comercial Diaria</h1>
+      <p>Captura rápida desde celular. Registra la actividad del día, clientes y el plan de trabajo del siguiente día.</p>
+      <div class="progress-wrap" aria-label="Progreso">
+        <div class="progress-step active"></div>
+        <div class="progress-step"></div>
+        <div class="progress-step"></div>
+        <div class="progress-step"></div>
+        <div class="progress-step"></div>
+      </div>
+    </header>
+
+    <div class="toolbar no-print">
+      <button class="btn-soft edit-control" type="button" onclick="saveDraft()">💾 Guardar avance</button>
+      <button class="btn-soft edit-control" type="button" onclick="loadDraft()">↩️ Recuperar</button>
+      <button class="btn-danger" type="button" onclick="clearForm()">🗑️ Limpiar</button>
+    </div>
+
+    <form id="reportForm" novalidate onsubmit="return false;">
+      <section class="step active" id="step1">
+        <div class="step-title">
+          <div class="step-number">1</div>
+          <div>
+            <h2>Datos del reporte</h2>
+            <p>Información general del asesor. La fecha y hora se generan automáticamente.</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label for="createdAt">Fecha y hora de elaboración</label>
+            <input id="createdAt" type="text" readonly aria-readonly="true">
+            <div class="locked-note">🔒 Se genera automáticamente y no puede modificarse.</div>
+          </div>          <div class="field">
+            <label class="required" for="advisorName">Nombre del asesor</label>
+            <input id="advisorName" type="text" readonly aria-readonly="true" required>
+          </div>
+          <div class="field">
+            <label for="employeeNumber">Número de empleado</label>
+            <input id="employeeNumber" type="text" readonly aria-readonly="true">
+          </div>
+        </div>
+
+        <div id="status1" class="status"></div>
+        <div class="nav">
+          <span></span>
+          <button class="btn-primary" type="button" onclick="nextStep(1)">Continuar →</button>
+        </div>
+      </section>
+
+      <section class="step" id="step2">
+        <div class="step-title">
+          <div class="step-number">2</div>
+          <div>
+            <h2>Actividad realizada</h2>
+            <p>Explica qué hiciste, cómo lo hiciste y dónde lo realizaste.</p>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label class="required">Medio de prospección</label>
+          <div class="chips">
+            <label class="chip"><input type="radio" name="prospecting" value="Telemarketing"><span>📞 Telemarketing</span></label>
+            <label class="chip"><input type="radio" name="prospecting" value="Domiciliación"><span>🏠 Domiciliación</span></label>
+            <label class="chip"><input type="radio" name="prospecting" value="En frío"><span>🚶 En frío</span></label>
+            <label class="chip"><input type="radio" name="prospecting" value="Referido de cliente"><span>🤝 Referido</span></label>
+            <label class="chip"><input type="radio" name="prospecting" value="Redes sociales"><span>📱 Redes sociales</span></label>
+          </div>
+        </div>
+
+        <div class="grid" style="margin-top:14px">
+          <div class="field">
+            <label class="required" for="activityPlace">Lugar o empresa visitada</label>
+            <input id="activityPlace" type="text" placeholder="Ej. Planta ABC, Ramos Arizpe" required>
+          </div>
+          <div class="field">
+            <label for="activitySchedule">Horario aproximado</label>
+            <input id="activitySchedule" type="text" placeholder="Ej. 10:00 a 13:00">
+          </div>
+          <div class="field">
+            <label for="peopleContacted">Contactos</label>
+            <input id="peopleContacted" type="number" min="0" inputmode="numeric" placeholder="Ej. 12">
+          </div>
+          <div class="field">
+            <label for="appointmentsGenerated">Citas generadas</label>
+            <input id="appointmentsGenerated" type="number" min="0" inputmode="numeric" placeholder="Ej. 2">
+          </div>
+          <div class="field full">
+            <label class="required" for="activityDescription">Descripción real y detallada</label>
+            <textarea id="activityDescription" maxlength="700" placeholder="Ej. Se realizó prospección en frío en la empresa ABC. Se contactó a trabajadores durante su salida de turno..." required></textarea>
+            <div class="counter"><span id="descriptionCount">0</span>/700</div>
+          </div>
+
+        </div>
+
+        <div id="status2" class="status"></div>
+        <div class="nav">
+          <button class="btn-soft" type="button" onclick="prevStep(2)">← Regresar</button>
+          <button class="btn-primary" type="button" onclick="nextStep(2)">Continuar →</button>
+        </div>
+      </section>
+
+      <section class="step" id="step3">
+        <div class="step-title">
+          <div class="step-number">3</div>
+          <div>
+            <h2>Clientes y prospectos</h2>
+            <p>Agrega los clientes contactados durante la actividad del día.</p>
+          </div>
+        </div>
+<div id="clientsContainer"></div>
+
+        <button class="btn-accent btn-full" type="button" onclick="addClient()">＋ Agregar otro cliente</button>
+
+        <div id="status3" class="status"></div>
+        <div class="nav">
+          <button class="btn-soft" type="button" onclick="prevStep(3)">← Regresar</button>
+          <button class="btn-primary" type="button" onclick="nextStep(3)">Continuar →</button>
+        </div>
+      </section>
+
+      <section class="step" id="step4">
+        <div class="step-title">
+          <div class="step-number">4</div>
+          <div>
+            <h2>Plan de trabajo</h2>
+            <p>Define de manera clara dónde trabajarás, cómo prospectarás y qué metas tendrás.</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label class="required" for="promiseDate">Fecha del plan de trabajo</label>
+            <input id="promiseDate" type="date" required>
+          </div>
+          <div class="field">
+            <label class="required" for="promisePlace">Lugar, empresa o zona</label>
+            <input id="promisePlace" type="text" placeholder="Ej. Corredor industrial Ramos Arizpe" required>
+          </div>
+          <div class="field">
+            <label class="required" for="promiseMethod">Medio de prospección</label>
+            <select id="promiseMethod" required>
+              <option value="">Seleccionar...</option>
+              <option>Telemarketing</option>
+              <option>Domiciliación</option>
+              <option>En frío</option>
+              <option>Referido de cliente</option>
+              <option>Redes sociales</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="promiseSchedule">Horario aproximado</label>
+            <input id="promiseSchedule" type="text" placeholder="Ej. 09:00 a 14:00">
+          </div>
+          <div class="field">
+            <label class="required" for="contactGoal">Meta de contactos</label>
+            <input id="contactGoal" type="number" min="1" inputmode="numeric" placeholder="Ej. 15" required>
+          </div>
+          <div class="field">
+            <label class="required" for="appointmentGoal">Meta de citas</label>
+            <input id="appointmentGoal" type="number" min="0" inputmode="numeric" placeholder="Ej. 2" required>
+          </div>
+          <div class="field full">
+            <label class="required" for="promiseDescription">Descripción del plan de trabajo</label>
+            <textarea id="promiseDescription" maxlength="500" placeholder="Ej. Realizaré prospección en frío en la zona industrial, priorizando trabajadores con posibilidad de cita..." required></textarea>
+          </div>
+        </div>
+
+        <div id="status4" class="status"></div>
+        <div class="nav">
+          <button class="btn-soft" type="button" onclick="prevStep(4)">← Regresar</button>
+          <button class="btn-primary" type="button" onclick="nextStep(4)">Revisar reporte →</button>
+        </div>
+      </section>
+
+      <section class="step" id="step5">
+        <div class="step-title no-print">
+          <div class="step-number">5</div>
+          <div>
+            <h2>Revisión y envío</h2>
+            <p>Verifica la información antes de compartirla.</p>
+          </div>
+        </div>
+
+        <div id="reportPreview" class="summary"></div>
+
+        <div class="finalized-badge no-print">🔒 Reporte finalizado y bloqueado. Ya puedes compartirlo o descargarlo.</div>
+
+        <div class="toolbar no-print">
+          <button class="btn-whatsapp share-action" type="button" onclick="shareWhatsApp()" disabled>📲 Enviar por WhatsApp</button>
+          <button class="btn-email share-action" type="button" onclick="sendEmail()" disabled>✉️ Enviar por correo</button>
+          <button class="btn-dark share-action" type="button" onclick="printReport()" disabled>🖨️ Guardar como PDF</button>
+          <button class="btn-accent share-action" type="button" onclick="downloadExcel()" disabled>📊 Descargar Excel</button>
+          <button class="btn-soft share-action" type="button" onclick="copySummary()" disabled>📋 Copiar resumen</button>
+        </div>
+
+        <div class="muted-box no-print">
+          Al marcar como finalizado, el reporte se guarda primero en Firebase. Después se habilitan WhatsApp, correo, PDF y Excel.
+        </div>
+
+        <div id="firebaseSaving" class="firebase-saving">Guardando el reporte de forma segura en Firebase…</div>
+        <div id="status5" class="status"></div>
+        <div class="nav no-print">
+          <button class="btn-soft edit-only" type="button" onclick="prevStep(5)">← Corregir información</button>
+          <button id="finalizeButton" class="btn-accent" type="button" onclick="finalizeReport()">✓ Marcar como finalizado</button>
+        </div>
+      </section>
+    </form>
+  </main>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script>
+    let currentStep = 1;
+    let clientCount = 0;
+    let evidenceData = [];
+    let reportFinalized = false;
+
+    const $ = (id) => document.getElementById(id);
+    const text = (id) => ($(id)?.value || "").trim();
+    const esc = (value) => String(value ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+
+    function nowLocalTimestamp(){
+      const d = new Date();
+      const pad = value => String(value).padStart(2,"0");
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    function todayISO(){
+      const d = new Date();
+      const offset = d.getTimezoneOffset();
+      return new Date(d.getTime() - offset*60*1000).toISOString().split("T")[0];
+    }
+
+    function tomorrowISO(){
+      const d = new Date();
+      d.setDate(d.getDate()+1);
+      const offset = d.getTimezoneOffset();
+      return new Date(d.getTime() - offset*60*1000).toISOString().split("T")[0];
+    }
+
+    function formatDate(value){
+      if(!value) return "No especificada";
+      const [y,m,d] = value.split("-");
+      return `${d}/${m}/${y}`;
+    }
+
+    function setStatus(step, message, type="error"){
+      const el = $(`status${step}`);
+      el.className = `status ${type}`;
+      el.textContent = message;
+    }
+
+    function clearStatus(step){
+      const el = $(`status${step}`);
+      el.className = "status";
+      el.textContent = "";
+    }
+
+    function showStep(step){
+      currentStep = step;
+      document.querySelectorAll(".step").forEach((el,i)=>{
+        el.classList.toggle("active", i === step-1);
+      });
+      document.querySelectorAll(".progress-step").forEach((el,i)=>{
+        el.classList.toggle("active", i <= step-1);
+      });
+      window.scrollTo({top:0,behavior:"smooth"});
+      if(step === 5) buildPreview();
+    }
+
+    function nextStep(step){
+      if(reportFinalized) return;
+      if(validateStep(step)) showStep(step+1);
+    }
+
+    function prevStep(step){
+      if(reportFinalized) return;
+      showStep(step-1);
+    }
+
+    function validateStep(step){
+      clearStatus(step);
+
+      if(step === 1){
+        if(!text("advisorName")){
+          setStatus(1,"Completa el nombre del asesor.");
+          return false;
+        }
+      }
+
+      if(step === 2){
+        const method = document.querySelector('input[name="prospecting"]:checked');
+        if(!method || !text("activityPlace") || !text("activityDescription")){
+          setStatus(2,"Selecciona el medio de prospección y completa el lugar y la descripción.");
+          return false;
+        }
+        if(text("activityDescription").length < 30){
+          setStatus(2,"La descripción debe explicar brevemente qué hiciste, cómo y dónde.");
+          return false;
+        }
+      }
+
+      if(step === 3){
+        const cards = [...document.querySelectorAll(".client-card")];
+        if(cards.length === 0){
+          setStatus(3,"Agrega al menos un cliente.");
+          return false;
+        }
+
+        for(const card of cards){
+          const idx = card.dataset.index;
+          const name = text(`clientName${idx}`);
+          const nss = text(`clientNss${idx}`);
+          const phone = text(`clientPhone${idx}`);
+          const company = text(`clientCompany${idx}`);
+          const points = Number(text(`clientPoints${idx}`));
+          const notes = text(`clientNotes${idx}`);
+          if(!name || !nss || !phone || !company || !notes){
+            setStatus(3,`Completa los campos obligatorios del Cliente ${idx}.`);
+            return false;
+          }
+          if(!Number.isFinite(points) || points <= 0){
+            setStatus(3,`El Cliente ${idx} debe contar con puntos mayores a cero.`);
+            return false;
+          }
+        }
+
+        if(!checkClientDuplicates(true)){
+          return false;
+        }
+      }
+
+      if(step === 4){
+        const required = ["promiseDate","promisePlace","promiseMethod","contactGoal","appointmentGoal","promiseDescription"];
+        if(required.some(id=>!text(id))){
+          setStatus(4,"Completa todos los campos obligatorios del plan de trabajo.");
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    function normalizeDigits(value){
+      return String(value || "").replace(/\D/g,"");
+    }
+
+    function findDuplicateValues(entries){
+      const counts = new Map();
+      entries.forEach(entry=>{
+        if(entry.value){
+          counts.set(entry.value,(counts.get(entry.value) || 0) + 1);
+        }
+      });
+      return new Set(
+        [...counts.entries()]
+          .filter(([,count])=>count > 1)
+          .map(([value])=>value)
+      );
+    }
+
+    function checkClientDuplicates(showMessage=true){
+      const cards = [...document.querySelectorAll(".client-card")];
+      const nssEntries = cards.map(card=>{
+        const idx = card.dataset.index;
+        return {
+          input:$(`clientNss${idx}`),
+          value:normalizeDigits(text(`clientNss${idx}`))
+        };
+      });
+      const phoneEntries = cards.map(card=>{
+        const idx = card.dataset.index;
+        return {
+          input:$(`clientPhone${idx}`),
+          value:normalizeDigits(text(`clientPhone${idx}`))
+        };
+      });
+
+      const duplicateNss = findDuplicateValues(nssEntries);
+      const duplicatePhones = findDuplicateValues(phoneEntries);
+
+      [...nssEntries,...phoneEntries].forEach(entry=>{
+        entry.input?.classList.remove("duplicate-field");
+      });
+
+      nssEntries.forEach(entry=>{
+        if(duplicateNss.has(entry.value)){
+          entry.input?.classList.add("duplicate-field");
+        }
+      });
+
+      phoneEntries.forEach(entry=>{
+        if(duplicatePhones.has(entry.value)){
+          entry.input?.classList.add("duplicate-field");
+        }
+      });
+
+      if(duplicateNss.size || duplicatePhones.size){
+        if(showMessage){
+          let message = "";
+          if(duplicateNss.size && duplicatePhones.size){
+            message = "Hay NSS y números de teléfono repetidos. Corrige los campos marcados en rojo.";
+          }else if(duplicateNss.size){
+            message = "Hay NSS repetidos. Corrige los campos marcados en rojo.";
+          }else{
+            message = "Hay números de teléfono repetidos. Corrige los campos marcados en rojo.";
+          }
+          setStatus(3,message);
+        }
+        return false;
+      }
+
+      if(showMessage){
+        clearStatus(3);
+      }
+      return true;
+    }
+
+    function addClient(data={}){
+      if(reportFinalized) return;
+      clientCount++;
+      const idx = clientCount;
+      const card = document.createElement("article");
+      card.className = "client-card";
+      card.dataset.index = idx;
+      card.innerHTML = `
+        <div class="client-head">
+          <h3>Cliente ${idx}</h3>
+          <button class="btn-danger" type="button" onclick="removeClient(this)">Eliminar</button>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label class="required" for="clientName${idx}">Nombre completo</label>
+            <input id="clientName${idx}" type="text" value="${esc(data.name||"")}" placeholder="Nombre y apellidos">
+          </div>
+          <div class="field">
+            <label for="clientCurp${idx}">CURP</label>
+            <input id="clientCurp${idx}" type="text" value="${esc(data.curp||"")}" maxlength="18" placeholder="18 caracteres">
+          </div>
+          <div class="field">
+            <label class="required" for="clientNss${idx}">NSS</label>
+            <input id="clientNss${idx}" type="text" inputmode="numeric" value="${esc(data.nss||"")}" placeholder="Número de Seguridad Social" oninput="this.value=this.value.replace(/\D/g,''); checkClientDuplicates(false)">
+          </div>
+          <div class="field">
+            <label class="required" for="clientPhone${idx}">Teléfono completo</label>
+            <input id="clientPhone${idx}" type="tel" inputmode="numeric" value="${esc(data.phone||"")}" placeholder="10 dígitos" oninput="this.value=this.value.replace(/\D/g,''); checkClientDuplicates(false)">
+          </div>
+          <div class="field">
+            <label for="clientEmail${idx}">Correo o dirección</label>
+            <input id="clientEmail${idx}" type="text" value="${esc(data.email||"")}" placeholder="Correo o domicilio">
+          </div>
+          <div class="field">
+            <label class="required" for="clientCompany${idx}">Empresa</label>
+            <input id="clientCompany${idx}" type="text" value="${esc(data.company||"")}" placeholder="Empresa donde trabaja">
+          </div>
+          <div class="field">
+            <label class="required" for="clientPoints${idx}">Puntos</label>
+            <input id="clientPoints${idx}" type="number" min="1" inputmode="numeric" value="${esc(data.points||"")}" placeholder="Ej. 1080">
+          </div>
+          <div class="field">
+            <label for="clientAfore${idx}">AFORE actual</label>
+            <select id="clientAfore${idx}">
+              <option value="">Seleccionar...</option>
+              <option ${data.afore==="Banorte" || data.afore==="XXI Banorte" ? "selected" : ""}>Banorte</option>
+              <option ${data.afore==="Sura" ? "selected" : ""}>Sura</option>
+              <option ${data.afore==="Banamex" ? "selected" : ""}>Banamex</option>
+              <option ${data.afore==="Invercap" ? "selected" : ""}>Invercap</option>
+              <option ${data.afore==="Principal" ? "selected" : ""}>Principal</option>
+              <option ${data.afore==="Azteca" ? "selected" : ""}>Azteca</option>
+              <option ${data.afore==="Coppel" ? "selected" : ""}>Coppel</option>
+              <option ${data.afore==="Pensionissste" ? "selected" : ""}>Pensionissste</option>
+              <option ${data.afore==="Inbursa" ? "selected" : ""}>Inbursa</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="required" for="clientResult${idx}">Resultado del contacto</label>
+            <select id="clientResult${idx}">
+              <option value="">Seleccionar...</option>
+              <option ${data.result==="Posible cita"?"selected":""}>Posible cita</option>
+              <option ${data.result==="Cita agendada"?"selected":""}>Cita agendada</option>
+              <option ${(data.result==="Enviar información" || data.result==="Información pendiente")?"selected":""}>Enviar información</option>
+              <option ${data.result==="Trámite realizado"?"selected":""}>Trámite realizado</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="clientAppointment${idx}">Fecha posible de cita</label>
+            <input id="clientAppointment${idx}" type="date" value="${esc(data.appointment||"")}">
+          </div>
+          <div class="field full">
+            <label class="required" for="clientNotes${idx}">Nota detallada y real</label>
+            <textarea id="clientNotes${idx}" placeholder="Describe lo sucedido con el cliente">${esc(data.notes||"")}</textarea>
+          </div>
+        </div>
+
+      `;
+      $("clientsContainer").appendChild(card);
+    }
+
+    function removeClient(button){
+      if(reportFinalized) return;
+      const cards = document.querySelectorAll(".client-card");
+      if(cards.length === 1){
+        setStatus(3,"Debe permanecer al menos un cliente.");
+        return;
+      }
+      button.closest(".client-card").remove();
+      renumberClients();
+      checkClientDuplicates(false);
+    }
+
+    function renumberClients(){
+      document.querySelectorAll(".client-card").forEach((card,i)=>{
+        card.querySelector("h3").textContent = `Cliente ${i+1}`;
+      });
+    }
+
+    function getClients(){
+      return [...document.querySelectorAll(".client-card")].map((card,i)=>{
+        const idx = card.dataset.index;
+        return {
+          number:i+1,
+          name:text(`clientName${idx}`),
+          curp:text(`clientCurp${idx}`),
+          nss:text(`clientNss${idx}`),
+          phone:text(`clientPhone${idx}`),
+          email:text(`clientEmail${idx}`),
+          company:text(`clientCompany${idx}`),
+          points:text(`clientPoints${idx}`),
+          afore:text(`clientAfore${idx}`),
+          result:text(`clientResult${idx}`),
+          appointment:text(`clientAppointment${idx}`),
+          notes:text(`clientNotes${idx}`)
+        };
+      });
+    }
+
+    function collectData(){
+      const automaticDate = (text("createdAt").split(" ")[0] || todayISO());
+      return {
+        createdAt:text("createdAt"),
+        reportDate:automaticDate,
+        advisorName:text("advisorName"),
+        employeeNumber:text("employeeNumber"),
+        prospecting:document.querySelector('input[name="prospecting"]:checked')?.value || "",
+        activityPlace:text("activityPlace"),
+        activitySchedule:text("activitySchedule"),
+        peopleContacted:text("peopleContacted"),
+        appointmentsGenerated:text("appointmentsGenerated"),
+        activityDescription:text("activityDescription"),
+        promiseDate:text("promiseDate"),
+        promisePlace:text("promisePlace"),
+        promiseMethod:text("promiseMethod"),
+        promiseSchedule:text("promiseSchedule"),
+        contactGoal:text("contactGoal"),
+        appointmentGoal:text("appointmentGoal"),
+        promiseDescription:text("promiseDescription"),
+        clients:getClients()
+      };
+    }
+
+    function buildPreview(){
+      const d = collectData();
+      const clientRows = d.clients.map(c=>`
+        <tr>
+          <td>${c.number}</td>
+          <td><strong>${esc(c.name)}</strong><br><span>${esc(c.phone)}</span></td>
+          <td>${esc(c.nss)}<br>${esc(c.curp)}</td>
+          <td>${esc(c.company)}</td>
+          <td>${esc(c.points)}</td>
+          <td>${esc(c.afore || "No indicado")}</td>
+          <td>${esc(c.result || "No indicado")}</td>
+          <td>${esc(c.notes)}${c.appointment ? `<br><strong>Cita:</strong> ${formatDate(c.appointment)}` : ""}</td>
+        </tr>
+      `).join("");
+
+      $("reportPreview").innerHTML = `
+        <div class="summary-head">
+          <h2>Reporte de Actividad Comercial</h2>
+          <p>${esc(d.createdAt)} · ${esc(d.advisorName)}</p>
+        </div>
+        <div class="summary-body">
+          <div class="summary-section">
+            <h3>1. Datos generales</h3>
+            <p><strong>Asesor:</strong> ${esc(d.advisorName)}<br>
+            <strong>Número de empleado:</strong> ${esc(d.employeeNumber || "No indicado")}<br>
+            <strong>Fecha y hora de elaboración:</strong> ${esc(d.createdAt)}</p>
+          </div>
+
+          <div class="summary-section">
+            <h3>2. Actividad realizada</h3>
+            <p><strong>Medio:</strong> ${esc(d.prospecting)}<br>
+            <strong>Lugar:</strong> ${esc(d.activityPlace)}<br>
+            <strong>Horario:</strong> ${esc(d.activitySchedule || "No indicado")}<br>
+            <strong>Contactos:</strong> ${esc(d.peopleContacted || "0")}<br>
+            <strong>Citas generadas:</strong> ${esc(d.appointmentsGenerated || "0")}</p>
+            <p>${esc(d.activityDescription)}</p>
+          </div>
+
+          <div class="summary-section">
+            <h3>3. Clientes registrados</h3>
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>Cliente / teléfono</th><th>NSS / CURP</th><th>Empresa</th>
+                  <th>Puntos</th><th>AFORE</th><th>Resultado</th><th>Observación</th>
+                </tr>
+              </thead>
+              <tbody>${clientRows}</tbody>
+            </table>
+          </div>
+
+          <div class="summary-section">
+            <h3>4. Plan de trabajo</h3>
+            <p><strong>Fecha:</strong> ${formatDate(d.promiseDate)}<br>
+            <strong>Lugar:</strong> ${esc(d.promisePlace)}<br>
+            <strong>Medio:</strong> ${esc(d.promiseMethod)}<br>
+            <strong>Horario:</strong> ${esc(d.promiseSchedule || "No indicado")}<br>
+            <strong>Meta de contactos:</strong> ${esc(d.contactGoal)}<br>
+            <strong>Meta de citas:</strong> ${esc(d.appointmentGoal)}</p>
+            <p>${esc(d.promiseDescription)}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function makePlainSummary(){
+      const d = collectData();
+      const lines = [
+        "ACTIVIDAD COMERCIAL DIARIA",
+        `Fecha y hora de elaboración: ${d.createdAt}`,
+        `Asesor: ${d.advisorName}`,
+        "",
+        "ACTIVIDAD REALIZADA",
+        `Medio: ${d.prospecting}`,
+        `Lugar: ${d.activityPlace}`,
+        `Horario: ${d.activitySchedule || "No indicado"}`,
+        `Contactos: ${d.peopleContacted || "0"}`,
+        `Citas generadas: ${d.appointmentsGenerated || "0"}`,
+        d.activityDescription,
+        "",
+        `CLIENTES REGISTRADOS: ${d.clients.length}`
+      ];
+
+      d.clients.forEach(c=>{
+        lines.push(
+          "",
+          `Cliente ${c.number}: ${c.name}`,
+          `NSS: ${c.nss}`,
+          `CURP: ${c.curp || "No indicada"}`,
+          `Teléfono: ${c.phone}`,
+          `Empresa: ${c.company}`,
+          `Puntos: ${c.points}`,
+          `AFORE: ${c.afore || "No indicada"}`,
+          `Resultado: ${c.result || "No indicado"}`,
+          `Nota: ${c.notes}`
+        );
+      });
+
+      lines.push(
+        "",
+        "PLAN DE TRABAJO",
+        `Fecha: ${formatDate(d.promiseDate)}`,
+        `Lugar: ${d.promisePlace}`,
+        `Medio: ${d.promiseMethod}`,
+        `Horario: ${d.promiseSchedule || "No indicado"}`,
+        `Meta de contactos: ${d.contactGoal}`,
+        `Meta de citas: ${d.appointmentGoal}`,
+        d.promiseDescription
+      );
+
+      return lines.join("\n");
+    }
+
+    function shareWhatsApp(){
+      if(!reportFinalized){
+        setStatus(5,"Primero debes marcar el reporte como finalizado.");
+        return;
+      }
+      const message = encodeURIComponent(makePlainSummary());
+      window.open(`https://wa.me/?text=${message}`,"_blank");
+    }
+
+    function printReport(){
+      if(!reportFinalized){
+        setStatus(5,"Primero debes marcar el reporte como finalizado.");
+        return;
+      }
+      window.print();
+    }
+
+    function sendEmail(){
+      if(!reportFinalized){
+        setStatus(5,"Primero debes marcar el reporte como finalizado.");
+        return;
+      }
+      const d = collectData();
+      const subject = encodeURIComponent(`Actividad Comercial - ${formatDate(d.reportDate)} - ${d.advisorName}`);
+      const body = encodeURIComponent(makePlainSummary() + "\n\nAdjuntar evidencia y PDF del reporte.");
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    }
+
+
+    function safeFilePart(value){
+      return String(value || "Sin_nombre")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"")
+        .replace(/[^a-zA-Z0-9_-]+/g,"_")
+        .replace(/^_+|_+$/g,"")
+        .slice(0,60) || "Sin_nombre";
+    }
+
+    function buildConsolidatedRows(d){
+      return d.clients.map(c=>({
+        "Fecha y hora de elaboración": d.createdAt,
+        "Fecha automática del reporte": d.reportDate,
+        "Nombre del asesor": d.advisorName,
+        "Número de empleado": d.employeeNumber,
+        "Medio de prospección": d.prospecting,
+        "Lugar o empresa visitada": d.activityPlace,
+        "Horario de actividad": d.activitySchedule,
+        "Contactos": Number(d.peopleContacted || 0),
+        "Citas generadas": Number(d.appointmentsGenerated || 0),
+        "Descripción de actividad": d.activityDescription,
+        "Número de cliente": c.number,
+        "Nombre completo": c.name,
+        "CURP": c.curp,
+        "NSS": c.nss,
+        "Teléfono": c.phone,
+        "Correo o dirección": c.email,
+        "Empresa": c.company,
+        "Puntos": Number(c.points || 0),
+        "AFORE actual": c.afore,
+        "Resultado del contacto": c.result,
+        "Fecha posible de cita": c.appointment,
+        "Nota detallada": c.notes,
+        "Fecha del plan de trabajo": d.promiseDate,
+        "Lugar del plan de trabajo": d.promisePlace,
+        "Medio del plan de trabajo": d.promiseMethod,
+        "Horario del plan de trabajo": d.promiseSchedule,
+        "Meta de contactos": Number(d.contactGoal || 0),
+        "Meta de citas": Number(d.appointmentGoal || 0),
+        "Plan de trabajo": d.promiseDescription
+      }));
+    }
+
+    function downloadExcel(){
+      if(!reportFinalized){
+        setStatus(5,"Primero debes marcar el reporte como finalizado.");
+        return;
+      }
+      const d = collectData();
+      const filenameBase = `Actividad_Comercial_${d.reportDate || todayISO()}_${safeFilePart(d.advisorName)}`;
+      const consolidatedRows = buildConsolidatedRows(d);
+
+      if(typeof XLSX !== "undefined"){
+        const workbook = XLSX.utils.book_new();
+
+        const reportRows = [
+          ["REPORTE DE ACTIVIDAD COMERCIAL",""],
+          ["Fecha y hora de elaboración",d.createdAt],
+          ["Fecha automática del reporte",d.reportDate],
+          ["Nombre del asesor",d.advisorName],
+          ["Número de empleado",d.employeeNumber],
+          ["Medio de prospección",d.prospecting],
+          ["Lugar o empresa visitada",d.activityPlace],
+          ["Horario",d.activitySchedule],
+          ["Contactos",Number(d.peopleContacted || 0)],
+          ["Citas generadas",Number(d.appointmentsGenerated || 0)],
+          ["Descripción de actividad",d.activityDescription],
+          ["",""],
+          ["PLAN DE TRABAJO",""],
+          ["Fecha del plan de trabajo",d.promiseDate],
+          ["Lugar",d.promisePlace],
+          ["Medio",d.promiseMethod],
+          ["Horario",d.promiseSchedule],
+          ["Meta de contactos",Number(d.contactGoal || 0)],
+          ["Meta de citas",Number(d.appointmentGoal || 0)],
+          ["Plan de trabajo",d.promiseDescription]
+        ];
+
+        const summarySheet = XLSX.utils.aoa_to_sheet(reportRows);
+        summarySheet["!cols"] = [{wch:30},{wch:80}];
+
+        const databaseSheet = XLSX.utils.json_to_sheet(consolidatedRows);
+        databaseSheet["!cols"] = [
+          {wch:22},{wch:16},{wch:28},{wch:18},{wch:22},{wch:30},{wch:18},
+          {wch:18},{wch:16},{wch:55},{wch:15},{wch:30},{wch:22},{wch:18},
+          {wch:18},{wch:28},{wch:25},{wch:12},{wch:20},{wch:24},{wch:18},
+          {wch:55},{wch:16},{wch:30},{wch:22},{wch:18},{wch:18},{wch:15},{wch:55}
+        ];
+
+        XLSX.utils.book_append_sheet(workbook, summarySheet, "Resumen");
+        XLSX.utils.book_append_sheet(workbook, databaseSheet, "Base consolidada");
+        XLSX.writeFile(workbook, `${filenameBase}.xlsx`, {compression:true});
+        setStatus(5,"Archivo Excel descargado correctamente.","ok");
+        return;
+      }
+
+      downloadExcelFallback(consolidatedRows, `${filenameBase}.xls`);
+    }
+
+    function xmlEscape(value){
+      return String(value ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;");
+    }
+
+    function downloadExcelFallback(rows, filename){
+      const headers = rows.length ? Object.keys(rows[0]) : [];
+      const headerXml = headers.map(h=>`<Cell><Data ss:Type="String">${xmlEscape(h)}</Data></Cell>`).join("");
+      const rowXml = rows.map(row=>{
+        const cells = headers.map(h=>{
+          const value = row[h];
+          const type = typeof value === "number" && Number.isFinite(value) ? "Number" : "String";
+          return `<Cell><Data ss:Type="${type}">${xmlEscape(value)}</Data></Cell>`;
+        }).join("");
+        return `<Row>${cells}</Row>`;
+      }).join("");
+
+      const xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Worksheet ss:Name="Base consolidada">
+  <Table>
+   <Row>${headerXml}</Row>
+   ${rowXml}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+
+      const blob = new Blob(["\ufeff",xml],{type:"application/vnd.ms-excel;charset=utf-8"});
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(()=>URL.revokeObjectURL(link.href),1000);
+      setStatus(5,"Excel descargado en formato compatible. Para generar .xlsx, abre el HTML con conexión a internet.","ok");
+    }
+
+    async function copySummary(){
+      if(!reportFinalized){
+        setStatus(5,"Primero debes marcar el reporte como finalizado.");
+        return;
+      }
+      try{
+        await navigator.clipboard.writeText(makePlainSummary());
+        setStatus(5,"Resumen copiado al portapapeles.","ok");
+      }catch{
+        setStatus(5,"No fue posible copiar automáticamente. Selecciona el texto del reporte.");
+      }
+    }
+
+    function userStorageKey(base){
+      const uid = window.currentUserProfile?.uid || "sin_sesion";
+      return `${base}_${uid}`;
+    }
+
+    function saveDraft(){
+      if(reportFinalized){
+        setStatus(5,"El reporte está finalizado y no puede modificarse.");
+        return;
+      }
+      const data = collectData();
+      localStorage.setItem(userStorageKey("actividadComercialDraft"),JSON.stringify(data));
+      setStatus(currentStep,"Avance guardado correctamente en este dispositivo.","ok");
+    }
+
+    function loadDraft(){
+      if(reportFinalized){
+        setStatus(5,"El reporte está finalizado y no puede modificarse.");
+        return;
+      }
+      const raw = localStorage.getItem(userStorageKey("actividadComercialDraft"));
+      if(!raw){
+        setStatus(currentStep,"No se encontró un avance guardado.");
+        return;
+      }
+      applyData(JSON.parse(raw));
+      setStatus(currentStep,"Avance recuperado correctamente.","ok");
+    }
+
+    function applyData(d){
+      $("createdAt").value = d.createdAt || nowLocalTimestamp();
+      $("advisorName").value = d.advisorName || "";
+      $("employeeNumber").value = d.employeeNumber || "";
+      document.querySelectorAll('input[name="prospecting"]').forEach(r=>r.checked=r.value===d.prospecting);
+      $("activityPlace").value = d.activityPlace || "";
+      $("activitySchedule").value = d.activitySchedule || "";
+      $("peopleContacted").value = d.peopleContacted || "";
+      $("appointmentsGenerated").value = d.appointmentsGenerated || "";
+      $("activityDescription").value = d.activityDescription || "";
+      $("descriptionCount").textContent = $("activityDescription").value.length;
+      $("promiseDate").value = d.promiseDate || tomorrowISO();
+      $("promisePlace").value = d.promisePlace || "";
+      $("promiseMethod").value = d.promiseMethod || "";
+      $("promiseSchedule").value = d.promiseSchedule || "";
+      $("contactGoal").value = d.contactGoal || "";
+      $("appointmentGoal").value = d.appointmentGoal || "";
+      $("promiseDescription").value = d.promiseDescription || "";
+
+      $("clientsContainer").innerHTML = "";
+      clientCount = 0;
+      (d.clients?.length ? d.clients : [{}]).forEach(c=>addClient({
+        name:c.name,curp:c.curp,nss:c.nss,phone:c.phone,email:c.email,
+        company:c.company,points:c.points,afore:c.afore,result:c.result,
+        appointment:c.appointment,notes:c.notes,valid:true
+      }));
+      checkClientDuplicates(false);
+    }
+
+    function clearForm(){
+      if(!confirm("¿Deseas borrar la información y comenzar un reporte nuevo?")) return;
+      setFinalizedState(false);
+            localStorage.removeItem(userStorageKey("actividadComercialDraft"));
+      document.getElementById("reportForm").reset();
+      evidenceData = [];
+      $("clientsContainer").innerHTML = "";
+      clientCount = 0;
+      addClient();
+      $("createdAt").value = nowLocalTimestamp();
+      $("promiseDate").value = tomorrowISO();
+      $("descriptionCount").textContent = "0";
+      showStep(1);
+    }
+
+    function loadExample(){
+      if(reportFinalized){
+        setStatus(5,"El reporte está finalizado y no puede modificarse.");
+        return;
+      }
+      applyData({
+        createdAt:nowLocalTimestamp(),
+        advisorName:"María López Hernández",
+        employeeNumber:"01852",
+        prospecting:"En frío",
+        activityPlace:"Empresa ABC, Ramos Arizpe",
+        activitySchedule:"10:00 a 13:00",
+        peopleContacted:"12",
+        appointmentsGenerated:"2",
+        activityDescription:"Se realizó prospección en frío durante la salida de turno de la empresa ABC. Se contactaron 12 trabajadores; cuatro proporcionaron información completa y dos mostraron posibilidad de cita.",
+        promiseDate:tomorrowISO(),
+        promisePlace:"Corredor industrial Ramos Arizpe",
+        promiseMethod:"En frío",
+        promiseSchedule:"09:00 a 14:00",
+        contactGoal:"15",
+        appointmentGoal:"2",
+        promiseDescription:"Realizar prospección en frío y contactar trabajadores de empresas de la zona. La prioridad será obtener registros completos y confirmar al menos dos citas.",
+        clients:[
+          {
+            name:"José Jaime Gaona Cruz",
+            curp:"GACJ790709HCLNRM03",
+            nss:"32967878193",
+            phone:"8440000001",
+            email:"Pendiente",
+            company:"Empresa ABC",
+            points:"1080",
+            afore:"Banorte",
+            result:"Enviar información",
+            notes:"Las huellas no fueron aceptadas correctamente; se requiere revisar la captura.",
+            valid:true
+          },
+          {
+            name:"Víctor Flores",
+            curp:"",
+            nss:"8442900932",
+            phone:"8440000002",
+            email:"Pendiente",
+            company:"Empresa ABC",
+            points:"950",
+            afore:"Invercap",
+            result:"Enviar información",
+            notes:"Pendiente recibir información complementaria para continuar con la cita.",
+            valid:true
+          }
+        ]
+      });
+      setStatus(1,"Ejemplo cargado. Puedes modificarlo libremente.","ok");
+    }
+
+
+    window.prepareAdvisorSession = function(profile){
+      window.currentUserProfile = profile;
+      $("advisorName").value = profile.name || "";
+      $("employeeNumber").value = profile.employeeNumber || "";
+      $("sessionName").textContent = profile.name || "Usuario";
+      $("sessionMeta").textContent = `Empleado ${profile.employeeNumber || "N/D"} · ${profile.role === "manager" ? "Gerente" : "Asesor"}`;
+      $("createdAt").value = nowLocalTimestamp();
+      $("promiseDate").value = tomorrowISO();
+    };
+
+    window.loadFinalizedReport = function(saved){
+      applyData({
+        ...saved,
+        createdAt: saved.createdAtLocal || saved.createdAt || nowLocalTimestamp(),
+        peopleContacted: saved.contacts,
+        appointmentsGenerated: saved.appointmentsGenerated,
+        promiseDate: saved.plan?.date,
+        promisePlace: saved.plan?.place,
+        promiseMethod: saved.plan?.method,
+        promiseSchedule: saved.plan?.schedule,
+        contactGoal: saved.plan?.contactGoal,
+        appointmentGoal: saved.plan?.appointmentGoal,
+        promiseDescription: saved.plan?.description
+      });
+      showStep(5);
+      setFinalizedState(true);
+      setStatus(5,"El reporte de hoy ya fue enviado y está bloqueado.","ok");
+    };
+
+    window.resetCommercialFormForSession = function(){
+      document.getElementById("reportForm").reset();
+      $("clientsContainer").innerHTML = "";
+      clientCount = 0;
+      reportFinalized = false;
+      document.body.classList.remove("report-finalized");
+      addClient();
+      $("createdAt").value = nowLocalTimestamp();
+      $("promiseDate").value = tomorrowISO();
+      if(window.currentUserProfile){
+        $("advisorName").value = window.currentUserProfile.name || "";
+        $("employeeNumber").value = window.currentUserProfile.employeeNumber || "";
+      }
+      $("descriptionCount").textContent = "0";
+      showStep(1);
+      setFinalizedState(false);
+    };
+
+    function setFinalizedState(isFinalized){
+      reportFinalized = Boolean(isFinalized);
+      document.body.classList.toggle("report-finalized", reportFinalized);
+
+      document.querySelectorAll(".share-action").forEach(button=>{
+        button.disabled = !reportFinalized;
+      });
+
+      document.querySelectorAll(".edit-control").forEach(button=>{
+        button.disabled = reportFinalized;
+      });
+
+      document.querySelectorAll("#reportForm input, #reportForm select, #reportForm textarea").forEach(field=>{
+        field.disabled = reportFinalized;
+      });
+
+      document.querySelectorAll("#reportForm button:not(.share-action):not(#finalizeButton)").forEach(button=>{
+        button.disabled = reportFinalized;
+      });
+
+      const finalizeButton = $("finalizeButton");
+      if(finalizeButton){
+        finalizeButton.disabled = reportFinalized;
+        finalizeButton.textContent = reportFinalized
+          ? "✓ Reporte finalizado"
+          : "✓ Marcar como finalizado";
+      }
+    }
+
+    async function finalizeReport(){
+      if(reportFinalized) return;
+
+      if(!window.currentUserProfile){
+        setStatus(5,"La sesión no está disponible. Vuelve a iniciar sesión.");
+        return;
+      }
+
+      if(!confirm("Al finalizar, el reporte se guardará en Firebase y quedará bloqueado. ¿Deseas continuar?")){
+        return;
+      }
+
+      buildPreview();
+      const data = collectData();
+      const finalizeButton = $("finalizeButton");
+      finalizeButton.disabled = true;
+      $("firebaseSaving").classList.add("show");
+      clearStatus(5);
+
+      try{
+        await window.saveFinalizedReportToFirebase(data);
+        localStorage.removeItem(userStorageKey("actividadComercialDraft"));
+        setFinalizedState(true);
+        setStatus(5,"Reporte guardado en Firebase, finalizado y bloqueado. Ya puedes compartirlo o descargarlo.","ok");
+      }catch(error){
+        finalizeButton.disabled = false;
+        setStatus(5,error?.message || "No fue posible guardar el reporte en Firebase.");
+      }finally{
+        $("firebaseSaving").classList.remove("show");
+      }
+    }
+
+    $("activityDescription").addEventListener("input",e=>{
+      $("descriptionCount").textContent = e.target.value.length;
+    });
+
+    $("createdAt").value = nowLocalTimestamp();
+    $("promiseDate").value = tomorrowISO();
+    addClient();
+    setFinalizedState(false);
+  </script>
+  <script type="module" src="app-firebase.js"></script>
+</body>
+</html>

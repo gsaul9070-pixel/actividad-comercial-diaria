@@ -1,0 +1,83 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function currentUserPath() {
+      return /databases/$(database)/documents/commercial_users/$(request.auth.uid);
+    }
+
+    function currentUser() {
+      return get(currentUserPath()).data;
+    }
+
+    function isActiveManager() {
+      return signedIn()
+        && exists(currentUserPath())
+        && currentUser().active == true
+        && currentUser().role == "manager";
+    }
+
+    function isInitialManagerAccount() {
+      return signedIn()
+        && request.auth.token.email == "jacquelinne.santos@profuturo.com.mx";
+    }
+
+    function validAdvisor(number, name) {
+      return (number == "130257" && name == "CORREA CERON MARIA DEL CARMEN")
+        || (number == "152642" && name == "ALVAREZ SOLIS CLAUDIA IVETT")
+        || (number == "158311" && name == "RAMIREZ BLANCO ARACELI GUADALUPE")
+        || (number == "161328" && name == "GUERRERO VILLEGAS ELSA GABRIELA")
+        || (number == "162129" && name == "MEZA MELO CLAUDIA GUADALUPE")
+        || (number == "164641" && name == "MENDOZA SANTIAGO ADRIANA")
+        || (number == "165555" && name == "SALAS TORRES RUBI ANAKAREN")
+        || (number == "169527" && name == "PATIÑO SILVA FERNANDA MONSERRAT")
+        || (number == "169884" && name == "SOTO DOMINGUEZ DAYANI SHERLIN GUADALUPE")
+        || (number == "171033" && name == "REYNA ORTIZ ROSA NANCY")
+        || (number == "171155" && name == "VEGA LUNA MARIA DE JESUS")
+        || (number == "172247" && name == "GARCIA BERLANGA BRENDA BERENICE")
+        || (number == "172852" && name == "BLANCO TORRES GILDA YAMILY")
+        || (number == "173151" && name == "ANGUIANO BERLANGA FRANCISCO DE JESUS")
+        || (number == "173159" && name == "MORALES LEYVA KARLA SAMANTA")
+        || (number == "502488" && name == "RAMOS MARTINEZ LAURA GEORGINA");
+    }
+
+    match /commercial_users/{userId} {
+      allow create: if request.auth.uid == userId
+        && isInitialManagerAccount()
+        && request.resource.data.employeeNumber == "143561"
+        && request.resource.data.name == "SANTOS GUTIERREZ JACQUELINNE ADRIANA"
+        && request.resource.data.role == "manager"
+        && request.resource.data.active == true;
+
+      allow read: if signedIn()
+        && (request.auth.uid == userId || isActiveManager());
+
+      allow update: if isActiveManager();
+
+      allow delete: if false;
+    }
+
+    match /commercial_activity_reports/{reportId} {
+      allow create: if request.auth == null
+        && request.resource.data.status == "finalized"
+        && request.resource.data.advisorRole == "advisor"
+        && validAdvisor(
+          request.resource.data.advisorEmployeeNumber,
+          request.resource.data.advisorName
+        )
+        && reportId == (
+          request.resource.data.advisorEmployeeNumber
+          + "_"
+          + request.resource.data.createdDate
+        );
+
+      allow read, update: if isActiveManager();
+
+      allow delete: if false;
+    }
+  }
+}
