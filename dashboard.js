@@ -151,6 +151,37 @@ const state = {
 };
 
 const appElement = document.getElementById("app");
+
+const ADMIN_PASSWORD_HASH =
+  "26afffd013603c1547932de323cc757340eeeefac0dd4f085697751b4792afd5";
+let dashboardUnlockedUntil = 0;
+
+async function dashboardSha256(value){
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256",bytes);
+  return [...new Uint8Array(digest)]
+    .map(byte=>byte.toString(16).padStart(2,"0"))
+    .join("");
+}
+
+async function requireDashboardPassword(action="realizar este cambio"){
+  if(Date.now() < dashboardUnlockedUntil) return true;
+
+  const password = prompt(
+    `Ingresa la contraseña para ${action}:`
+  );
+
+  if(password === null) return false;
+
+  if(await dashboardSha256(password) !== ADMIN_PASSWORD_HASH){
+    alert("Contraseña incorrecta.");
+    return false;
+  }
+
+  dashboardUnlockedUntil = Date.now() + (10 * 60 * 1000);
+  return true;
+}
+
 const localISO = () => {
   const d = new Date(), offset = d.getTimezoneOffset();
   return new Date(d.getTime() - offset * 60000).toISOString().slice(0,10);
@@ -519,7 +550,8 @@ if(Object.values(firebaseConfig).some(value =>
     document.getElementById("detailModal").classList.add("show");
   };
 
-  window.openAddAdvisor = function(){
+  window.openAddAdvisor = async function(){
+    if(!await requireDashboardPassword("agregar un empleado")) return;
     document.getElementById("advisorForm").reset();
     document.getElementById("advisorOriginalNumber").value = "";
     document.getElementById("advisorActive").checked = true;
@@ -529,7 +561,8 @@ if(Object.values(firebaseConfig).some(value =>
     document.getElementById("advisorModal").classList.add("show");
   };
 
-  window.openEditAdvisor = function(employeeNumber){
+  window.openEditAdvisor = async function(employeeNumber){
+    if(!await requireDashboardPassword("editar un empleado")) return;
     const advisor = state.advisors.find(item=>item.employeeNumber === employeeNumber);
     if(!advisor) return;
 
@@ -545,6 +578,7 @@ if(Object.values(firebaseConfig).some(value =>
 
   document.getElementById("advisorForm").addEventListener("submit", async event=>{
     event.preventDefault();
+    if(!await requireDashboardPassword("guardar los cambios del empleado")) return;
     setBox("advisorError");
     setBox("advisorSuccess");
 
@@ -638,6 +672,7 @@ if(Object.values(firebaseConfig).some(value =>
   });
 
   window.toggleAdvisor = async function(employeeNumber, active){
+    if(!await requireDashboardPassword("cambiar el estado de un empleado")) return;
     const advisor = state.advisors.find(item=>item.employeeNumber === employeeNumber);
     if(!advisor) return;
 
@@ -653,6 +688,7 @@ if(Object.values(firebaseConfig).some(value =>
   };
 
   window.deleteAdvisor = async function(employeeNumber){
+    if(!await requireDashboardPassword("eliminar un empleado")) return;
     const advisor = state.advisors.find(item=>item.employeeNumber === employeeNumber);
     if(!advisor) return;
 
@@ -746,7 +782,8 @@ if(Object.values(firebaseConfig).some(value =>
       });
   }
 
-  window.openEditReport = function(id){
+  window.openEditReport = async function(id){
+    if(!await requireDashboardPassword("editar un reporte")) return;
     const report = state.reports.find(item=>item.id === id);
     if(!report) return;
 
@@ -795,6 +832,7 @@ if(Object.values(firebaseConfig).some(value =>
 
   document.getElementById("reportEditForm").addEventListener("submit", async event=>{
     event.preventDefault();
+    if(!await requireDashboardPassword("guardar los cambios del reporte")) return;
     setBox("reportEditError");
     setBox("reportEditSuccess");
 
@@ -933,6 +971,7 @@ if(Object.values(firebaseConfig).some(value =>
   });
 
   window.markReviewed = async function(id){
+    if(!await requireDashboardPassword("marcar un reporte como revisado")) return;
     if(!confirm("¿Marcar este reporte como revisado?")) return;
 
     await updateDoc(doc(db, REPORTS_COLLECTION, id),{
@@ -945,6 +984,7 @@ if(Object.values(firebaseConfig).some(value =>
   };
 
   window.cancelReport = async function(id){
+    if(!await requireDashboardPassword("anular un reporte")) return;
     const reason = prompt("Escribe el motivo de la anulación:");
     if(!reason?.trim()) return;
 
@@ -959,6 +999,7 @@ if(Object.values(firebaseConfig).some(value =>
   };
 
   window.deleteReport = async function(id){
+    if(!await requireDashboardPassword("eliminar un reporte")) return;
     const report = state.reports.find(item=>item.id === id);
     if(!report) return;
 
@@ -1057,7 +1098,14 @@ if(Object.values(firebaseConfig).some(value =>
   });
 
   document.querySelectorAll(".tab").forEach(button=>{
-    button.addEventListener("click",()=>{
+    button.addEventListener("click",async ()=>{
+      if(
+        button.dataset.panel === "staffPanel"
+        && !await requireDashboardPassword("administrar empleados")
+      ){
+        return;
+      }
+
       document.querySelectorAll(".tab").forEach(
         item=>item.classList.remove("active")
       );

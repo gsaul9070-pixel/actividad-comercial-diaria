@@ -3,9 +3,16 @@ import {
   getFirestore,
   collection,
   doc,
+  getDoc,
+  getDocs,
   onSnapshot,
+  query,
+  where,
   setDoc,
-  serverTimestamp
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 import {
@@ -17,6 +24,48 @@ import {
 const advisorSelector = document.getElementById("advisorSelector");
 const appRoot = document.getElementById("appRoot");
 let advisors = [];
+let allAdvisors = [];
+let employeeManagerUnlockedUntil = 0;
+
+const ADMIN_PASSWORD_HASH =
+  "26afffd013603c1547932de323cc757340eeeefac0dd4f085697751b4792afd5";
+
+async function sha256(value){
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256",bytes);
+  return [...new Uint8Array(digest)]
+    .map(byte=>byte.toString(16).padStart(2,"0"))
+    .join("");
+}
+
+async function requireEmployeeAdminPassword(){
+  if(Date.now() < employeeManagerUnlockedUntil) return true;
+
+  const password = prompt(
+    "Ingresa la contraseña para administrar empleados:"
+  );
+
+  if(password === null) return false;
+
+  if(await sha256(password) !== ADMIN_PASSWORD_HASH){
+    alert("Contraseña incorrecta.");
+    return false;
+  }
+
+  employeeManagerUnlockedUntil = Date.now() + (10 * 60 * 1000);
+  return true;
+}
+
+const normalizeEmployeeNumber = value =>
+  String(value || "").replace(/\D/g,"");
+
+function setEmployeeManagerMessage(message="",type="error"){
+  const box = document.getElementById("employeeManagerMessage");
+  if(!box) return;
+  box.textContent = message;
+  box.className = `employee-admin-message ${type}`;
+  if(message) box.classList.add("show");
+}
 
 function currentLocalDate(){
   const date = new Date();
@@ -83,18 +132,23 @@ if(hasPlaceholder){
     snapshot=>{
       const selected = advisorSelector.value;
 
-      advisors = snapshot.docs
+      allAdvisors = snapshot.docs
         .map(item=>({
           employeeNumber:item.id,
           ...item.data()
         }))
-        .filter(advisor=>advisor.active === true)
         .sort((a,b)=>(a.name || "").localeCompare(b.name || ""));
 
+      advisors = allAdvisors.filter(
+        advisor=>advisor.active === true
+      );
+
+      renderEmployeeManager();
+
       advisorSelector.innerHTML =
-        '<option value="">Selecciona un asesor</option>' +
+        '<option value="">Selecciona un número de empleado</option>' +
         advisors.map(advisor=>
-          `<option value="${advisor.employeeNumber}">${advisor.name} · ${advisor.employeeNumber}</option>`
+          `<option value="${advisor.employeeNumber}">${advisor.employeeNumber}</option>`
         ).join("");
 
       if(advisors.some(item=>item.employeeNumber === selected)){
@@ -120,6 +174,266 @@ if(hasPlaceholder){
     advisorSelector.value = "";
     activateAdvisor("");
     window.resetCommercialFormForSession();
+  };
+
+
+  function renderEmployeeManager(){
+    const container = document.getElementById("employeeManagerList");
+    if(!container) return;
+
+    if(!allAdvisors.length){
+      container.innerHTML =
+        '<div class="employee-admin-note">No hay empleados registrados.</div>';
+      return;
+    }
+
+    container.innerHTML = allAdvisors.map(employee=>`
+      <div class="employee-admin-row">
+        <strong>${employee.employeeNumber}</strong>
+        <div>
+          <b>${String(employee.name || "").replaceAll("<","&lt;")}</b><br>
+          <span class="employee-admin-note">
+            ${employee.active === true ? "Activo" : "Inactivo"}
+          </span>
+        </div>
+        <div class="employee-admin-actions">
+          <button class="btn-soft" type="button"
+            onclick="window.editManagedEmployee('${employee.employeeNumber}')">
+            Editar
+          </button>
+          <button class="btn-soft" type="button"
+            onclick="window.toggleManagedEmployee(
+              '${employee.employeeNumber}',${employee.active !== true}
+            )">
+            ${employee.active === true ? "Desactivar" : "Activar"}
+          </button>
+          <button class="btn-danger" type="button"
+            onclick="window.deleteManagedEmployee(
+              '${employee.employeeNumber}'
+            )">
+            Eliminar
+          </button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function resetEmployeeManagerForm(){
+    document.getElementById("employeeManagerForm").reset();
+    document.getElementById("employeeManagerOriginalNumber").value = "";
+    document.getElementById("employeeManagerActive").checked = true;
+    document.getElementById("employeeManagerSaveButton").textContent =
+      "Guardar empleado";
+  }
+
+  window.openEmployeeManager = async function(){
+    if(!await requireEmployeeAdminPassword()) return;
+    resetEmployeeManagerForm();
+    setEmployeeManagerMessage();
+    renderEmployeeManager();
+    document.getElementById("employeeManagerModal").classList.add("show");
+  };
+
+  window.closeEmployeeManager = function(){
+    document.getElementById("employeeManagerModal").classList.remove("show");
+    resetEmployeeManagerForm();
+    setEmployeeManagerMessage();
+  };
+
+  window.editManagedEmployee = async function(employeeNumber){
+    if(!await requireEmployeeAdminPassword()) return;
+
+    const employee = allAdvisors.find(
+      item=>item.employeeNumber === employeeNumber
+    );
+    if(!employee) return;
+
+    document.getElementById("employeeManagerOriginalNumber").value =
+      employee.employeeNumber;
+    document.getElementById("employeeManagerNumber").value =
+      employee.employeeNumber;
+    document.getElementById("employeeManagerName").value =
+      employee.name || "";
+    document.getElementById("employeeManagerActive").checked =
+      employee.active === true;
+    document.getElementById("employeeManagerSaveButton").textContent =
+      "Actualizar empleado";
+    setEmployeeManagerMessage();
+  };
+
+  document.getElementById("employeeManagerForm")
+    .addEventListener("submit",async event=>{
+      event.preventDefault();
+
+      if(!await requireEmployeeAdminPassword()) return;
+
+      setEmployeeManagerMessage();
+
+      const originalNumber = normalizeEmployeeNumber(
+        document.getElementById(
+          "employeeManagerOriginalNumber"
+        ).value
+      );
+      const employeeNumber = normalizeEmployeeNumber(
+        document.getElementById("employeeManagerNumber").value
+      );
+      const name = document.getElementById(
+        "employeeManagerName"
+      ).value.trim().toUpperCase();
+      const active = document.getElementById(
+        "employeeManagerActive"
+      ).checked;
+      const saveButton = document.getElementById(
+        "employeeManagerSaveButton"
+      );
+
+      if(employeeNumber.length < 3){
+        setEmployeeManagerMessage(
+          "Ingresa un número de empleado válido."
+        );
+        return;
+      }
+
+      if(!name){
+        setEmployeeManagerMessage("Ingresa el nombre completo.");
+        return;
+      }
+
+      saveButton.disabled = true;
+      saveButton.textContent = "Guardando…";
+
+      try{
+        const targetRef = doc(
+          db,ADVISORS_COLLECTION,employeeNumber
+        );
+        const targetSnapshot = await getDoc(targetRef);
+
+        if(
+          targetSnapshot.exists()
+          && employeeNumber !== originalNumber
+        ){
+          throw new Error(
+            "Ese número de empleado ya está registrado."
+          );
+        }
+
+        const employeeData = {
+          employeeNumber,
+          name,
+          role:"advisor",
+          active,
+          accessMode:"public_selector",
+          updatedAt:serverTimestamp(),
+          updatedBy:"password-admin"
+        };
+
+        if(!originalNumber){
+          await setDoc(targetRef,{
+            ...employeeData,
+            createdAt:serverTimestamp(),
+            createdBy:"password-admin"
+          });
+        }else if(originalNumber === employeeNumber){
+          await setDoc(targetRef,employeeData,{merge:true});
+        }else{
+          const batch = writeBatch(db);
+          batch.set(targetRef,{
+            ...employeeData,
+            createdAt:serverTimestamp(),
+            createdBy:"password-admin"
+          });
+          batch.delete(
+            doc(db,ADVISORS_COLLECTION,originalNumber)
+          );
+          await batch.commit();
+
+          const relatedReports = await getDocs(
+            query(
+              collection(db,REPORTS_COLLECTION),
+              where(
+                "advisorEmployeeNumber","==",originalNumber
+              )
+            )
+          );
+
+          for(const reportSnapshot of relatedReports.docs){
+            await updateDoc(reportSnapshot.ref,{
+              advisorUid:`employee-${employeeNumber}`,
+              advisorEmployeeNumber:employeeNumber,
+              advisorName:name,
+              updatedAt:serverTimestamp(),
+              editedBy:"password-admin"
+            });
+          }
+        }
+
+        setEmployeeManagerMessage(
+          "Empleado guardado correctamente.","success"
+        );
+        resetEmployeeManagerForm();
+      }catch(error){
+        console.error(error);
+        setEmployeeManagerMessage(
+          error?.message ||
+            "No fue posible guardar el empleado."
+        );
+      }finally{
+        saveButton.disabled = false;
+        if(
+          document.getElementById(
+            "employeeManagerOriginalNumber"
+          ).value
+        ){
+          saveButton.textContent = "Actualizar empleado";
+        }else{
+          saveButton.textContent = "Guardar empleado";
+        }
+      }
+    });
+
+  window.toggleManagedEmployee = async function(
+    employeeNumber,active
+  ){
+    if(!await requireEmployeeAdminPassword()) return;
+
+    const employee = allAdvisors.find(
+      item=>item.employeeNumber === employeeNumber
+    );
+    if(!employee) return;
+
+    const action = active ? "activar" : "desactivar";
+    if(!confirm(
+      `¿Deseas ${action} a ${employee.name}?`
+    )) return;
+
+    await updateDoc(
+      doc(db,ADVISORS_COLLECTION,employeeNumber),
+      {
+        active,
+        updatedAt:serverTimestamp(),
+        updatedBy:"password-admin"
+      }
+    );
+  };
+
+  window.deleteManagedEmployee = async function(
+    employeeNumber
+  ){
+    if(!await requireEmployeeAdminPassword()) return;
+
+    const employee = allAdvisors.find(
+      item=>item.employeeNumber === employeeNumber
+    );
+    if(!employee) return;
+
+    if(!confirm(
+      `¿Eliminar definitivamente a ${employee.name}?`
+      + "\n\nSus reportes históricos no se eliminarán."
+    )) return;
+
+    await deleteDoc(
+      doc(db,ADVISORS_COLLECTION,employeeNumber)
+    );
   };
 
   window.saveFinalizedReportToFirebase = async function(data){

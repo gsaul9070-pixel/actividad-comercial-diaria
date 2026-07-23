@@ -518,6 +518,94 @@
     }
     .firebase-saving.show{display:block}
 
+    .employee-admin-modal{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:none;
+      place-items:center;
+      padding:18px;
+      background:rgba(15,23,42,.72);
+    }
+
+    .employee-admin-modal.show{display:grid}
+
+    .employee-admin-card{
+      width:min(920px,100%);
+      max-height:92vh;
+      overflow:auto;
+      border-radius:22px;
+      background:#fff;
+      padding:20px;
+      box-shadow:0 24px 70px rgba(0,0,0,.28);
+    }
+
+    .employee-admin-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:16px;
+    }
+
+    .employee-admin-head h2{
+      margin:0;
+      color:var(--primary);
+    }
+
+    .employee-admin-grid{
+      display:grid;
+      grid-template-columns:1fr 2fr auto;
+      gap:10px;
+      align-items:end;
+    }
+
+    .employee-admin-list{
+      display:grid;
+      gap:9px;
+      margin-top:16px;
+    }
+
+    .employee-admin-row{
+      display:grid;
+      grid-template-columns:130px minmax(220px,1fr) auto;
+      gap:10px;
+      align-items:center;
+      padding:11px;
+      border:1px solid var(--line);
+      border-radius:13px;
+      background:#F8FAFC;
+    }
+
+    .employee-admin-row strong{color:var(--primary)}
+    .employee-admin-actions{display:flex;gap:7px;flex-wrap:wrap}
+    .employee-admin-note{font-size:12px;color:var(--muted);margin-top:8px}
+    .employee-admin-message{
+      display:none;
+      margin-top:12px;
+      padding:11px;
+      border-radius:11px;
+      font-weight:700;
+    }
+    .employee-admin-message.show{display:block}
+    .employee-admin-message.error{
+      background:#FFF0F0;
+      border:1px solid #F2BABA;
+      color:#A62F2F;
+    }
+    .employee-admin-message.success{
+      background:#E8F8F0;
+      border:1px solid #BDEAD6;
+      color:#087554;
+    }
+
+    @media(max-width:720px){
+      .employee-admin-grid,
+      .employee-admin-row{
+        grid-template-columns:1fr;
+      }
+    }
+
     @media(max-width:760px){
       .app{padding:10px}
       .hero{padding:20px 16px;border-radius:18px}
@@ -548,7 +636,10 @@
         <span id="sessionMeta">Captura directa sin inicio de sesión</span>
       </div>
       <div class="session-actions">
-        <a class="btn-soft" href="dashboard.html" style="text-decoration:none">Abrir dashboard</a>
+        <button class="btn-soft" type="button"
+          onclick="window.openEmployeeManager()">Administrar empleados</button>
+        <a class="btn-soft" href="dashboard.html"
+          style="text-decoration:none">Abrir dashboard</a>
       </div>
     </div>
 
@@ -585,16 +676,18 @@
             <label for="createdAt">Fecha y hora de elaboración</label>
             <input id="createdAt" type="text" readonly aria-readonly="true">
             <div class="locked-note">🔒 Se genera automáticamente y no puede modificarse.</div>
-          </div>          <div class="field">
-            <label class="required" for="advisorSelector">Nombre del asesor</label>
-            <select id="advisorSelector" required>
-              <option value="">Selecciona un asesor</option>
-            </select>
-            <input id="advisorName" type="hidden">
           </div>
           <div class="field">
-            <label for="employeeNumber">Número de empleado</label>
-            <input id="employeeNumber" type="text" readonly aria-readonly="true">
+            <label class="required" for="advisorSelector">Número de empleado</label>
+            <select id="advisorSelector" required>
+              <option value="">Selecciona un número de empleado</option>
+            </select>
+            <input id="employeeNumber" type="hidden">
+          </div>
+          <div class="field">
+            <label for="advisorName">Nombre del trabajador</label>
+            <input id="advisorName" type="text" readonly aria-readonly="true"
+              placeholder="Se llenará automáticamente">
           </div>
         </div>
 
@@ -1452,6 +1545,9 @@
       $("createdAt").value = d.createdAt || nowLocalTimestamp();
       $("advisorName").value = d.advisorName || "";
       $("employeeNumber").value = d.employeeNumber || "";
+      if($("advisorSelector") && d.employeeNumber){
+        $("advisorSelector").value = d.employeeNumber;
+      }
       document.querySelectorAll('input[name="prospecting"]').forEach(r=>r.checked=r.value===d.prospecting);
       $("activityPlace").value = d.activityPlace || "";
       $("activitySchedule").value = d.activitySchedule || "";
@@ -1640,7 +1736,7 @@
         return;
       }
 
-      if(!confirm("Al finalizar, el reporte se guardará en Firebase y quedará bloqueado. ¿Deseas continuar?")){
+      if(!confirm("¿Desea enviar información?")){
         return;
       }
 
@@ -1673,6 +1769,54 @@
     addClient();
     setFinalizedState(false);
   </script>
-  <script type="module" src="app-firebase.js?v=20260723-02"></script>
+
+  <div id="employeeManagerModal" class="employee-admin-modal no-print">
+    <div class="employee-admin-card">
+      <div class="employee-admin-head">
+        <div>
+          <h2>Administrar empleados</h2>
+          <div class="employee-admin-note">
+            Los cambios se reflejan automáticamente en la captura y el dashboard.
+          </div>
+        </div>
+        <button class="btn-danger" type="button"
+          onclick="window.closeEmployeeManager()">Cerrar</button>
+      </div>
+
+      <form id="employeeManagerForm">
+        <input id="employeeManagerOriginalNumber" type="hidden">
+        <div class="employee-admin-grid">
+          <div class="field">
+            <label class="required" for="employeeManagerNumber">
+              Número de empleado
+            </label>
+            <input id="employeeManagerNumber" inputmode="numeric"
+              maxlength="10" required>
+          </div>
+          <div class="field">
+            <label class="required" for="employeeManagerName">
+              Nombre completo
+            </label>
+            <input id="employeeManagerName" maxlength="160" required>
+          </div>
+          <button id="employeeManagerSaveButton" class="btn-primary"
+            type="submit">Guardar empleado</button>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:12px">
+          <input id="employeeManagerActive" type="checkbox"
+            style="width:18px;height:18px" checked>
+          Empleado activo
+        </label>
+      </form>
+
+      <div id="employeeManagerMessage"
+        class="employee-admin-message"></div>
+
+      <div id="employeeManagerList"
+        class="employee-admin-list"></div>
+    </div>
+  </div>
+
+  <script type="module" src="app-firebase.js?v=20260723-04"></script>
 </body>
 </html>
