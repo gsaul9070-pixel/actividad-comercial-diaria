@@ -1,18 +1,18 @@
-ACTUALIZACIÓN — REGISTROS ADICIONALES
+ACTUALIZACIÓN — OMITIR ÚNICAMENTE EL PASO 4
 
 Reemplaza en GitHub:
 - index.html
 - app-firebase.js
 
 Funcionamiento:
-1. El primer reporte del asesor en el día usa los pasos 1, 2, 3 y 4.
-2. Desde el segundo reporte del mismo asesor en el mismo día:
-   - Se completa el paso 1.
-   - Se pasa directamente al paso 3.
-   - Después se pasa directamente a confirmar y enviar.
-3. Los pasos 2 y 4 se heredan del reporte anterior del día.
-4. Contactos y citas del registro adicional se guardan en cero para
-   no duplicar los indicadores.
-5. Cada envío continúa acumulándose como registro independiente.
+1. Primer reporte del asesor en el día:
+   - Completa los pasos 1, 2, 3 y 4.
+2. Segundo reporte y siguientes del mismo asesor en ese día:
+   - Completa los pasos 1, 2 y 3.
+   - Después del paso 3 pasa directamente a revisión y envío.
+   - El paso 4 no se solicita.
+3. Contactos y citas se guardan con los valores capturados.
+4. El plan de trabajo se registra como no requerido y queda vacío.
+5. Cada envío sigue acumulándose como un registro independiente.
 
 No es necesario modificar las reglas de Firebase.

@@ -532,7 +532,6 @@
 
     .repeat-entry-notice.show{display:block}
 
-    body.repeat-entry-mode .progress-step:nth-child(2),
     body.repeat-entry-mode .progress-step:nth-child(4){
       display:none;
     }
@@ -706,7 +705,7 @@
 
         <div id="repeatEntryNotice" class="repeat-entry-notice">
           Registro adicional del día: este asesor ya realizó su primer reporte.
-          Solo será necesario completar los pasos 1 y 3.
+          Completa los pasos 1, 2 y 3. El paso 4 no será requerido.
         </div>
 
         <div id="status1" class="status"></div>
@@ -951,11 +950,6 @@
       if(reportFinalized) return;
       if(!validateStep(step)) return;
 
-      if(repeatEntryMode && step === 1){
-        showStep(3);
-        return;
-      }
-
       if(repeatEntryMode && step === 3){
         showStep(5);
         return;
@@ -966,11 +960,6 @@
 
     function prevStep(step){
       if(reportFinalized) return;
-
-      if(repeatEntryMode && step === 3){
-        showStep(1);
-        return;
-      }
 
       if(repeatEntryMode && step === 5){
         showStep(3);
@@ -990,7 +979,7 @@
         }
       }
 
-      if(step === 2 && !repeatEntryMode){
+      if(step === 2){
         const method = document.querySelector('input[name="prospecting"]:checked');
         const contactsText = text("peopleContacted");
         const appointmentsText = text("appointmentsGenerated");
@@ -1347,16 +1336,23 @@
             </table>
           </div>
 
-          <div class="summary-section">
-            <h3>4. Plan de trabajo</h3>
-            <p><strong>Fecha:</strong> ${formatDate(d.promiseDate)}<br>
-            <strong>Lugar:</strong> ${esc(d.promisePlace)}<br>
-            <strong>Medio:</strong> ${esc(d.promiseMethod)}<br>
-            <strong>Horario:</strong> ${esc(d.promiseSchedule || "No indicado")}<br>
-            <strong>Meta de contactos:</strong> ${esc(d.contactGoal)}<br>
-            <strong>Meta de citas:</strong> ${esc(d.appointmentGoal)}</p>
-            <p>${esc(d.promiseDescription)}</p>
-          </div>
+          ${d.repeatEntry ? `
+            <div class="summary-section">
+              <h3>4. Plan de trabajo</h3>
+              <p>No requerido en este registro adicional.</p>
+            </div>
+          ` : `
+            <div class="summary-section">
+              <h3>4. Plan de trabajo</h3>
+              <p><strong>Fecha:</strong> ${formatDate(d.promiseDate)}<br>
+              <strong>Lugar:</strong> ${esc(d.promisePlace)}<br>
+              <strong>Medio:</strong> ${esc(d.promiseMethod)}<br>
+              <strong>Horario:</strong> ${esc(d.promiseSchedule || "No indicado")}<br>
+              <strong>Meta de contactos:</strong> ${esc(d.contactGoal)}<br>
+              <strong>Meta de citas:</strong> ${esc(d.appointmentGoal)}</p>
+              <p>${esc(d.promiseDescription)}</p>
+            </div>
+          `}
         </div>
       `;
     }
@@ -1394,17 +1390,19 @@
         );
       });
 
-      lines.push(
-        "",
-        "PLAN DE TRABAJO",
-        `Fecha: ${formatDate(d.promiseDate)}`,
-        `Lugar: ${d.promisePlace}`,
-        `Medio: ${d.promiseMethod}`,
-        `Horario: ${d.promiseSchedule || "No indicado"}`,
-        `Meta de contactos: ${d.contactGoal}`,
-        `Meta de citas: ${d.appointmentGoal}`,
-        d.promiseDescription
-      );
+      if(!d.repeatEntry){
+        lines.push(
+          "",
+          "PLAN DE TRABAJO",
+          `Fecha: ${formatDate(d.promiseDate)}`,
+          `Lugar: ${d.promisePlace}`,
+          `Medio: ${d.promiseMethod}`,
+          `Horario: ${d.promiseSchedule || "No indicado"}`,
+          `Meta de contactos: ${d.contactGoal}`,
+          `Meta de citas: ${d.appointmentGoal}`,
+          d.promiseDescription
+        );
+      }
 
       return lines.join("\n");
     }
@@ -1741,70 +1739,34 @@
         notice.classList.toggle("show",repeatEntryMode);
       }
 
-      if(repeatEntryMode && previousReport){
-        const previousMethod = previousReport.prospecting || "";
+      document.querySelectorAll(
+        'input[name="prospecting"]'
+      ).forEach(input=>{
+        input.checked = false;
+      });
 
-        document.querySelectorAll(
-          'input[name="prospecting"]'
-        ).forEach(input=>{
-          input.checked = input.value === previousMethod;
-        });
+      $("activityPlace").value = "";
+      $("activitySchedule").value = "";
+      $("peopleContacted").value = "";
+      $("appointmentsGenerated").value = "";
+      $("activityDescription").value = "";
+      $("descriptionCount").textContent = "0";
 
-        $("activityPlace").value =
-          previousReport.activityPlace || "";
-        $("activitySchedule").value =
-          previousReport.activitySchedule || "";
-        $("peopleContacted").value = "0";
-        $("appointmentsGenerated").value = "0";
-        $("activityDescription").value =
-          previousReport.activityDescription
-          || "Registro adicional de clientes del mismo día.";
-        $("descriptionCount").textContent =
-          $("activityDescription").value.length;
+      $("promiseDate").value = repeatEntryMode ? "" : tomorrowISO();
+      $("promisePlace").value = "";
+      $("promiseMethod").value = "";
+      $("promiseSchedule").value = "";
+      $("contactGoal").value = "";
+      $("appointmentGoal").value = "";
+      $("promiseDescription").value = "";
 
-        const previousPlan = previousReport.plan || {};
-        $("promiseDate").value =
-          previousPlan.date || tomorrowISO();
-        $("promisePlace").value =
-          previousPlan.place || "";
-        $("promiseMethod").value =
-          previousPlan.method || "";
-        $("promiseSchedule").value =
-          previousPlan.schedule || "";
-        $("contactGoal").value =
-          previousPlan.contactGoal ?? "";
-        $("appointmentGoal").value =
-          previousPlan.appointmentGoal ?? "";
-        $("promiseDescription").value =
-          previousPlan.description || "";
-
+      if(repeatEntryMode){
         setStatus(
           1,
-          "Este asesor ya tiene un reporte hoy. Al continuar pasarás directamente a Clientes y prospectos.",
+          "Este asesor ya tiene un reporte hoy. Completa los pasos 1, 2 y 3; el plan de trabajo no será requerido.",
           "ok"
         );
       }else{
-        document.querySelectorAll(
-          'input[name="prospecting"]'
-        ).forEach(input=>{
-          input.checked = false;
-        });
-
-        $("activityPlace").value = "";
-        $("activitySchedule").value = "";
-        $("peopleContacted").value = "";
-        $("appointmentsGenerated").value = "";
-        $("activityDescription").value = "";
-        $("descriptionCount").textContent = "0";
-
-        $("promiseDate").value = tomorrowISO();
-        $("promisePlace").value = "";
-        $("promiseMethod").value = "";
-        $("promiseSchedule").value = "";
-        $("contactGoal").value = "";
-        $("appointmentGoal").value = "";
-        $("promiseDescription").value = "";
-
         clearStatus(1);
       }
     };

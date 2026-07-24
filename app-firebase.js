@@ -534,7 +534,7 @@ if(hasPlaceholder){
       advisorEmployeeNumber:profile.employeeNumber,
       advisorRole:"advisor",
       entryType:data.repeatEntry
-        ? "additional_client"
+        ? "additional_report_without_plan"
         : "daily_full_report",
       inheritedFromReportId:
         data.inheritedFromReportId || "",
@@ -544,24 +544,25 @@ if(hasPlaceholder){
       prospecting:data.prospecting,
       activityPlace:data.activityPlace,
       activitySchedule:data.activitySchedule,
-      contacts:data.repeatEntry
-        ? 0
-        : Number(data.peopleContacted || 0),
-      appointmentsGenerated:data.repeatEntry
-        ? 0
-        : Number(data.appointmentsGenerated || 0),
+      contacts:Number(data.peopleContacted || 0),
+      appointmentsGenerated:Number(data.appointmentsGenerated || 0),
       activityDescription:data.activityDescription,
       clients,
       clientCount:clients.length,
       procedureCount,
+      planSkipped:data.repeatEntry === true,
       plan:{
-        date:data.promiseDate,
-        place:data.promisePlace,
-        method:data.promiseMethod,
-        schedule:data.promiseSchedule,
-        contactGoal:Number(data.contactGoal || 0),
-        appointmentGoal:Number(data.appointmentGoal || 0),
-        description:data.promiseDescription
+        date:data.repeatEntry ? "" : data.promiseDate,
+        place:data.repeatEntry ? "" : data.promisePlace,
+        method:data.repeatEntry ? "" : data.promiseMethod,
+        schedule:data.repeatEntry ? "" : data.promiseSchedule,
+        contactGoal:data.repeatEntry
+          ? 0
+          : Number(data.contactGoal || 0),
+        appointmentGoal:data.repeatEntry
+          ? 0
+          : Number(data.appointmentGoal || 0),
+        description:data.repeatEntry ? "" : data.promiseDescription
       },
       status:"finalized",
       reviewStatus:"pending",
