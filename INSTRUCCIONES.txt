@@ -1,24 +1,18 @@
-ACTUALIZACIÓN — ACUMULACIÓN DE REPORTES Y VALIDACIONES
+ACTUALIZACIÓN — REGISTROS ADICIONALES
 
 Reemplaza en GitHub:
 - index.html
 - app-firebase.js
-- dashboard.html
-- dashboard.js
 
-Cambios:
-1. Nuevos resultados:
-   - Regresar llamada
-   - Inconsistencia de documentos
-   - Inconsistencia de datos
-2. Contactos y citas son obligatorios y aceptan de 0 a 99.
-3. Resultado del contacto es obligatorio.
-4. Cada envío crea un registro único.
-5. Los reportes del mismo asesor y fecha ya no reemplazan al anterior.
-6. Dashboard y Excel mostrarán todos los registros acumulados.
-7. Editar un reporte conserva su identificador único.
+Funcionamiento:
+1. El primer reporte del asesor en el día usa los pasos 1, 2, 3 y 4.
+2. Desde el segundo reporte del mismo asesor en el mismo día:
+   - Se completa el paso 1.
+   - Se pasa directamente al paso 3.
+   - Después se pasa directamente a confirmar y enviar.
+3. Los pasos 2 y 4 se heredan del reporte anterior del día.
+4. Contactos y citas del registro adicional se guardan en cero para
+   no duplicar los indicadores.
+5. Cada envío continúa acumulándose como registro independiente.
 
-No es necesario cambiar las reglas de Firebase.
-
-Los registros sobrescritos antes de esta actualización no pueden
-recuperarse automáticamente.
+No es necesario modificar las reglas de Firebase.

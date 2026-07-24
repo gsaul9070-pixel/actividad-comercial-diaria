@@ -518,6 +518,25 @@
     }
     .firebase-saving.show{display:block}
 
+    .repeat-entry-notice{
+      display:none;
+      margin-top:14px;
+      padding:13px 15px;
+      border-radius:13px;
+      background:#EAF2F8;
+      border:1px solid #BFD4E7;
+      color:var(--primary);
+      font-weight:800;
+      line-height:1.4;
+    }
+
+    .repeat-entry-notice.show{display:block}
+
+    body.repeat-entry-mode .progress-step:nth-child(2),
+    body.repeat-entry-mode .progress-step:nth-child(4){
+      display:none;
+    }
+
     .employee-admin-modal{
       position:fixed;
       inset:0;
@@ -683,6 +702,11 @@
             <input id="advisorName" type="text" readonly aria-readonly="true"
               placeholder="Se llenará automáticamente">
           </div>
+        </div>
+
+        <div id="repeatEntryNotice" class="repeat-entry-notice">
+          Registro adicional del día: este asesor ya realizó su primer reporte.
+          Solo será necesario completar los pasos 1 y 3.
         </div>
 
         <div id="status1" class="status"></div>
@@ -862,6 +886,8 @@
     let clientCount = 0;
     let evidenceData = [];
     let reportFinalized = false;
+    let repeatEntryMode = false;
+    let inheritedDailyReport = null;
 
     const $ = (id) => document.getElementById(id);
     const text = (id) => ($(id)?.value || "").trim();
@@ -923,11 +949,34 @@
 
     function nextStep(step){
       if(reportFinalized) return;
-      if(validateStep(step)) showStep(step+1);
+      if(!validateStep(step)) return;
+
+      if(repeatEntryMode && step === 1){
+        showStep(3);
+        return;
+      }
+
+      if(repeatEntryMode && step === 3){
+        showStep(5);
+        return;
+      }
+
+      showStep(step+1);
     }
 
     function prevStep(step){
       if(reportFinalized) return;
+
+      if(repeatEntryMode && step === 3){
+        showStep(1);
+        return;
+      }
+
+      if(repeatEntryMode && step === 5){
+        showStep(3);
+        return;
+      }
+
       showStep(step-1);
     }
 
@@ -941,7 +990,7 @@
         }
       }
 
-      if(step === 2){
+      if(step === 2 && !repeatEntryMode){
         const method = document.querySelector('input[name="prospecting"]:checked');
         const contactsText = text("peopleContacted");
         const appointmentsText = text("appointmentsGenerated");
@@ -1011,7 +1060,7 @@
         }
       }
 
-      if(step === 4){
+      if(step === 4 && !repeatEntryMode){
         const required = ["promiseDate","promisePlace","promiseMethod","contactGoal","appointmentGoal","promiseDescription"];
         if(required.some(id=>!text(id))){
           setStatus(4,"Completa todos los campos obligatorios del plan de trabajo.");
@@ -1238,7 +1287,12 @@
         contactGoal:text("contactGoal"),
         appointmentGoal:text("appointmentGoal"),
         promiseDescription:text("promiseDescription"),
-        clients:getClients()
+        clients:getClients(),
+        repeatEntry:repeatEntryMode,
+        inheritedFromReportId:
+          inheritedDailyReport?.reportId
+          || inheritedDailyReport?.id
+          || ""
       };
     }
 
@@ -1672,6 +1726,89 @@
     }
 
 
+
+    window.setRepeatEntryMode = function(isRepeat, previousReport=null){
+      repeatEntryMode = Boolean(isRepeat);
+      inheritedDailyReport = repeatEntryMode ? previousReport : null;
+
+      document.body.classList.toggle(
+        "repeat-entry-mode",
+        repeatEntryMode
+      );
+
+      const notice = $("repeatEntryNotice");
+      if(notice){
+        notice.classList.toggle("show",repeatEntryMode);
+      }
+
+      if(repeatEntryMode && previousReport){
+        const previousMethod = previousReport.prospecting || "";
+
+        document.querySelectorAll(
+          'input[name="prospecting"]'
+        ).forEach(input=>{
+          input.checked = input.value === previousMethod;
+        });
+
+        $("activityPlace").value =
+          previousReport.activityPlace || "";
+        $("activitySchedule").value =
+          previousReport.activitySchedule || "";
+        $("peopleContacted").value = "0";
+        $("appointmentsGenerated").value = "0";
+        $("activityDescription").value =
+          previousReport.activityDescription
+          || "Registro adicional de clientes del mismo día.";
+        $("descriptionCount").textContent =
+          $("activityDescription").value.length;
+
+        const previousPlan = previousReport.plan || {};
+        $("promiseDate").value =
+          previousPlan.date || tomorrowISO();
+        $("promisePlace").value =
+          previousPlan.place || "";
+        $("promiseMethod").value =
+          previousPlan.method || "";
+        $("promiseSchedule").value =
+          previousPlan.schedule || "";
+        $("contactGoal").value =
+          previousPlan.contactGoal ?? "";
+        $("appointmentGoal").value =
+          previousPlan.appointmentGoal ?? "";
+        $("promiseDescription").value =
+          previousPlan.description || "";
+
+        setStatus(
+          1,
+          "Este asesor ya tiene un reporte hoy. Al continuar pasarás directamente a Clientes y prospectos.",
+          "ok"
+        );
+      }else{
+        document.querySelectorAll(
+          'input[name="prospecting"]'
+        ).forEach(input=>{
+          input.checked = false;
+        });
+
+        $("activityPlace").value = "";
+        $("activitySchedule").value = "";
+        $("peopleContacted").value = "";
+        $("appointmentsGenerated").value = "";
+        $("activityDescription").value = "";
+        $("descriptionCount").textContent = "0";
+
+        $("promiseDate").value = tomorrowISO();
+        $("promisePlace").value = "";
+        $("promiseMethod").value = "";
+        $("promiseSchedule").value = "";
+        $("contactGoal").value = "";
+        $("appointmentGoal").value = "";
+        $("promiseDescription").value = "";
+
+        clearStatus(1);
+      }
+    };
+
     window.prepareAdvisorSession = function(profile){
       window.currentUserProfile = profile;
       $("advisorName").value = profile.name || "";
@@ -1726,6 +1863,10 @@
       $("descriptionCount").textContent = "0";
       showStep(1);
       setFinalizedState(false);
+
+      if(repeatEntryMode && inheritedDailyReport){
+        window.setRepeatEntryMode(true,inheritedDailyReport);
+      }
     };
 
     function setFinalizedState(isFinalized){
@@ -1780,7 +1921,7 @@
         await window.saveFinalizedReportToFirebase(data);
         localStorage.removeItem(userStorageKey("actividadComercialDraft"));
         setFinalizedState(true);
-        setStatus(5,"Reporte guardado en Firebase, finalizado y bloqueado. Ya puedes compartirlo o descargarlo.","ok");
+        setStatus(5,"Información enviada correctamente. Ya puedes compartirla o descargarla.","ok");
       }catch(error){
         finalizeButton.disabled = false;
         setStatus(5,error?.message || "No fue posible guardar el reporte en Firebase.");
@@ -1846,6 +1987,6 @@
     </div>
   </div>
 
-  <script type="module" src="app-firebase.js?v=20260724-06"></script>
+  <script type="module" src="app-firebase.js?v=20260724-07"></script>
 </body>
 </html>

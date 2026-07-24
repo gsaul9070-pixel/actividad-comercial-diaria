@@ -94,7 +94,24 @@ function showConfigurationError(message){
   }
 }
 
-function activateAdvisor(employeeNumber){
+let advisorActivationToken = 0;
+
+function reportTimestampValue(report){
+  if(report.createdAt?.toMillis){
+    return report.createdAt.toMillis();
+  }
+
+  const localValue =
+    report.createdAtLocal
+    || report.createdAt
+    || "";
+
+  const parsed = new Date(localValue).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+async function activateAdvisor(employeeNumber){
+  const activationToken = ++advisorActivationToken;
   const profile = advisors.find(
     advisor => advisor.employeeNumber === employeeNumber
   );
@@ -107,6 +124,7 @@ function activateAdvisor(employeeNumber){
       "Selecciona un asesor";
     document.getElementById("sessionMeta").textContent =
       "Captura directa sin inicio de sesión";
+    window.setRepeatEntryMode?.(false,null);
     return;
   }
 
@@ -118,6 +136,52 @@ function activateAdvisor(employeeNumber){
     active:true,
     accessMode:"public_selector"
   });
+
+  window.setRepeatEntryMode?.(false,null);
+
+  try{
+    const reportSnapshots = await getDocs(
+      query(
+        collection(db,REPORTS_COLLECTION),
+        where(
+          "advisorEmployeeNumber",
+          "==",
+          profile.employeeNumber
+        )
+      )
+    );
+
+    if(activationToken !== advisorActivationToken) return;
+
+    const today = currentLocalDate();
+    const reportsToday = reportSnapshots.docs
+      .map(item=>({
+        id:item.id,
+        ...item.data()
+      }))
+      .filter(report=>
+        report.createdDate === today
+        && report.status !== "cancelled"
+      )
+      .sort(
+        (a,b)=>
+          reportTimestampValue(b)
+          - reportTimestampValue(a)
+      );
+
+    const previousReport = reportsToday[0] || null;
+
+    window.setRepeatEntryMode?.(
+      Boolean(previousReport),
+      previousReport
+    );
+  }catch(error){
+    console.error(
+      "No fue posible validar registros previos:",
+      error
+    );
+    window.setRepeatEntryMode?.(false,null);
+  }
 }
 
 const hasPlaceholder = Object.values(firebaseConfig).some(value =>
@@ -173,8 +237,8 @@ if(hasPlaceholder){
     }
   );
 
-  advisorSelector.addEventListener("change",()=>{
-    activateAdvisor(advisorSelector.value);
+  advisorSelector.addEventListener("change",async ()=>{
+    await activateAdvisor(advisorSelector.value);
   });
 
   window.logoutCommercialUser = function(){
@@ -469,14 +533,23 @@ if(hasPlaceholder){
       advisorName:profile.name,
       advisorEmployeeNumber:profile.employeeNumber,
       advisorRole:"advisor",
+      entryType:data.repeatEntry
+        ? "additional_client"
+        : "daily_full_report",
+      inheritedFromReportId:
+        data.inheritedFromReportId || "",
       createdDate:reportDate,
       createdAt:serverTimestamp(),
       createdAtLocal:data.createdAt,
       prospecting:data.prospecting,
       activityPlace:data.activityPlace,
       activitySchedule:data.activitySchedule,
-      contacts:Number(data.peopleContacted || 0),
-      appointmentsGenerated:Number(data.appointmentsGenerated || 0),
+      contacts:data.repeatEntry
+        ? 0
+        : Number(data.peopleContacted || 0),
+      appointmentsGenerated:data.repeatEntry
+        ? 0
+        : Number(data.appointmentsGenerated || 0),
       activityDescription:data.activityDescription,
       clients,
       clientCount:clients.length,
