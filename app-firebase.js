@@ -74,7 +74,14 @@ function currentLocalDate(){
 }
 
 function reportDocumentId(employeeNumber, date){
-  return `${employeeNumber}_${date}`;
+  const timestamp = Date.now();
+  const randomPart = (
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID().slice(0,8)
+      : Math.random().toString(36).slice(2,10)
+  );
+
+  return `${employeeNumber}_${date}_${timestamp}_${randomPart}`;
 }
 
 function showConfigurationError(message){
@@ -457,6 +464,7 @@ if(hasPlaceholder){
     ).length;
 
     const payload = {
+      reportId,
       advisorUid:`employee-${profile.employeeNumber}`,
       advisorName:profile.name,
       advisorEmployeeNumber:profile.employeeNumber,

@@ -722,12 +722,16 @@
             <input id="activitySchedule" type="text" placeholder="Ej. 10:00 a 13:00">
           </div>
           <div class="field">
-            <label for="peopleContacted">Contactos</label>
-            <input id="peopleContacted" type="number" min="0" inputmode="numeric" placeholder="Ej. 12">
+            <label class="required" for="peopleContacted">Contactos</label>
+            <input id="peopleContacted" type="number" min="0" max="99"
+              inputmode="numeric" placeholder="Ej. 12" required
+              oninput="if(this.value.length>2)this.value=this.value.slice(0,2);if(Number(this.value)>99)this.value='99'">
           </div>
           <div class="field">
-            <label for="appointmentsGenerated">Citas generadas</label>
-            <input id="appointmentsGenerated" type="number" min="0" inputmode="numeric" placeholder="Ej. 2">
+            <label class="required" for="appointmentsGenerated">Citas generadas</label>
+            <input id="appointmentsGenerated" type="number" min="0" max="99"
+              inputmode="numeric" placeholder="Ej. 2" required
+              oninput="if(this.value.length>2)this.value=this.value.slice(0,2);if(Number(this.value)>99)this.value='99'">
           </div>
           <div class="field full">
             <label class="required" for="activityDescription">Descripción real y detallada</label>
@@ -939,10 +943,37 @@
 
       if(step === 2){
         const method = document.querySelector('input[name="prospecting"]:checked');
-        if(!method || !text("activityPlace") || !text("activityDescription")){
-          setStatus(2,"Selecciona el medio de prospección y completa el lugar y la descripción.");
+        const contactsText = text("peopleContacted");
+        const appointmentsText = text("appointmentsGenerated");
+        const contacts = Number(contactsText);
+        const appointments = Number(appointmentsText);
+
+        if(
+          !method
+          || !text("activityPlace")
+          || !text("activityDescription")
+          || contactsText === ""
+          || appointmentsText === ""
+        ){
+          setStatus(
+            2,
+            "Selecciona el medio de prospección y completa lugar, contactos, citas y descripción."
+          );
           return false;
         }
+
+        if(
+          !Number.isInteger(contacts)
+          || contacts < 0
+          || contacts > 99
+          || !Number.isInteger(appointments)
+          || appointments < 0
+          || appointments > 99
+        ){
+          setStatus(2,"Contactos y citas deben ser números de 0 a 99.");
+          return false;
+        }
+
         if(text("activityDescription").length < 30){
           setStatus(2,"La descripción debe explicar brevemente qué hiciste, cómo y dónde.");
           return false;
@@ -963,8 +994,9 @@
           const phone = text(`clientPhone${idx}`);
           const company = text(`clientCompany${idx}`);
           const points = Number(text(`clientPoints${idx}`));
+          const result = text(`clientResult${idx}`);
           const notes = text(`clientNotes${idx}`);
-          if(!name || !nss || !phone || !company || !notes){
+          if(!name || !nss || !phone || !company || !result || !notes){
             setStatus(3,`Completa los campos obligatorios del Cliente ${idx}.`);
             return false;
           }
@@ -1123,11 +1155,14 @@
           </div>
           <div class="field">
             <label class="required" for="clientResult${idx}">Resultado del contacto</label>
-            <select id="clientResult${idx}">
+            <select id="clientResult${idx}" required>
               <option value="">Seleccionar...</option>
               <option ${data.result==="Posible cita"?"selected":""}>Posible cita</option>
               <option ${data.result==="Cita agendada"?"selected":""}>Cita agendada</option>
               <option ${(data.result==="Enviar información" || data.result==="Información pendiente")?"selected":""}>Enviar información</option>
+              <option ${data.result==="Regresar llamada"?"selected":""}>Regresar llamada</option>
+              <option ${data.result==="Inconsistencia de documentos"?"selected":""}>Inconsistencia de documentos</option>
+              <option ${data.result==="Inconsistencia de datos"?"selected":""}>Inconsistencia de datos</option>
               <option ${data.result==="Trámite realizado"?"selected":""}>Trámite realizado</option>
             </select>
           </div>
@@ -1811,6 +1846,6 @@
     </div>
   </div>
 
-  <script type="module" src="app-firebase.js?v=20260723-05"></script>
+  <script type="module" src="app-firebase.js?v=20260724-06"></script>
 </body>
 </html>

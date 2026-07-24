@@ -1,15 +1,24 @@
-ACTUALIZACIÓN DE BOTONES
+ACTUALIZACIÓN — ACUMULACIÓN DE REPORTES Y VALIDACIONES
 
 Reemplaza en GitHub:
 - index.html
+- app-firebase.js
 - dashboard.html
 - dashboard.js
 
 Cambios:
-1. Se quitaron de la captura los botones:
-   - Administrar empleados
-   - Abrir dashboard
-2. En el dashboard se colocaron:
-   - Administrar empleados (protegido con contraseña)
-   - Abrir captura
-3. No es necesario modificar las reglas de Firebase.
+1. Nuevos resultados:
+   - Regresar llamada
+   - Inconsistencia de documentos
+   - Inconsistencia de datos
+2. Contactos y citas son obligatorios y aceptan de 0 a 99.
+3. Resultado del contacto es obligatorio.
+4. Cada envío crea un registro único.
+5. Los reportes del mismo asesor y fecha ya no reemplazan al anterior.
+6. Dashboard y Excel mostrarán todos los registros acumulados.
+7. Editar un reporte conserva su identificador único.
+
+No es necesario cambiar las reglas de Firebase.
+
+Los registros sobrescritos antes de esta actualización no pueden
+recuperarse automáticamente.

@@ -602,6 +602,46 @@ if(Object.values(firebaseConfig).some(value =>
       return;
     }
 
+    const contacts = Number(
+      document.getElementById("editReportContacts").value
+    );
+    const appointments = Number(
+      document.getElementById("editReportAppointments").value
+    );
+
+    if(
+      !Number.isInteger(contacts)
+      || contacts < 0
+      || contacts > 99
+      || !Number.isInteger(appointments)
+      || appointments < 0
+      || appointments > 99
+    ){
+      setBox(
+        "reportEditError",
+        "Contactos y citas deben ser números de 0 a 99."
+      );
+      return;
+    }
+
+    if(
+      clients.length === 0
+      || clients.some(client=>
+        !client.name
+        || !client.nss
+        || !client.phone
+        || !client.company
+        || !client.result
+        || !client.notes
+      )
+    ){
+      setBox(
+        "reportEditError",
+        "Completa los campos obligatorios de todos los clientes."
+      );
+      return;
+    }
+
     saveButton.disabled = true;
     saveButton.textContent = "Guardando…";
 
@@ -736,7 +776,29 @@ if(Object.values(firebaseConfig).some(value =>
           <div><label>Empresa</label><input data-field="company" value="${esc(client.company || "")}"></div>
           <div><label>Puntos</label><input data-field="points" type="number" min="0" value="${Number(client.points || 0)}"></div>
           <div><label>AFORE</label><input data-field="afore" value="${esc(client.afore || "")}"></div>
-          <div><label>Resultado</label><input data-field="result" value="${esc(client.result || "")}"></div>
+          <div>
+            <label>Resultado</label>
+            <select data-field="result" required>
+              <option value="">Seleccionar...</option>
+              ${[
+                "Posible cita",
+                "Cita agendada",
+                "Enviar información",
+                "Regresar llamada",
+                "Inconsistencia de documentos",
+                "Inconsistencia de datos",
+                "Trámite realizado"
+              ].map(option=>
+                `<option value="${esc(option)}" ${
+                  (client.result === option
+                    || (option === "Enviar información"
+                      && client.result === "Información pendiente"))
+                    ? "selected"
+                    : ""
+                }>${esc(option)}</option>`
+              ).join("")}
+            </select>
+          </div>
           <div><label>Fecha posible de cita</label><input data-field="appointment" type="date" value="${esc(client.appointment || "")}"></div>
           <div class="full"><label>Observación</label><textarea data-field="notes">${esc(client.notes || "")}</textarea></div>
         </div>
@@ -855,7 +917,6 @@ if(Object.values(firebaseConfig).some(value =>
     };
     const createdDate = document.getElementById("editReportDate").value;
     const clients = collectEditedClients();
-    const targetId = `${employeeNumber}_${createdDate}`;
     const saveButton = document.getElementById("reportEditSaveButton");
 
     if(!employeeNumber || !createdDate){
@@ -867,18 +928,6 @@ if(Object.values(firebaseConfig).some(value =>
     saveButton.textContent = "Guardando…";
 
     try{
-      if(targetId !== originalId){
-        const targetSnapshot = await getDoc(
-          doc(db, REPORTS_COLLECTION, targetId)
-        );
-
-        if(targetSnapshot.exists()){
-          throw new Error(
-            "Ya existe un reporte para ese asesor en la fecha seleccionada."
-          );
-        }
-      }
-
       const reviewStatus = document.getElementById("editReportReview").value;
       const status = document.getElementById("editReportStatus").value;
       const procedureCount = clients.filter(
@@ -894,10 +943,8 @@ if(Object.values(firebaseConfig).some(value =>
         prospecting:document.getElementById("editReportProspecting").value.trim(),
         activityPlace:document.getElementById("editReportPlace").value.trim(),
         activitySchedule:document.getElementById("editReportSchedule").value.trim(),
-        contacts:Number(document.getElementById("editReportContacts").value || 0),
-        appointmentsGenerated:Number(
-          document.getElementById("editReportAppointments").value || 0
-        ),
+        contacts,
+        appointmentsGenerated:appointments,
         activityDescription:
           document.getElementById("editReportDescription").value.trim(),
         clients,
@@ -941,20 +988,10 @@ if(Object.values(firebaseConfig).some(value =>
         editedByName:state.manager.name
       };
 
-      if(targetId === originalId){
-        await updateDoc(doc(db, REPORTS_COLLECTION, originalId),changes);
-      }else{
-        const batch = writeBatch(db);
-        batch.set(
-          doc(db, REPORTS_COLLECTION, targetId),
-          {
-            ...original,
-            ...changes
-          }
-        );
-        batch.delete(doc(db, REPORTS_COLLECTION, originalId));
-        await batch.commit();
-      }
+      await updateDoc(
+        doc(db, REPORTS_COLLECTION, originalId),
+        changes
+      );
 
       setBox("reportEditSuccess","Reporte actualizado correctamente.","success");
       setTimeout(()=>window.closeModal("reportEditModal"),700);
