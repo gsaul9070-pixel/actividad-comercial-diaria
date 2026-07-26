@@ -178,6 +178,23 @@
             <label for="advisorName">Nombre completo</label>
             <input id="advisorName" maxlength="160" required>
           </div>
+          <div class="full">
+            <label for="advisorPin">PIN de acceso</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="advisorPin" type="password"
+                inputmode="numeric" maxlength="4"
+                pattern="[0-9]{4}"
+                placeholder="4 dígitos">
+              <button class="soft" type="button"
+                onclick="window.generateAdvisorPin()">
+                Generar PIN
+              </button>
+            </div>
+            <p class="helper">
+              Para editar un empleado, deja el PIN vacío si deseas conservarlo.
+              Si cambias el número de empleado, asigna un PIN nuevo.
+            </p>
+          </div>
         </div>
         <p class="helper">Al guardar, el asesor aparecerá en la lista de selección del portal de captura.</p>
         <div id="advisorError" class="error"></div>
@@ -279,6 +296,6 @@
   </div>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script type="module" src="dashboard.js?v=20260724-06"></script>
+  <script type="module" src="dashboard.js?v=20260725-09"></script>
 </body>
 </html>

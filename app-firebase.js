@@ -5,14 +5,10 @@ import {
   doc,
   getDoc,
   getDocs,
-  onSnapshot,
   query,
   where,
   setDoc,
-  updateDoc,
-  deleteDoc,
-  serverTimestamp,
-  writeBatch
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 import {
@@ -21,59 +17,72 @@ import {
   REPORTS_COLLECTION
 } from "./firebase-config.js";
 
-const advisorSelector = document.getElementById("advisorSelector");
-const appRoot = document.getElementById("appRoot");
-let advisors = [];
-let allAdvisors = [];
-let employeeManagerUnlockedUntil = 0;
+const INITIAL_PIN_HASHES = {
+  "130257": "99529c2976202f50fed82d5c940126be745a5ac2a20e864e3ceaf24658f0af32",
+  "152642": "d7fcb83baff340632f21132053f767e40b38be6bc8202f2282689db95b0567be",
+  "158311": "472103ca9d0cc86abc0b5912161938d8f892b281e182a3538e84e1fa3aae11e5",
+  "161328": "bf26fde81678761ffc17a8b7d035b5add4e35a519042b6bb09a221b815a74563",
+  "162129": "f801ae1c445a21eafa59d53271fab28a012c3c594163cad56a4c264fd403bb94",
+  "164641": "c3e8a20da78d7fdcc547a3f822b184efdf34867567864332248ea07ed96f8892",
+  "165555": "840bdc7edae5507ecfc5d40028f473370998314b798a6559f65d2566ad5133ab",
+  "169527": "d0e8d98bdf542abb3ec72604e5675dd592a470bec7a39d4dacdb718e32e9d2b1",
+  "169884": "80fc610537ed26e2cd61bbfe4f2f9d08da333ca96b6983e41b7002d8c120a43c",
+  "171033": "2bd74ca25282ca2947279b7224986049b494905b048ab8b11bf828a6647efdb4",
+  "171155": "f72b1863e685713a80d9dbeeb9cc90a31a7c696a52bbe97421f44be9fb80da79",
+  "172247": "8e3067bef11dac1c37508aa3f9bc626172786f3e002bcdf1cf0b36715dd7d338",
+  "172852": "e9b08f027d649403701647e92db43485b016c232b7dd60f9c374f1ddfef6e7f7",
+  "173151": "2966a0f8d5b2b3f83911fb5cb03397a72466a88dd9b9ed5a7710d58650db52e3",
+  "173159": "86057ebdac4b526ced430f5ae2490d8675c66be5b8cba5eab146121125bb59f4",
+  "502488": "a8486ecf79291f49ca260fdc11e3309a65ed5437693e2026452f320286e5f520"
+};
 
-const ADMIN_PASSWORD_HASH =
-  "26afffd013603c1547932de323cc757340eeeefac0dd4f085697751b4792afd5";
+const authScreen = document.getElementById("advisorAuthScreen");
+const appRoot = document.getElementById("appRoot");
+const loginForm = document.getElementById("advisorLoginForm");
+const loginButton = document.getElementById("advisorLoginButton");
+const loginError = document.getElementById("advisorLoginError");
+const loginEmployeeNumber =
+  document.getElementById("loginEmployeeNumber");
+const loginPin = document.getElementById("loginPin");
+
+let failedAttempts = 0;
+let lockedUntil = 0;
+let advisorActivationToken = 0;
+
+const normalizeEmployeeNumber = value =>
+  String(value || "").replace(/\D/g,"");
 
 async function sha256(value){
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-256",bytes);
+
   return [...new Uint8Array(digest)]
     .map(byte=>byte.toString(16).padStart(2,"0"))
     .join("");
 }
 
-async function requireEmployeeAdminPassword(){
-  if(Date.now() < employeeManagerUnlockedUntil) return true;
-
-  const password = prompt(
-    "Ingresa la contraseña para administrar empleados:"
-  );
-
-  if(password === null) return false;
-
-  if(await sha256(password) !== ADMIN_PASSWORD_HASH){
-    alert("Contraseña incorrecta.");
-    return false;
-  }
-
-  employeeManagerUnlockedUntil = Date.now() + (10 * 60 * 1000);
-  return true;
+function setLoginError(message=""){
+  loginError.textContent = message;
+  loginError.classList.toggle("show",Boolean(message));
 }
 
-const normalizeEmployeeNumber = value =>
-  String(value || "").replace(/\D/g,"");
-
-function setEmployeeManagerMessage(message="",type="error"){
-  const box = document.getElementById("employeeManagerMessage");
-  if(!box) return;
-  box.textContent = message;
-  box.className = `employee-admin-message ${type}`;
-  if(message) box.classList.add("show");
+function setLoginBusy(isBusy){
+  loginButton.disabled = isBusy;
+  loginButton.textContent = isBusy
+    ? "Validando…"
+    : "Ingresar";
 }
 
 function currentLocalDate(){
   const date = new Date();
   const offset = date.getTimezoneOffset();
-  return new Date(date.getTime() - offset * 60000).toISOString().slice(0,10);
+
+  return new Date(
+    date.getTime() - offset * 60000
+  ).toISOString().slice(0,10);
 }
 
-function reportDocumentId(employeeNumber, date){
+function reportDocumentId(employeeNumber,date){
   const timestamp = Date.now();
   const randomPart = (
     typeof crypto !== "undefined" && crypto.randomUUID
@@ -83,18 +92,6 @@ function reportDocumentId(employeeNumber, date){
 
   return `${employeeNumber}_${date}_${timestamp}_${randomPart}`;
 }
-
-function showConfigurationError(message){
-  const status = document.getElementById("status1");
-  if(status){
-    status.textContent = message;
-    status.className = "status error show";
-  } else {
-    alert(message);
-  }
-}
-
-let advisorActivationToken = 0;
 
 function reportTimestampValue(report){
   if(report.createdAt?.toMillis){
@@ -110,37 +107,26 @@ function reportTimestampValue(report){
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-async function activateAdvisor(employeeNumber){
-  const activationToken = ++advisorActivationToken;
-  const profile = advisors.find(
-    advisor => advisor.employeeNumber === employeeNumber
+const hasPlaceholder = Object.values(firebaseConfig).some(
+  value=>String(value).includes("REEMPLAZAR")
+);
+
+let db = null;
+
+if(hasPlaceholder){
+  setLoginError(
+    "Falta configurar Firebase en firebase-config.js."
   );
+}else{
+  const firebaseApp = initializeApp(firebaseConfig);
+  db = getFirestore(firebaseApp);
+}
 
-  if(!profile){
-    window.currentUserProfile = null;
-    document.getElementById("advisorName").value = "";
-    document.getElementById("employeeNumber").value = "";
-    document.getElementById("sessionName").textContent =
-      "Selecciona un asesor";
-    document.getElementById("sessionMeta").textContent =
-      "Captura directa sin inicio de sesión";
-    window.setRepeatEntryMode?.(false,null);
-    return;
-  }
-
-  window.prepareAdvisorSession({
-    uid:`employee-${profile.employeeNumber}`,
-    employeeNumber:profile.employeeNumber,
-    name:profile.name,
-    role:"advisor",
-    active:true,
-    accessMode:"public_selector"
-  });
-
-  window.setRepeatEntryMode?.(false,null);
+async function detectRepeatEntry(profile){
+  const activationToken = ++advisorActivationToken;
 
   try{
-    const reportSnapshots = await getDocs(
+    const snapshots = await getDocs(
       query(
         collection(db,REPORTS_COLLECTION),
         where(
@@ -154,7 +140,7 @@ async function activateAdvisor(employeeNumber){
     if(activationToken !== advisorActivationToken) return;
 
     const today = currentLocalDate();
-    const reportsToday = reportSnapshots.docs
+    const reportsToday = snapshots.docs
       .map(item=>({
         id:item.id,
         ...item.data()
@@ -184,394 +170,235 @@ async function activateAdvisor(employeeNumber){
   }
 }
 
-const hasPlaceholder = Object.values(firebaseConfig).some(value =>
-  String(value).includes("REEMPLAZAR")
-);
-
-appRoot.classList.remove("hidden");
-
-if(hasPlaceholder){
-  showConfigurationError(
-    "Falta colocar la configuración real de Firebase en firebase-config.js."
-  );
-} else {
-  const firebaseApp = initializeApp(firebaseConfig);
-  const db = getFirestore(firebaseApp);
-
-  onSnapshot(
-    collection(db, ADVISORS_COLLECTION),
-    snapshot=>{
-      const selected = advisorSelector.value;
-
-      allAdvisors = snapshot.docs
-        .map(item=>({
-          employeeNumber:item.id,
-          ...item.data()
-        }))
-        .sort((a,b)=>(a.name || "").localeCompare(b.name || ""));
-
-      advisors = allAdvisors.filter(
-        advisor=>advisor.active === true
-      );
-
-      renderEmployeeManager();
-
-      advisorSelector.innerHTML =
-        '<option value="">Selecciona un número de empleado</option>' +
-        advisors.map(advisor=>
-          `<option value="${advisor.employeeNumber}">${advisor.employeeNumber}</option>`
-        ).join("");
-
-      if(advisors.some(item=>item.employeeNumber === selected)){
-        advisorSelector.value = selected;
-        activateAdvisor(selected);
-      } else {
-        activateAdvisor("");
-      }
-    },
-    error=>{
-      console.error(error);
-      showConfigurationError(
-        "No fue posible cargar la lista de asesores desde Firebase."
-      );
-    }
-  );
-
-  advisorSelector.addEventListener("change",async ()=>{
-    await activateAdvisor(advisorSelector.value);
-  });
-
-  window.logoutCommercialUser = function(){
-    advisorSelector.value = "";
-    activateAdvisor("");
-    window.resetCommercialFormForSession();
-  };
-
-
-  function renderEmployeeManager(){
-    const container = document.getElementById("employeeManagerList");
-    if(!container) return;
-
-    if(!allAdvisors.length){
-      container.innerHTML =
-        '<div class="employee-admin-note">No hay empleados registrados.</div>';
-      return;
-    }
-
-    container.innerHTML = allAdvisors.map(employee=>`
-      <div class="employee-admin-row">
-        <strong>${employee.employeeNumber}</strong>
-        <div>
-          <b>${String(employee.name || "").replaceAll("<","&lt;")}</b><br>
-          <span class="employee-admin-note">
-            ${employee.active === true ? "Activo" : "Inactivo"}
-          </span>
-        </div>
-        <div class="employee-admin-actions">
-          <button class="btn-soft" type="button"
-            onclick="window.editManagedEmployee('${employee.employeeNumber}')">
-            Editar
-          </button>
-          <button class="btn-soft" type="button"
-            onclick="window.toggleManagedEmployee(
-              '${employee.employeeNumber}',${employee.active !== true}
-            )">
-            ${employee.active === true ? "Desactivar" : "Activar"}
-          </button>
-          <button class="btn-danger" type="button"
-            onclick="window.deleteManagedEmployee(
-              '${employee.employeeNumber}'
-            )">
-            Eliminar
-          </button>
-        </div>
-      </div>
-    `).join("");
+async function authenticateAdvisor(employeeNumber,pin){
+  if(!db){
+    throw new Error("Firebase no está disponible.");
   }
 
-  function resetEmployeeManagerForm(){
-    document.getElementById("employeeManagerForm").reset();
-    document.getElementById("employeeManagerOriginalNumber").value = "";
-    document.getElementById("employeeManagerActive").checked = true;
-    document.getElementById("employeeManagerSaveButton").textContent =
-      "Guardar empleado";
-  }
-
-  window.openEmployeeManager = async function(){
-    if(!await requireEmployeeAdminPassword()) return;
-    resetEmployeeManagerForm();
-    setEmployeeManagerMessage();
-    renderEmployeeManager();
-    document.getElementById("employeeManagerModal").classList.add("show");
-  };
-
-  window.closeEmployeeManager = function(){
-    document.getElementById("employeeManagerModal").classList.remove("show");
-    resetEmployeeManagerForm();
-    setEmployeeManagerMessage();
-  };
-
-  window.editManagedEmployee = async function(employeeNumber){
-    if(!await requireEmployeeAdminPassword()) return;
-
-    const employee = allAdvisors.find(
-      item=>item.employeeNumber === employeeNumber
-    );
-    if(!employee) return;
-
-    document.getElementById("employeeManagerOriginalNumber").value =
-      employee.employeeNumber;
-    document.getElementById("employeeManagerNumber").value =
-      employee.employeeNumber;
-    document.getElementById("employeeManagerName").value =
-      employee.name || "";
-    document.getElementById("employeeManagerActive").checked =
-      employee.active === true;
-    document.getElementById("employeeManagerSaveButton").textContent =
-      "Actualizar empleado";
-    setEmployeeManagerMessage();
-  };
-
-  document.getElementById("employeeManagerForm")
-    .addEventListener("submit",async event=>{
-      event.preventDefault();
-
-      if(!await requireEmployeeAdminPassword()) return;
-
-      setEmployeeManagerMessage();
-
-      const originalNumber = normalizeEmployeeNumber(
-        document.getElementById(
-          "employeeManagerOriginalNumber"
-        ).value
-      );
-      const employeeNumber = normalizeEmployeeNumber(
-        document.getElementById("employeeManagerNumber").value
-      );
-      const name = document.getElementById(
-        "employeeManagerName"
-      ).value.trim().toUpperCase();
-      const active = document.getElementById(
-        "employeeManagerActive"
-      ).checked;
-      const saveButton = document.getElementById(
-        "employeeManagerSaveButton"
-      );
-
-      if(employeeNumber.length < 3){
-        setEmployeeManagerMessage(
-          "Ingresa un número de empleado válido."
-        );
-        return;
-      }
-
-      if(!name){
-        setEmployeeManagerMessage("Ingresa el nombre completo.");
-        return;
-      }
-
-      saveButton.disabled = true;
-      saveButton.textContent = "Guardando…";
-
-      try{
-        const targetRef = doc(
-          db,ADVISORS_COLLECTION,employeeNumber
-        );
-        const targetSnapshot = await getDoc(targetRef);
-
-        if(
-          targetSnapshot.exists()
-          && employeeNumber !== originalNumber
-        ){
-          throw new Error(
-            "Ese número de empleado ya está registrado."
-          );
-        }
-
-        const employeeData = {
-          employeeNumber,
-          name,
-          role:"advisor",
-          active,
-          accessMode:"public_selector",
-          updatedAt:serverTimestamp(),
-          updatedBy:"password-admin"
-        };
-
-        if(!originalNumber){
-          await setDoc(targetRef,{
-            ...employeeData,
-            createdAt:serverTimestamp(),
-            createdBy:"password-admin"
-          });
-        }else if(originalNumber === employeeNumber){
-          await setDoc(targetRef,employeeData,{merge:true});
-        }else{
-          const batch = writeBatch(db);
-          batch.set(targetRef,{
-            ...employeeData,
-            createdAt:serverTimestamp(),
-            createdBy:"password-admin"
-          });
-          batch.delete(
-            doc(db,ADVISORS_COLLECTION,originalNumber)
-          );
-          await batch.commit();
-
-          const relatedReports = await getDocs(
-            query(
-              collection(db,REPORTS_COLLECTION),
-              where(
-                "advisorEmployeeNumber","==",originalNumber
-              )
-            )
-          );
-
-          for(const reportSnapshot of relatedReports.docs){
-            await updateDoc(reportSnapshot.ref,{
-              advisorUid:`employee-${employeeNumber}`,
-              advisorEmployeeNumber:employeeNumber,
-              advisorName:name,
-              updatedAt:serverTimestamp(),
-              editedBy:"password-admin"
-            });
-          }
-        }
-
-        setEmployeeManagerMessage(
-          "Empleado guardado correctamente.","success"
-        );
-        resetEmployeeManagerForm();
-      }catch(error){
-        console.error(error);
-        setEmployeeManagerMessage(
-          error?.message ||
-            "No fue posible guardar el empleado."
-        );
-      }finally{
-        saveButton.disabled = false;
-        if(
-          document.getElementById(
-            "employeeManagerOriginalNumber"
-          ).value
-        ){
-          saveButton.textContent = "Actualizar empleado";
-        }else{
-          saveButton.textContent = "Guardar empleado";
-        }
-      }
-    });
-
-  window.toggleManagedEmployee = async function(
-    employeeNumber,active
-  ){
-    if(!await requireEmployeeAdminPassword()) return;
-
-    const employee = allAdvisors.find(
-      item=>item.employeeNumber === employeeNumber
-    );
-    if(!employee) return;
-
-    const action = active ? "activar" : "desactivar";
-    if(!confirm(
-      `¿Deseas ${action} a ${employee.name}?`
-    )) return;
-
-    await updateDoc(
-      doc(db,ADVISORS_COLLECTION,employeeNumber),
-      {
-        active,
-        updatedAt:serverTimestamp(),
-        updatedBy:"password-admin"
-      }
-    );
-  };
-
-  window.deleteManagedEmployee = async function(
+  const employeeRef = doc(
+    db,
+    ADVISORS_COLLECTION,
     employeeNumber
-  ){
-    if(!await requireEmployeeAdminPassword()) return;
+  );
+  const employeeSnapshot = await getDoc(employeeRef);
 
-    const employee = allAdvisors.find(
-      item=>item.employeeNumber === employeeNumber
-    );
-    if(!employee) return;
+  if(!employeeSnapshot.exists()){
+    throw new Error("Usuario o PIN incorrectos.");
+  }
 
-    if(!confirm(
-      `¿Eliminar definitivamente a ${employee.name}?`
-      + "\n\nSus reportes históricos no se eliminarán."
-    )) return;
-
-    await deleteDoc(
-      doc(db,ADVISORS_COLLECTION,employeeNumber)
-    );
+  const employee = {
+    employeeNumber:employeeSnapshot.id,
+    ...employeeSnapshot.data()
   };
 
-  window.saveFinalizedReportToFirebase = async function(data){
-    const profile = window.currentUserProfile;
+  if(employee.active !== true){
+    throw new Error("Este usuario se encuentra inactivo.");
+  }
 
-    if(!profile || profile.role !== "advisor"){
-      throw new Error("Selecciona un asesor antes de guardar.");
-    }
+  const storedHash =
+    employee.pinHash
+    || INITIAL_PIN_HASHES[employeeNumber]
+    || "";
 
-    const reportDate = currentLocalDate();
-    const reportId = reportDocumentId(profile.employeeNumber, reportDate);
-    const reportRef = doc(db, REPORTS_COLLECTION, reportId);
+  const candidateHash = await sha256(
+    `${employeeNumber}:${pin}`
+  );
 
-    const clients = (data.clients || []).map(client=>({
-      ...client,
-      points:Number(client.points || 0)
-    }));
+  if(!storedHash || candidateHash !== storedHash){
+    throw new Error("Usuario o PIN incorrectos.");
+  }
 
-    const procedureCount = clients.filter(
-      client => client.result === "Trámite realizado"
-    ).length;
-
-    const payload = {
-      reportId,
-      advisorUid:`employee-${profile.employeeNumber}`,
-      advisorName:profile.name,
-      advisorEmployeeNumber:profile.employeeNumber,
-      advisorRole:"advisor",
-      entryType:data.repeatEntry
-        ? "additional_report_without_plan"
-        : "daily_full_report",
-      inheritedFromReportId:
-        data.inheritedFromReportId || "",
-      createdDate:reportDate,
-      createdAt:serverTimestamp(),
-      createdAtLocal:data.createdAt,
-      prospecting:data.prospecting,
-      activityPlace:data.activityPlace,
-      activitySchedule:data.activitySchedule,
-      contacts:Number(data.peopleContacted || 0),
-      appointmentsGenerated:Number(data.appointmentsGenerated || 0),
-      activityDescription:data.activityDescription,
-      clients,
-      clientCount:clients.length,
-      procedureCount,
-      planSkipped:data.repeatEntry === true,
-      plan:{
-        date:data.repeatEntry ? "" : data.promiseDate,
-        place:data.repeatEntry ? "" : data.promisePlace,
-        method:data.repeatEntry ? "" : data.promiseMethod,
-        schedule:data.repeatEntry ? "" : data.promiseSchedule,
-        contactGoal:data.repeatEntry
-          ? 0
-          : Number(data.contactGoal || 0),
-        appointmentGoal:data.repeatEntry
-          ? 0
-          : Number(data.appointmentGoal || 0),
-        description:data.repeatEntry ? "" : data.promiseDescription
+  if(!employee.pinHash && INITIAL_PIN_HASHES[employeeNumber]){
+    await setDoc(
+      employeeRef,
+      {
+        pinHash:INITIAL_PIN_HASHES[employeeNumber],
+        pinEnabled:true,
+        accessMode:"employee_pin",
+        pinUpdatedAt:serverTimestamp()
       },
-      status:"finalized",
-      reviewStatus:"pending",
-      reviewedAt:null,
-      reviewedBy:null,
-      updatedAt:serverTimestamp()
-    };
+      {merge:true}
+    );
+  }
 
-    await setDoc(reportRef,payload);
-    return reportId;
+  return {
+    uid:`employee-${employeeNumber}`,
+    employeeNumber,
+    name:employee.name || "Empleado",
+    role:"advisor",
+    active:true,
+    accessMode:"employee_pin"
   };
 }
+
+loginPin.addEventListener("input",event=>{
+  event.target.value = event.target.value
+    .replace(/\D/g,"")
+    .slice(0,4);
+});
+
+loginEmployeeNumber.addEventListener("input",event=>{
+  event.target.value = normalizeEmployeeNumber(
+    event.target.value
+  ).slice(0,10);
+});
+
+loginForm.addEventListener("submit",async event=>{
+  event.preventDefault();
+  setLoginError();
+
+  if(Date.now() < lockedUntil){
+    const seconds = Math.ceil(
+      (lockedUntil - Date.now()) / 1000
+    );
+    setLoginError(
+      `Demasiados intentos. Espera ${seconds} segundos.`
+    );
+    return;
+  }
+
+  const employeeNumber = normalizeEmployeeNumber(
+    loginEmployeeNumber.value
+  );
+  const pin = loginPin.value.trim();
+
+  if(employeeNumber.length < 3 || !/^\d{4}$/.test(pin)){
+    setLoginError(
+      "Ingresa tu número de empleado y un PIN de cuatro dígitos."
+    );
+    return;
+  }
+
+  setLoginBusy(true);
+
+  try{
+    const profile = await authenticateAdvisor(
+      employeeNumber,
+      pin
+    );
+
+    failedAttempts = 0;
+    lockedUntil = 0;
+
+    window.prepareAdvisorSession(profile);
+    window.resetCommercialFormForSession();
+    await detectRepeatEntry(profile);
+
+    authScreen.classList.add("hidden");
+    appRoot.classList.remove("hidden");
+    loginPin.value = "";
+  }catch(error){
+    console.error(error);
+    failedAttempts += 1;
+
+    if(failedAttempts >= 5){
+      lockedUntil = Date.now() + 60_000;
+      failedAttempts = 0;
+      setLoginError(
+        "Demasiados intentos. El acceso se bloqueó durante 60 segundos."
+      );
+    }else{
+      setLoginError(
+        error?.message || "No fue posible validar el acceso."
+      );
+    }
+  }finally{
+    setLoginBusy(false);
+  }
+});
+
+window.logoutCommercialUser = function(){
+  advisorActivationToken += 1;
+  window.currentUserProfile = null;
+  window.setRepeatEntryMode?.(false,null);
+
+  appRoot.classList.add("hidden");
+  authScreen.classList.remove("hidden");
+
+  loginForm.reset();
+  setLoginError();
+  loginEmployeeNumber.focus();
+};
+
+window.saveFinalizedReportToFirebase = async function(data){
+  const profile = window.currentUserProfile;
+
+  if(!profile || profile.role !== "advisor"){
+    throw new Error(
+      "La sesión del usuario ya no está disponible."
+    );
+  }
+
+  const reportDate = currentLocalDate();
+  const reportId = reportDocumentId(
+    profile.employeeNumber,
+    reportDate
+  );
+  const reportRef = doc(
+    db,
+    REPORTS_COLLECTION,
+    reportId
+  );
+
+  const clients = (data.clients || []).map(client=>({
+    ...client,
+    points:Number(client.points || 0)
+  }));
+
+  const procedureCount = clients.filter(
+    client=>client.result === "Trámite realizado"
+  ).length;
+
+  const payload = {
+    reportId,
+    advisorUid:`employee-${profile.employeeNumber}`,
+    advisorName:profile.name,
+    advisorEmployeeNumber:profile.employeeNumber,
+    advisorRole:"advisor",
+    entryType:data.repeatEntry
+      ? "additional_report_without_plan"
+      : "daily_full_report",
+    inheritedFromReportId:
+      data.inheritedFromReportId || "",
+    createdDate:reportDate,
+    createdAt:serverTimestamp(),
+    createdAtLocal:data.createdAt,
+    prospecting:data.prospecting,
+    activityPlace:data.activityPlace,
+    activitySchedule:data.activitySchedule,
+    contacts:Number(data.peopleContacted || 0),
+    appointmentsGenerated:Number(
+      data.appointmentsGenerated || 0
+    ),
+    activityDescription:data.activityDescription,
+    clients,
+    clientCount:clients.length,
+    procedureCount,
+    planSkipped:data.repeatEntry === true,
+    plan:{
+      date:data.repeatEntry ? "" : data.promiseDate,
+      place:data.repeatEntry ? "" : data.promisePlace,
+      method:data.repeatEntry ? "" : data.promiseMethod,
+      schedule:data.repeatEntry
+        ? ""
+        : data.promiseSchedule,
+      contactGoal:data.repeatEntry
+        ? 0
+        : Number(data.contactGoal || 0),
+      appointmentGoal:data.repeatEntry
+        ? 0
+        : Number(data.appointmentGoal || 0),
+      description:data.repeatEntry
+        ? ""
+        : data.promiseDescription
+    },
+    status:"finalized",
+    reviewStatus:"pending",
+    reviewedAt:null,
+    reviewedBy:null,
+    updatedAt:serverTimestamp()
+  };
+
+  await setDoc(reportRef,payload);
+  return reportId;
+};
