@@ -278,6 +278,7 @@ const ADMIN_PASSWORD_HASH =
   "26afffd013603c1547932de323cc757340eeeefac0dd4f085697751b4792afd5";
 let dashboardUnlockedUntil = 0;
 let dashboardAdminSecret = "";
+let cachedPinVaultKey = null;
 
 async function dashboardSha256(value){
   const bytes = new TextEncoder().encode(value);
@@ -326,6 +327,10 @@ function base64ToBytes(value){
 }
 
 async function derivePinVaultKey(password){
+  if(cachedPinVaultKey){
+    return cachedPinVaultKey;
+  }
+
   const sourceKey = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(password),
@@ -334,7 +339,7 @@ async function derivePinVaultKey(password){
     ["deriveKey"]
   );
 
-  return crypto.subtle.deriveKey(
+  cachedPinVaultKey = await crypto.subtle.deriveKey(
     {
       name:"PBKDF2",
       salt:new TextEncoder().encode(PIN_VAULT_SALT),
@@ -349,6 +354,8 @@ async function derivePinVaultKey(password){
     false,
     ["encrypt","decrypt"]
   );
+
+  return cachedPinVaultKey;
 }
 
 async function encryptAdvisorPin(pin){
@@ -417,10 +424,27 @@ async function decryptAdvisorPin(advisor){
 async function loadVisibleAdvisorPins(){
   const visiblePins = {};
 
-  for(const advisor of state.advisors){
-    const pin = await decryptAdvisorPin(advisor);
-    visiblePins[advisor.employeeNumber] =
-      pin || "No asignado";
+  try{
+    const results = await Promise.all(
+      state.advisors.map(async advisor=>{
+        const pin = await decryptAdvisorPin(advisor);
+        return [
+          advisor.employeeNumber,
+          pin || "No asignado"
+        ];
+      })
+    );
+
+    results.forEach(([employeeNumber,pin])=>{
+      visiblePins[employeeNumber] = pin;
+    });
+  }catch(error){
+    console.error("Error al cargar PIN:",error);
+
+    state.advisors.forEach(advisor=>{
+      visiblePins[advisor.employeeNumber] =
+        "No disponible";
+    });
   }
 
   state.visiblePins = visiblePins;
@@ -447,6 +471,9 @@ async function requireDashboardPassword(action="realizar este cambio"){
   }
 
   dashboardAdminSecret = password;
+  cachedPinVaultKey = null;
+  await derivePinVaultKey(password);
+
   dashboardUnlockedUntil =
     Date.now() + (10 * 60 * 1000);
   return true;
@@ -1624,15 +1651,7 @@ if(Object.values(firebaseConfig).some(value =>
     );
   });
 
-  window.openEmployeeAdministration = async function(){
-    if(
-      !await requireDashboardPassword(
-        "administrar empleados"
-      )
-    ) return;
-
-    await loadVisibleAdvisorPins();
-
+  function showEmployeePanel(){
     document.querySelectorAll(".tab").forEach(
       item=>item.classList.remove("active")
     );
@@ -1643,23 +1662,72 @@ if(Object.values(firebaseConfig).some(value =>
     const staffTab = document.querySelector(
       '.tab[data-panel="staffPanel"]'
     );
+
     staffTab?.classList.add("active");
-    document.getElementById("staffPanel")?.classList.add("active");
-    window.scrollTo({top:0,behavior:"smooth"});
+    document.getElementById(
+      "staffPanel"
+    )?.classList.add("active");
+
+    window.scrollTo({
+      top:0,
+      behavior:"smooth"
+    });
+  }
+
+  window.openEmployeeAdministration = async function(){
+    try{
+      const authorized = await requireDashboardPassword(
+        "administrar empleados"
+      );
+
+      if(!authorized) return;
+
+      showEmployeePanel();
+
+      document.getElementById(
+        "staffCount"
+      ).textContent = "Cargando empleados y PIN…";
+
+      await loadVisibleAdvisorPins();
+    }catch(error){
+      console.error(
+        "No fue posible abrir empleados:",
+        error
+      );
+
+      showEmployeePanel();
+      document.getElementById(
+        "staffCount"
+      ).textContent =
+        "La sección se abrió, pero no fue posible cargar los PIN.";
+    }
   };
 
   document.querySelectorAll(".tab").forEach(button=>{
     button.addEventListener("click",async ()=>{
       if(button.dataset.panel === "staffPanel"){
-        if(
-          !await requireDashboardPassword(
-            "administrar empleados"
-          )
-        ){
-          return;
+        try{
+          if(
+            !await requireDashboardPassword(
+              "administrar empleados"
+            )
+          ){
+            return;
+          }
+
+          showEmployeePanel();
+          document.getElementById(
+            "staffCount"
+          ).textContent =
+            "Cargando empleados y PIN…";
+
+          await loadVisibleAdvisorPins();
+        }catch(error){
+          console.error(error);
+          showEmployeePanel();
         }
 
-        await loadVisibleAdvisorPins();
+        return;
       }
 
       document.querySelectorAll(".tab").forEach(
@@ -1669,7 +1737,9 @@ if(Object.values(firebaseConfig).some(value =>
         panel=>panel.classList.remove("active")
       );
       button.classList.add("active");
-      document.getElementById(button.dataset.panel).classList.add("active");
+      document.getElementById(
+        button.dataset.panel
+      ).classList.add("active");
     });
   });
 

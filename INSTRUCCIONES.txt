@@ -1,21 +1,15 @@
-ACTUALIZACIÓN — PINES VISIBLES Y PERSISTENTES
+CORRECCIÓN — APERTURA DE ADMINISTRAR EMPLEADOS
 
 Reemplaza en GitHub:
 - dashboard.html
 - dashboard.js
 
-Cambios:
-1. La tabla de empleados muestra una columna PIN.
-2. Al entrar a Administrar empleados se descifran y muestran los PIN.
-3. Al editar un empleado, su PIN actual aparece en el formulario.
-4. Al modificar un PIN se guarda de forma cifrada y permanecerá visible
-   cuando vuelvas a abrir al empleado.
-5. Los PIN iniciales conocidos se migran automáticamente de forma cifrada.
-
-IMPORTANTE:
-Los PIN que fueron modificados antes de esta actualización solo se
-guardaron como hash y no se pueden reconstruir. En esos casos aparecerá
-"No asignado". Captura nuevamente el PIN una sola vez y desde entonces
-quedará visible y editable.
+Correcciones:
+1. La pestaña Administrar empleados se abre inmediatamente después de
+   validar la contraseña.
+2. Los PIN se cargan después, sin bloquear la apertura.
+3. La llave de cifrado se calcula una sola vez por sesión.
+4. Los PIN se descifran en paralelo para evitar demoras.
+5. Si un PIN no puede cargarse, la sección seguirá abriendo.
 
 No es necesario modificar las reglas de Firebase.
