@@ -154,6 +154,108 @@ const INITIAL_ADVISOR_PIN_HASHES = {
   "502488": "a8486ecf79291f49ca260fdc11e3309a65ed5437693e2026452f320286e5f520"
 };
 
+const INITIAL_ADVISOR_PIN_VAULT = {
+  "130257": {
+    "pinHash": "99529c2976202f50fed82d5c940126be745a5ac2a20e864e3ceaf24658f0af32",
+    "pinCipher": "WQBySK7xR76Kt0NUhz5Q2u8VdQM=",
+    "pinIv": "LaBiJaV804KIKYA0",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "152642": {
+    "pinHash": "d7fcb83baff340632f21132053f767e40b38be6bc8202f2282689db95b0567be",
+    "pinCipher": "Yj43FofUPcDd1UcMCJoaOlrlbfE=",
+    "pinIv": "opNdRXtcwKsAgL81",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "158311": {
+    "pinHash": "472103ca9d0cc86abc0b5912161938d8f892b281e182a3538e84e1fa3aae11e5",
+    "pinCipher": "KzGsBYnhoPi6avyYoDTLtFK8yFQ=",
+    "pinIv": "uIMgtAlE0j7M3dp4",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "161328": {
+    "pinHash": "bf26fde81678761ffc17a8b7d035b5add4e35a519042b6bb09a221b815a74563",
+    "pinCipher": "lcuzpF2wlv6OwbueikKVbTBT4Dg=",
+    "pinIv": "/Dw59Nq2ZQYgx+Z8",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "162129": {
+    "pinHash": "f801ae1c445a21eafa59d53271fab28a012c3c594163cad56a4c264fd403bb94",
+    "pinCipher": "KHoMh2pPGQNNWj4f+tW9IzqSPrc=",
+    "pinIv": "MzZPc97zUdGHd8XL",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "164641": {
+    "pinHash": "c3e8a20da78d7fdcc547a3f822b184efdf34867567864332248ea07ed96f8892",
+    "pinCipher": "C7qmvZIURpP5IMrCXWf666VIcsQ=",
+    "pinIv": "lSkkG927jsNqBqqm",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "165555": {
+    "pinHash": "840bdc7edae5507ecfc5d40028f473370998314b798a6559f65d2566ad5133ab",
+    "pinCipher": "o4lpFql7JZCC0WooSa0+Kf03vGE=",
+    "pinIv": "3bFJDqdfnbFx14gM",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "169527": {
+    "pinHash": "d0e8d98bdf542abb3ec72604e5675dd592a470bec7a39d4dacdb718e32e9d2b1",
+    "pinCipher": "PxmBfLZCiOTmI3Gaz11fzhLBpCE=",
+    "pinIv": "mleoE3nuFV7qR2MV",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "169884": {
+    "pinHash": "80fc610537ed26e2cd61bbfe4f2f9d08da333ca96b6983e41b7002d8c120a43c",
+    "pinCipher": "Cmun614iY2LgV3PzRpNIx/TeQ6I=",
+    "pinIv": "ZbTHJlx0mRYCxLE/",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "171033": {
+    "pinHash": "2bd74ca25282ca2947279b7224986049b494905b048ab8b11bf828a6647efdb4",
+    "pinCipher": "ksWWkWN+uThnITbt5xh8Em0AvuI=",
+    "pinIv": "Jzj7OtZAtaqaO2+h",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "171155": {
+    "pinHash": "f72b1863e685713a80d9dbeeb9cc90a31a7c696a52bbe97421f44be9fb80da79",
+    "pinCipher": "+WaXfVv8wHgQUneKwpLSLEkkV6g=",
+    "pinIv": "tyFjyaQekeLr7FB1",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "172247": {
+    "pinHash": "8e3067bef11dac1c37508aa3f9bc626172786f3e002bcdf1cf0b36715dd7d338",
+    "pinCipher": "7+0cdKPAmsT+5KBd+4MQnOW9wEY=",
+    "pinIv": "HZb2HIpJEyztR+9E",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "172852": {
+    "pinHash": "e9b08f027d649403701647e92db43485b016c232b7dd60f9c374f1ddfef6e7f7",
+    "pinCipher": "UTknvBgZZmbzS3ceO7hiOIfTsfM=",
+    "pinIv": "wLA2YLB29iwkyukU",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "173151": {
+    "pinHash": "2966a0f8d5b2b3f83911fb5cb03397a72466a88dd9b9ed5a7710d58650db52e3",
+    "pinCipher": "c4CuD1+ANcSREtGJTsIbCqbkl00=",
+    "pinIv": "+utew4GwDhF+LhX4",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "173159": {
+    "pinHash": "86057ebdac4b526ced430f5ae2490d8675c66be5b8cba5eab146121125bb59f4",
+    "pinCipher": "JC5ceqK8DCkYJeSeckTgBpPXuV4=",
+    "pinIv": "+UMjB2LZ6lUi2HRL",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  },
+  "502488": {
+    "pinHash": "a8486ecf79291f49ca260fdc11e3309a65ed5437693e2026452f320286e5f520",
+    "pinCipher": "zSvJ/0DHLYV4hPHEfxHJkv24d6E=",
+    "pinIv": "gFRQ5/SP1Ui5ys0G",
+    "pinEncryption": "aes-gcm-pbkdf2-v1"
+  }
+};
+const PIN_VAULT_SALT = "actividad-comercial-pin-vault-v1";
+const PIN_VAULT_ITERATIONS = 120000;
+
+
 
 const state = {
   reports: [],
@@ -166,7 +268,8 @@ const state = {
     active:true
   },
   editingReportId: null,
-  editingClientCounter: 0
+  editingClientCounter: 0,
+  visiblePins: {}
 };
 
 const appElement = document.getElementById("app");
@@ -174,6 +277,7 @@ const appElement = document.getElementById("app");
 const ADMIN_PASSWORD_HASH =
   "26afffd013603c1547932de323cc757340eeeefac0dd4f085697751b4792afd5";
 let dashboardUnlockedUntil = 0;
+let dashboardAdminSecret = "";
 
 async function dashboardSha256(value){
   const bytes = new TextEncoder().encode(value);
@@ -204,8 +308,132 @@ window.generateAdvisorPin = function(){
   input.select();
 };
 
+
+function bytesToBase64(bytes){
+  let binary = "";
+  bytes.forEach(byte=>{
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
+
+function base64ToBytes(value){
+  const binary = atob(value);
+  return Uint8Array.from(
+    binary,
+    character=>character.charCodeAt(0)
+  );
+}
+
+async function derivePinVaultKey(password){
+  const sourceKey = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveKey"]
+  );
+
+  return crypto.subtle.deriveKey(
+    {
+      name:"PBKDF2",
+      salt:new TextEncoder().encode(PIN_VAULT_SALT),
+      iterations:PIN_VAULT_ITERATIONS,
+      hash:"SHA-256"
+    },
+    sourceKey,
+    {
+      name:"AES-GCM",
+      length:256
+    },
+    false,
+    ["encrypt","decrypt"]
+  );
+}
+
+async function encryptAdvisorPin(pin){
+  if(!dashboardAdminSecret){
+    throw new Error(
+      "Vuelve a validar la contraseña administrativa."
+    );
+  }
+
+  const key = await derivePinVaultKey(
+    dashboardAdminSecret
+  );
+  const iv = crypto.getRandomValues(
+    new Uint8Array(12)
+  );
+  const encrypted = await crypto.subtle.encrypt(
+    {
+      name:"AES-GCM",
+      iv
+    },
+    key,
+    new TextEncoder().encode(pin)
+  );
+
+  return {
+    pinCipher:bytesToBase64(
+      new Uint8Array(encrypted)
+    ),
+    pinIv:bytesToBase64(iv),
+    pinEncryption:"aes-gcm-pbkdf2-v1"
+  };
+}
+
+async function decryptAdvisorPin(advisor){
+  if(
+    !advisor?.pinCipher
+    || !advisor?.pinIv
+    || !dashboardAdminSecret
+  ){
+    return "";
+  }
+
+  try{
+    const key = await derivePinVaultKey(
+      dashboardAdminSecret
+    );
+    const decrypted = await crypto.subtle.decrypt(
+      {
+        name:"AES-GCM",
+        iv:base64ToBytes(advisor.pinIv)
+      },
+      key,
+      base64ToBytes(advisor.pinCipher)
+    );
+
+    return new TextDecoder().decode(decrypted);
+  }catch(error){
+    console.error(
+      "No fue posible descifrar el PIN:",
+      error
+    );
+    return "";
+  }
+}
+
+async function loadVisibleAdvisorPins(){
+  const visiblePins = {};
+
+  for(const advisor of state.advisors){
+    const pin = await decryptAdvisorPin(advisor);
+    visiblePins[advisor.employeeNumber] =
+      pin || "No asignado";
+  }
+
+  state.visiblePins = visiblePins;
+  renderStaff();
+}
+
 async function requireDashboardPassword(action="realizar este cambio"){
-  if(Date.now() < dashboardUnlockedUntil) return true;
+  if(
+    Date.now() < dashboardUnlockedUntil
+    && dashboardAdminSecret
+  ){
+    return true;
+  }
 
   const password = prompt(
     `Ingresa la contraseña para ${action}:`
@@ -218,7 +446,9 @@ async function requireDashboardPassword(action="realizar este cambio"){
     return false;
   }
 
-  dashboardUnlockedUntil = Date.now() + (10 * 60 * 1000);
+  dashboardAdminSecret = password;
+  dashboardUnlockedUntil =
+    Date.now() + (10 * 60 * 1000);
   return true;
 }
 
@@ -349,32 +579,61 @@ if(Object.values(firebaseConfig).some(value =>
     const markerRef = doc(
       db,
       SETTINGS_COLLECTION,
-      "advisor_pin_seed_v1"
+      "advisor_pin_vault_seed_v2"
     );
     const marker = await getDoc(markerRef);
 
     if(marker.exists()) return;
 
     const batch = writeBatch(db);
+    let migratedCount = 0;
 
-    Object.entries(INITIAL_ADVISOR_PIN_HASHES)
-      .forEach(([employeeNumber,pinHash])=>{
+    for(
+      const [
+        employeeNumber,
+        vaultRecord
+      ] of Object.entries(
+        INITIAL_ADVISOR_PIN_VAULT
+      )
+    ){
+      const advisorRef = doc(
+        db,
+        ADVISORS_COLLECTION,
+        employeeNumber
+      );
+      const advisorSnapshot = await getDoc(
+        advisorRef
+      );
+
+      if(!advisorSnapshot.exists()) continue;
+
+      const advisor = advisorSnapshot.data();
+
+      // Solo migra el PIN inicial cuando su hash no fue cambiado.
+      if(
+        !advisor.pinCipher
+        && advisor.pinHash === vaultRecord.pinHash
+      ){
         batch.set(
-          doc(db,ADVISORS_COLLECTION,employeeNumber),
+          advisorRef,
           {
-            pinHash,
+            pinCipher:vaultRecord.pinCipher,
+            pinIv:vaultRecord.pinIv,
+            pinEncryption:
+              vaultRecord.pinEncryption,
             pinEnabled:true,
             accessMode:"employee_pin",
             pinUpdatedAt:serverTimestamp()
           },
           {merge:true}
         );
-      });
+        migratedCount += 1;
+      }
+    }
 
     batch.set(markerRef,{
       completed:true,
-      employeeCount:
-        Object.keys(INITIAL_ADVISOR_PIN_HASHES).length,
+      migratedCount,
       completedAt:serverTimestamp()
     });
 
@@ -546,25 +805,65 @@ if(Object.values(firebaseConfig).some(value =>
     const body = document.getElementById("staffBody");
 
     if(!state.advisors.length){
-      body.innerHTML = '<tr><td colspan="5" class="empty">No hay asesores registrados.</td></tr>';
+      body.innerHTML =
+        '<tr><td colspan="5" class="empty">'
+        + 'No hay asesores registrados.</td></tr>';
       return;
     }
 
-    body.innerHTML = state.advisors.map(advisor=>`
-      <tr>
-        <td>${esc(advisor.employeeNumber)}</td>
-        <td><strong>${esc(advisor.name)}</strong></td>
-        <td><span class="badge ${advisor.active ? "reviewed" : "cancelled-badge"}">${advisor.active ? "Activo" : "Inactivo"}</span></td>
-        <td>Número de empleado</td>
-        <td>
-          <div class="actions">
-            <button class="warning" onclick="window.openEditAdvisor('${advisor.employeeNumber}')">Editar</button>
-            <button class="soft" onclick="window.toggleAdvisor('${advisor.employeeNumber}',${!advisor.active})">${advisor.active ? "Desactivar" : "Activar"}</button>
-            <button class="danger" onclick="window.deleteAdvisor('${advisor.employeeNumber}')">Eliminar</button>
-          </div>
-        </td>
-      </tr>
-    `).join("");
+    body.innerHTML = state.advisors.map(advisor=>{
+      const visiblePin =
+        state.visiblePins[advisor.employeeNumber]
+        || "••••";
+
+      return `
+        <tr>
+          <td>${esc(advisor.employeeNumber)}</td>
+          <td><strong>${esc(advisor.name)}</strong></td>
+          <td>
+            <strong style="letter-spacing:2px">
+              ${esc(visiblePin)}
+            </strong>
+          </td>
+          <td>
+            <span class="badge ${
+              advisor.active
+                ? "reviewed"
+                : "cancelled-badge"
+            }">
+              ${advisor.active ? "Activo" : "Inactivo"}
+            </span>
+          </td>
+          <td>
+            <div class="actions">
+              <button class="warning"
+                onclick="window.openEditAdvisor(
+                  '${advisor.employeeNumber}'
+                )">
+                Editar
+              </button>
+              <button class="soft"
+                onclick="window.toggleAdvisor(
+                  '${advisor.employeeNumber}',
+                  ${!advisor.active}
+                )">
+                ${
+                  advisor.active
+                    ? "Desactivar"
+                    : "Activar"
+                }
+              </button>
+              <button class="danger"
+                onclick="window.deleteAdvisor(
+                  '${advisor.employeeNumber}'
+                )">
+                Eliminar
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
   }
 
   window.closeModal = function(id){
@@ -636,6 +935,8 @@ if(Object.values(firebaseConfig).some(value =>
     document.getElementById("advisorPin").value =
       createFourDigitPin();
     document.getElementById("advisorPin").type = "text";
+    document.getElementById("advisorPinHelp").textContent =
+      "PIN nuevo generado. Puedes modificarlo antes de guardar.";
     document.getElementById("advisorModalTitle").textContent = "Agregar asesor";
     setBox("advisorError");
     setBox("advisorSuccess");
@@ -643,20 +944,58 @@ if(Object.values(firebaseConfig).some(value =>
   };
 
   window.openEditAdvisor = async function(employeeNumber){
-    if(!await requireDashboardPassword("editar un empleado")) return;
-    const advisor = state.advisors.find(item=>item.employeeNumber === employeeNumber);
+    if(
+      !await requireDashboardPassword(
+        "editar un empleado"
+      )
+    ) return;
+
+    const advisor = state.advisors.find(
+      item=>
+        item.employeeNumber === employeeNumber
+    );
     if(!advisor) return;
 
-    document.getElementById("advisorOriginalNumber").value = advisor.employeeNumber;
-    document.getElementById("advisorEmployeeNumber").value = advisor.employeeNumber;
-    document.getElementById("advisorName").value = advisor.name || "";
-    document.getElementById("advisorPin").value = "";
-    document.getElementById("advisorPin").type = "password";
-    document.getElementById("advisorActive").checked = advisor.active === true;
-    document.getElementById("advisorModalTitle").textContent = "Editar asesor";
+    const currentPin = await decryptAdvisorPin(
+      advisor
+    );
+
+    document.getElementById(
+      "advisorOriginalNumber"
+    ).value = advisor.employeeNumber;
+    document.getElementById(
+      "advisorEmployeeNumber"
+    ).value = advisor.employeeNumber;
+    document.getElementById(
+      "advisorName"
+    ).value = advisor.name || "";
+    document.getElementById(
+      "advisorPin"
+    ).value = currentPin;
+    document.getElementById(
+      "advisorPin"
+    ).type = "text";
+    document.getElementById(
+      "advisorActive"
+    ).checked = advisor.active === true;
+    document.getElementById(
+      "advisorModalTitle"
+    ).textContent = "Editar asesor";
+
+    document.getElementById(
+      "advisorPinHelp"
+    ).textContent = currentPin
+      ? "PIN actual cargado. Puedes verlo o modificarlo."
+      : (
+        "Este PIN fue guardado antes de esta actualización "
+        + "y no puede recuperarse. Asigna uno nuevo una sola vez."
+      );
+
     setBox("advisorError");
     setBox("advisorSuccess");
-    document.getElementById("advisorModal").classList.add("show");
+    document.getElementById(
+      "advisorModal"
+    ).classList.add("show");
   };
 
   document.getElementById("advisorForm")
@@ -768,6 +1107,12 @@ if(Object.values(firebaseConfig).some(value =>
             employeeNumber,
             pin
           );
+
+          const encryptedPin = await encryptAdvisorPin(
+            pin
+          );
+
+          Object.assign(data,encryptedPin);
           data.pinUpdatedAt = serverTimestamp();
         }
 
@@ -822,6 +1167,11 @@ if(Object.values(firebaseConfig).some(value =>
               }
             );
           }
+        }
+
+        if(pin){
+          delete state.visiblePins[originalNumber];
+          state.visiblePins[employeeNumber] = pin;
         }
 
         const message = pin
@@ -1275,7 +1625,13 @@ if(Object.values(firebaseConfig).some(value =>
   });
 
   window.openEmployeeAdministration = async function(){
-    if(!await requireDashboardPassword("administrar empleados")) return;
+    if(
+      !await requireDashboardPassword(
+        "administrar empleados"
+      )
+    ) return;
+
+    await loadVisibleAdvisorPins();
 
     document.querySelectorAll(".tab").forEach(
       item=>item.classList.remove("active")
@@ -1294,11 +1650,16 @@ if(Object.values(firebaseConfig).some(value =>
 
   document.querySelectorAll(".tab").forEach(button=>{
     button.addEventListener("click",async ()=>{
-      if(
-        button.dataset.panel === "staffPanel"
-        && !await requireDashboardPassword("administrar empleados")
-      ){
-        return;
+      if(button.dataset.panel === "staffPanel"){
+        if(
+          !await requireDashboardPassword(
+            "administrar empleados"
+          )
+        ){
+          return;
+        }
+
+        await loadVisibleAdvisorPins();
       }
 
       document.querySelectorAll(".tab").forEach(

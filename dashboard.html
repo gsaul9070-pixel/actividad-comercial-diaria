@@ -142,7 +142,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>No. empleado</th><th>Nombre</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>No. empleado</th><th>Nombre</th><th>PIN</th><th>Estado</th><th>Acciones</th></tr></thead>
             <tbody id="staffBody"></tbody>
           </table>
         </div>
@@ -181,7 +181,7 @@
           <div class="full">
             <label for="advisorPin">PIN de acceso</label>
             <div style="display:flex;gap:8px;align-items:center">
-              <input id="advisorPin" type="password"
+              <input id="advisorPin" type="text"
                 inputmode="numeric" maxlength="4"
                 pattern="[0-9]{4}"
                 placeholder="4 dígitos">
@@ -190,9 +190,8 @@
                 Generar PIN
               </button>
             </div>
-            <p class="helper">
-              Para editar un empleado, deja el PIN vacío si deseas conservarlo.
-              Si cambias el número de empleado, asigna un PIN nuevo.
+            <p id="advisorPinHelp" class="helper">
+              El PIN actual se mostrará y podrá modificarse.
             </p>
           </div>
         </div>
@@ -296,6 +295,6 @@
   </div>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script type="module" src="dashboard.js?v=20260725-09"></script>
+  <script type="module" src="dashboard.js?v=20260726-10"></script>
 </body>
 </html>

@@ -1,29 +1,21 @@
-ACTUALIZACIÓN — ACCESO CON NÚMERO DE EMPLEADO Y PIN
+ACTUALIZACIÓN — PINES VISIBLES Y PERSISTENTES
 
 Reemplaza en GitHub:
-- index.html
-- app-firebase.js
 - dashboard.html
 - dashboard.js
 
-NO subas a GitHub:
-- PINES_EMPLEADOS_CONFIDENCIAL.txt
-
-Funcionamiento:
-1. El usuario es el número de empleado.
-2. Cada empleado tiene un PIN personal de cuatro dígitos.
-3. La captura permanece oculta hasta validar usuario y PIN.
-4. Después de cinco intentos incorrectos se bloquea el acceso 60 segundos.
-5. Los PIN iniciales se asignan automáticamente a los empleados existentes.
-6. En Dashboard > Administrar empleados:
-   - Los empleados nuevos reciben un PIN generado.
-   - El administrador puede cambiar el PIN.
-   - Dejar el campo PIN vacío conserva el PIN actual.
-7. La lógica de omitir únicamente el paso 4 en registros adicionales se conserva.
-
-No es necesario modificar las reglas de Firebase.
+Cambios:
+1. La tabla de empleados muestra una columna PIN.
+2. Al entrar a Administrar empleados se descifran y muestran los PIN.
+3. Al editar un empleado, su PIN actual aparece en el formulario.
+4. Al modificar un PIN se guarda de forma cifrada y permanecerá visible
+   cuando vuelvas a abrir al empleado.
+5. Los PIN iniciales conocidos se migran automáticamente de forma cifrada.
 
 IMPORTANTE:
-Este es un control de acceso básico del navegador. Debido a que el proyecto
-sigue utilizando reglas públicas de Firestore, no sustituye una autenticación
-empresarial segura.
+Los PIN que fueron modificados antes de esta actualización solo se
+guardaron como hash y no se pueden reconstruir. En esos casos aparecerá
+"No asignado". Captura nuevamente el PIN una sola vez y desde entonces
+quedará visible y editable.
+
+No es necesario modificar las reglas de Firebase.
