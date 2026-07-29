@@ -141,7 +141,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       try{
         credential = await signInWithEmailAndPassword(
           auth,
-          "jacquelinne.santos@profuturo.com.mx",
+          "143561@actividad.local",
           "Saltillo20$$"
         );
       }catch(error){
@@ -150,16 +150,16 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
         if(code === "auth/user-not-found" || code === "auth/invalid-credential"){
           credential = await createUserWithEmailAndPassword(
             auth,
-            "jacquelinne.santos@profuturo.com.mx",
+            "143561@actividad.local",
             "Saltillo20$$"
           );
 
           await setDoc(doc(db,USERS_COLLECTION,credential.user.uid),{
             employeeNumber:"143561",
-            name:"JACQUELINNE SANTOS",
+            name:"SANTOS GUTIERREZ JACQUELINNE ADRIANA",
             role:"manager",
             active:true,
-            authEmail:"jacquelinne.santos@profuturo.com.mx",
+            authEmail:"143561@actividad.local",
             accessMode:"manager_dialog_password",
             createdAt:serverTimestamp(),
             updatedAt:serverTimestamp()
@@ -178,7 +178,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
             No fue posible validar la cuenta gerencial en Firebase
           </p>
           <p style="margin:0 0 14px;color:#C8D7EE">
-            La cuenta jacquelinne.santos@profuturo.com.mx debe existir con la contraseña configurada.
+            No fue posible crear o validar la sesión técnica del gerente.
           </p>
           <button type="button" class="accent" onclick="window.location.assign('./index.html')">
             Regresar
@@ -208,7 +208,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       if(!profileSnap.exists()){
         const managerEmail = String(user.email || "").toLowerCase();
 
-        if(managerEmail !== "jacquelinne.santos@profuturo.com.mx"){
+        if(managerEmail !== "143561@actividad.local"){
           throw new Error("Usuario no autorizado.");
         }
 

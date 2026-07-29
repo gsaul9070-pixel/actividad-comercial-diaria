@@ -67,10 +67,35 @@ if(hasPlaceholder){
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  async function readProfile(uid){
-    const snap = await getDoc(doc(db, USERS_COLLECTION, uid));
-    if(!snap.exists()) throw new Error("El asesor no está registrado.");
-    return {uid, ...snap.data()};
+  async function readProfile(user){
+    const profileRef = doc(db, USERS_COLLECTION, user.uid);
+    let snap = await getDoc(profileRef);
+
+    if(!snap.exists()){
+      const email = String(user.email || "").toLowerCase();
+      const match = email.match(/^([0-9]+)@actividad[.]local$/);
+      const employeeNumber = match?.[1] || "";
+      const advisor = LEGACY_ADVISORS[employeeNumber];
+
+      if(!advisor){
+        throw new Error("El asesor no está registrado.");
+      }
+
+      await setDoc(profileRef,{
+        employeeNumber,
+        name:advisor.name,
+        role:"advisor",
+        active:true,
+        authEmail:email,
+        accessMode:"employee_pin",
+        createdAt:serverTimestamp(),
+        updatedAt:serverTimestamp()
+      },{merge:true});
+
+      snap = await getDoc(profileRef);
+    }
+
+    return {uid:user.uid, ...snap.data()};
   }
 
   async function openAdvisorSession(user, profile){
@@ -133,22 +158,18 @@ if(hasPlaceholder){
         const code = String(error?.code || "");
 
         if(code === "auth/user-not-found" || code === "auth/invalid-credential"){
-          const credential = await createUserWithEmailAndPassword(
-            auth,
-            employeeEmail(employeeNumber),
-            firebaseAdvisorPassword(pin)
-          );
-
-          await setDoc(doc(db, USERS_COLLECTION, credential.user.uid), {
-            employeeNumber,
-            name: advisor.name,
-            role: "advisor",
-            active: true,
-            authEmail: employeeEmail(employeeNumber),
-            accessMode: "employee_pin",
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          }, {merge:true});
+          try{
+            await createUserWithEmailAndPassword(
+              auth,
+              employeeEmail(employeeNumber),
+              firebaseAdvisorPassword(pin)
+            );
+          }catch(createError){
+            if(String(createError?.code || "") === "auth/email-already-in-use"){
+              throw new Error("La cuenta del asesor ya existe con una clave distinta. El gerente debe reiniciar su acceso.");
+            }
+            throw createError;
+          }
         }else{
           throw error;
         }
@@ -172,7 +193,7 @@ if(hasPlaceholder){
     }
 
     try{
-      const profile = await readProfile(user.uid);
+      const profile = await readProfile(user);
       await openAdvisorSession(user, profile);
     }catch(error){
       console.error(error);

@@ -173,3 +173,17 @@ Firebase Authentication exige contraseñas de al menos seis caracteres. Por eso,
 - Conserva los mismos enlaces de GitHub Pages y códigos QR.
 
 Es obligatorio publicar el archivo `firestore.rules` actualizado.
+
+
+## Versión estable de autenticación
+
+La interfaz queda simple para el usuario:
+
+- Asesores: número de empleado + PIN de cuatro dígitos.
+- Gerente: cuadro de diálogo de contraseña.
+- La cuenta técnica del gerente usa `143561@actividad.local`, evitando conflictos con cuentas anteriores.
+- Firebase Authentication trabaja únicamente en segundo plano.
+- Los perfiles faltantes se generan automáticamente en Firestore durante el primer acceso válido.
+- Los enlaces de GitHub Pages y códigos QR permanecen iguales.
+
+Para que funcione, publica también el contenido actualizado de `firestore.rules` en Firebase Console.

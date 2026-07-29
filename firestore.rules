@@ -29,7 +29,7 @@ service cloud.firestore {
     function isManagerBootstrap(userId) {
       return signedIn()
         && request.auth.uid == userId
-        && request.auth.token.email == "jacquelinne.santos@profuturo.com.mx"
+        && request.auth.token.email == "143561@actividad.local"
         && request.resource.data.employeeNumber == "143561"
         && request.resource.data.role == "manager"
         && request.resource.data.active == true;
