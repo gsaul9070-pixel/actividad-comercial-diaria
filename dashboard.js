@@ -190,6 +190,8 @@ if(Object.values(firebaseConfig).some(value=>String(value).includes("REEMPLAZAR"
     renderAdvisorFilter();
     renderKPIs();
     renderCharts();
+    renderRecentActivity();
+    renderSummaryMissing();
     renderMissing();
     renderReports();
     renderStaff();
@@ -418,6 +420,58 @@ if(Object.values(firebaseConfig).some(value=>String(value).includes("REEMPLAZAR"
           </div>
         `).join("")
       : '<div class="empty">No hay información para generar el ranking.</div>';
+  }
+
+
+  function relativeActivityTime(report){
+    try{
+      const date = report.createdAt?.toDate ? report.createdAt.toDate() : new Date(report.createdAtLocal || report.createdDate || Date.now());
+      const minutes = Math.max(0,Math.floor((Date.now()-date.getTime())/60000));
+      if(minutes < 1) return "Ahora";
+      if(minutes < 60) return `Hace ${minutes} min`;
+      const hours = Math.floor(minutes/60);
+      if(hours < 24) return `Hace ${hours} h`;
+      return formatDate(report.createdDate);
+    }catch{return formatDate(report.createdDate);}
+  }
+
+  function renderRecentActivity(){
+    const reports = [...state.reports]
+      .filter(report=>report.status !== "cancelled")
+      .sort((a,b)=>{
+        const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAtLocal || a.createdDate || 0).getTime();
+        const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAtLocal || b.createdDate || 0).getTime();
+        return bTime-aTime;
+      }).slice(0,12);
+
+    const rows = reports.length ? reports.map(report=>`
+      <div class="activity-item">
+        <div class="activity-icon">↗</div>
+        <div class="activity-copy">
+          <strong>${esc(report.advisorName || "Asesor")} registró actividad</strong>
+          <span>${esc(report.activityPlace || report.prospecting || "Actividad comercial")} · ${Number(report.contacts || 0)} contacto(s), ${Number(report.appointmentsGenerated || 0)} cita(s), ${Number(report.procedureCount || 0)} trámite(s)</span>
+        </div>
+        <div class="activity-time">${esc(relativeActivityTime(report))}</div>
+      </div>`).join("") : '<div class="empty">Todavía no hay actividad registrada.</div>';
+
+    const full = document.getElementById("recentActivityFeed");
+    const compact = document.getElementById("summaryRecentActivity");
+    if(full) full.innerHTML = rows;
+    if(compact) compact.innerHTML = rows;
+    const count = document.getElementById("recentActivityCount");
+    if(count) count.textContent = reports.length;
+  }
+
+  function renderSummaryMissing(){
+    const today = localISO();
+    const reported = new Set(state.reports.filter(r=>r.createdDate===today && r.status!=="cancelled").map(r=>r.advisorUid));
+    const missing = state.advisors.filter(a=>a.active!==false && !reported.has(a.advisorUid));
+    const preview = document.getElementById("summaryMissingAdvisors");
+    const count = document.getElementById("summaryMissingCount");
+    if(count) count.textContent = missing.length;
+    if(preview) preview.innerHTML = missing.length
+      ? missing.slice(0,8).map(item=>`<span class="pending-person">${esc(item.name)}</span>`).join("")
+      : '<span class="badge reviewed">Todos reportaron hoy</span>';
   }
 
   function renderMissing(){
@@ -844,14 +898,25 @@ if(Object.values(firebaseConfig).some(value=>String(value).includes("REEMPLAZAR"
     );
   });
 
-  document.querySelectorAll(".tab").forEach(button=>{
-    button.addEventListener("click",()=>{
-      document.querySelectorAll(".tab").forEach(item=>item.classList.remove("active"));
-      document.querySelectorAll(".panel").forEach(panel=>panel.classList.remove("active"));
-      button.classList.add("active");
-      document.getElementById(button.dataset.panel).classList.add("active");
-    });
+  function openPanel(panelId){
+    const target = document.getElementById(panelId);
+    if(!target) return;
+    document.querySelectorAll(".panel").forEach(panel=>panel.classList.remove("active"));
+    document.querySelectorAll(".side-nav .tab").forEach(item=>item.classList.remove("active"));
+    target.classList.add("active");
+    const nav = document.querySelector(`.side-nav .tab[data-panel="${panelId}"]`);
+    if(nav) nav.classList.add("active");
+    window.scrollTo({top:0,behavior:"smooth"});
+    if(panelId === "summaryPanel") setTimeout(renderCharts,180);
+  }
+
+  document.querySelectorAll(".tab[data-panel]").forEach(button=>{
+    button.addEventListener("click",()=>openPanel(button.dataset.panel));
   });
+  document.querySelectorAll(".tab-jump[data-target]").forEach(button=>{
+    button.addEventListener("click",()=>openPanel(button.dataset.target));
+  });
+  window.openDashboardPanel = openPanel;
 
   const today = localISO();
   document.getElementById("dateFrom").value = today.slice(0,8) + "01";

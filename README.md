@@ -44,3 +44,7 @@ Se incorporó una interfaz con:
 - Área principal clara y de alto contraste.
 - Diseño adaptable a computadora, tableta y teléfono.
 - Conservación de todos los IDs y funciones existentes.
+
+
+## Navegación corregida
+Actividades y Reportes abren paneles funcionales independientes. Se agregó actividad reciente, seguimiento diario, transiciones y diseño dinámico.

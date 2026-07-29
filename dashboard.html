@@ -412,6 +412,45 @@
       .dashboard-main{padding:8px}
     }
 
+  
+    .sidebar:before{content:"";position:absolute;width:180px;height:180px;border-radius:50%;left:-90px;top:110px;background:radial-gradient(circle,rgba(45,132,255,.28),transparent 68%);pointer-events:none}
+    .side-brand,.side-nav,.side-footer{position:relative;z-index:1}
+    .nav-icon{transition:transform .22s ease,background .22s ease}
+    .side-nav .tab:hover .nav-icon,.side-nav button:hover .nav-icon,.side-nav a:hover .nav-icon{transform:scale(1.1) rotate(-4deg)}
+    .dashboard-main{position:relative;overflow:hidden}
+    .dashboard-main:before{content:"";position:absolute;right:-190px;top:-190px;width:470px;height:470px;border-radius:50%;background:radial-gradient(circle,rgba(18,102,215,.13),transparent 70%);pointer-events:none}
+    .dashboard-main>*{position:relative;z-index:1}
+    .top{background:radial-gradient(circle at 88% 20%,rgba(83,151,255,.3),transparent 25%),linear-gradient(125deg,#061E4A,#0A397A 65%,#0A4A98)}
+    .kpi,.chart-card,.executive-card{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+    .kpi:hover,.chart-card:hover,.executive-card:hover{transform:translateY(-4px);box-shadow:0 18px 38px rgba(18,58,99,.13);border-color:#BDD4EA}
+    .executive-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:14px;margin-top:14px}
+    .executive-card{background:#fff;border:1px solid #DCE6F0;border-radius:18px;padding:18px;box-shadow:0 10px 26px rgba(18,58,99,.07)}
+    .performance-card{background:linear-gradient(145deg,#FFFFFF,#F0F7FF)}
+    .executive-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:15px}
+    .executive-head h2,.page-heading h1{margin:3px 0 0;color:#08285D;letter-spacing:-.35px}
+    .executive-head h2{font-size:18px}
+    .eyebrow{display:block;color:#1266D7;text-transform:uppercase;letter-spacing:.8px;font-size:10px;font-weight:900}
+    .text-link{padding:6px 8px;background:transparent;color:#1266D7;font-size:12px}
+    .counter-pill,.page-badge{display:inline-flex;align-items:center;justify-content:center;min-width:38px;padding:7px 10px;border-radius:999px;background:#E7F1FF;color:#0957B8;font-size:11px;font-weight:900}
+    .counter-pill.warning{background:#FFF1CE;color:#9A6400}
+    .activity-feed{display:flex;flex-direction:column;gap:10px}
+    .activity-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;padding:12px;border:1px solid #E0E9F2;border-radius:14px;background:linear-gradient(145deg,#FBFDFF,#F5F9FE);transition:.2s ease}
+    .activity-item:hover{border-color:#BBD4EC;transform:translateX(3px)}
+    .activity-feed.compact .activity-item:nth-child(n+5){display:none}
+    .activity-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:#fff;font-size:17px;background:linear-gradient(145deg,#1266D7,#4D9BFF);box-shadow:0 8px 18px rgba(18,102,215,.24)}
+    .activity-copy strong{display:block;color:#102A4C;font-size:13px}.activity-copy span{display:block;color:#60738B;font-size:11px;margin-top:4px}
+    .activity-time{color:#60738B;font-size:10px;font-weight:800;white-space:nowrap}
+    .pending-preview{display:flex;flex-wrap:wrap;gap:8px;min-height:74px}
+    .pending-person{padding:9px 11px;border-radius:12px;background:#FFF7E2;border:1px solid #F7D995;color:#765000;font-size:11px;font-weight:800}
+    .wide-action{width:100%;margin-top:14px;padding:11px;border-radius:12px;background:linear-gradient(135deg,#08285D,#1266D7);color:#fff;font-size:12px}
+    .page-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:6px 0 18px;padding:20px 22px;border-radius:18px;background:#fff;border:1px solid #DCE6F0;box-shadow:0 10px 26px rgba(18,58,99,.07)}
+    .page-heading h1{font-size:26px}.page-heading p{margin:6px 0 0;color:#60738B;font-size:13px}
+    .activity-page-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);gap:14px}
+    .dynamic-missing{display:flex;flex-direction:column;gap:9px}.reports-card{margin-top:14px}.reports-card .card-head small{display:block;color:#60738B;margin-top:5px}
+    .panel:not(.active){display:none!important}.panel.active{display:block!important}
+    @media(max-width:1100px){.executive-grid,.activity-page-grid{grid-template-columns:1fr}}
+    @media(max-width:620px){.page-heading{padding:16px}.page-heading h1{font-size:22px}.activity-item{grid-template-columns:38px minmax(0,1fr)}.activity-time{grid-column:2}}
+
   </style>
 </head>
 <body>
@@ -453,13 +492,13 @@
         <button class="tab active" data-panel="summaryPanel">
           <span class="nav-icon">▦</span> Resumen
         </button>
-        <button type="button" onclick="document.getElementById('reportsBody').scrollIntoView({behavior:'smooth'})">
+        <button class="tab" data-panel="activitiesPanel">
           <span class="nav-icon">▤</span> Actividades
         </button>
         <button class="tab" data-panel="staffPanel">
           <span class="nav-icon">♙</span> Asesores
         </button>
-        <button type="button" onclick="document.getElementById('reportsBody').scrollIntoView({behavior:'smooth'})">
+        <button class="tab" data-panel="reportsPanel">
           <span class="nav-icon">▧</span> Reportes
         </button>
         <button type="button" onclick="window.exportDashboardExcel()">
@@ -499,15 +538,6 @@
         <div class="kpi"><span>Contactos</span><strong id="kpiContacts">0</strong></div>
         <div class="kpi"><span>Citas</span><strong id="kpiAppointments">0</strong></div>
         <div class="kpi"><span>Trámites</span><strong id="kpiProcedures">0</strong></div>
-      </div>
-
-      <div class="section-label"><i>⌕</i> Filtros de consulta</div>
-      <div class="filters">
-        <div><label>Desde</label><input id="dateFrom" type="date"></div>
-        <div><label>Hasta</label><input id="dateTo" type="date"></div>
-        <div><label>Asesor</label><select id="advisorFilter"><option value="">Todos</option></select></div>
-        <div><label>Estado</label><select id="statusFilter"><option value="">Todos</option><option value="pending">Pendiente de revisión</option><option value="reviewed">Revisado</option><option value="cancelled">Anulado</option></select></div>
-        <div><label>Buscar</label><input id="searchFilter" placeholder="Nombre, empresa, NSS o teléfono"></div>
       </div>
 
       <div class="section-label"><i>◔</i> Análisis gráfico</div>
@@ -578,13 +608,68 @@
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-head"><h2>Pendientes de reportar hoy</h2><span id="missingCount" class="badge pending">0</span></div>
-        <div id="missingAdvisors" class="missing"></div>
+      <div class="executive-grid">
+        <div class="executive-card">
+          <div class="executive-head">
+            <div><span class="eyebrow">Pulso de la operación</span><h2>Actividad reciente</h2></div>
+            <button class="text-link tab-jump" data-target="activitiesPanel">Ver todas →</button>
+          </div>
+          <div id="summaryRecentActivity" class="activity-feed compact"></div>
+        </div>
+        <div class="executive-card performance-card">
+          <div class="executive-head">
+            <div><span class="eyebrow">Seguimiento diario</span><h2>Asesores pendientes</h2></div>
+            <span id="summaryMissingCount" class="counter-pill">0</span>
+          </div>
+          <div id="summaryMissingAdvisors" class="pending-preview"></div>
+          <button class="wide-action tab-jump" data-target="activitiesPanel">Abrir seguimiento completo</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="activitiesPanel" class="panel">
+      <div class="page-heading">
+        <div><span class="eyebrow">Seguimiento operativo</span><h1>Actividades comerciales</h1><p>Movimientos recientes y asesores pendientes de reportar.</p></div>
+        <span class="page-badge">En tiempo real</span>
+      </div>
+      <div class="activity-page-grid">
+        <div class="executive-card">
+          <div class="executive-head">
+            <div><span class="eyebrow">Últimos movimientos</span><h2>Actividad reciente</h2></div>
+            <span id="recentActivityCount" class="counter-pill">0</span>
+          </div>
+          <div id="recentActivityFeed" class="activity-feed"></div>
+        </div>
+        <div class="executive-card">
+          <div class="executive-head">
+            <div><span class="eyebrow">Control diario</span><h2>Pendientes de reportar hoy</h2></div>
+            <span id="missingCount" class="counter-pill warning">0</span>
+          </div>
+          <div id="missingAdvisors" class="missing dynamic-missing"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="reportsPanel" class="panel">
+      <div class="page-heading">
+        <div><span class="eyebrow">Consulta y auditoría</span><h1>Reportes registrados</h1><p>Filtra, consulta, revisa y exporta toda la actividad comercial.</p></div>
+        <button class="accent export-main" onclick="window.exportDashboardExcel()">⇩ Exportar Excel</button>
+      </div>
+      <div class="section-label"><i>⌕</i> Filtros de consulta</div>
+      <div class="filters">
+        <div><label>Desde</label><input id="dateFrom" type="date"></div>
+        <div><label>Hasta</label><input id="dateTo" type="date"></div>
+        <div><label>Asesor</label><select id="advisorFilter"><option value="">Todos</option></select></div>
+        <div><label>Estado</label><select id="statusFilter"><option value="">Todos</option><option value="pending">Pendiente de revisión</option><option value="reviewed">Revisado</option><option value="cancelled">Anulado</option></select></div>
+        <div><label>Buscar</label><input id="searchFilter" placeholder="Nombre, empresa, NSS o teléfono"></div>
       </div>
 
-      <div class="card">
-        <div class="card-head"><h2>Reportes registrados</h2><span id="visibleCount"></span></div>
+
+      <div class="card reports-card">
+        <div class="card-head">
+          <div><h2>Historial de reportes</h2><small>Resultados de acuerdo con los filtros seleccionados.</small></div>
+          <span id="visibleCount" class="counter-pill">0</span>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Fecha</th><th>Asesor</th><th>Medio / lugar</th><th>Contactos</th><th>Citas</th><th>Clientes</th><th>Trámites</th><th>Revisión</th><th>Acciones</th></tr></thead>
