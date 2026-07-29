@@ -7,6 +7,8 @@ import {
   firebaseConfig, ADVISORS_COLLECTION, REPORTS_COLLECTION
 } from "./firebase-config.js";
 
+const LEGACY_NIPS = {"130257": "9435", "152642": "2776", "158311": "6364", "161328": "2229", "162129": "1338", "164641": "1327", "165555": "5120", "169527": "8122", "169884": "3842", "171033": "5553", "171155": "6810", "172247": "6627", "172852": "8272", "173151": "6367", "173159": "1296", "502488": "8144"};
+
 const state = {
   reports:[],
   advisors:[],
@@ -86,6 +88,34 @@ if(Object.values(firebaseConfig).some(value=>String(value).includes("REEMPLAZAR"
     };
   };
 
+
+  async function loadLegacyNips(){
+    const updates = [];
+
+    for(const advisor of state.advisors){
+      const employeeNumber = String(advisor.employeeNumber || advisor.id || "");
+      const nip = LEGACY_NIPS[employeeNumber];
+
+      if(!nip || advisor.pin) continue;
+
+      updates.push(
+        updateDoc(doc(db,ADVISORS_COLLECTION,advisor.id),{
+          pin:nip,
+          nipLoadedAt:serverTimestamp(),
+          nipLoadedBy:"manager-143561",
+          updatedAt:serverTimestamp()
+        }).catch(error=>{
+          console.error(`No se pudo cargar el NIP de ${employeeNumber}:`,error);
+        })
+      );
+    }
+
+    if(updates.length){
+      await Promise.all(updates);
+      console.log(`${updates.length} NIP(s) históricos cargados en Firestore.`);
+    }
+  }
+
   function openDashboard(){
     document.getElementById("managerName").textContent =
       `${state.manager.name} · Empleado ${state.manager.employeeNumber}`;
@@ -108,6 +138,7 @@ if(Object.values(firebaseConfig).some(value=>String(value).includes("REEMPLAZAR"
           .map(item=>normalizeAdvisor({id:item.id,...item.data()}))
           .sort((a,b)=>(a.name || "").localeCompare(b.name || ""));
         renderAll();
+        loadLegacyNips();
       },
       error=>showError(`No fue posible cargar empleados: ${error.code || error.message}`)
     );
