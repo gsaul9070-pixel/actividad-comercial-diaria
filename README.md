@@ -32,3 +32,15 @@ Se agregaron:
 - Promedios por reporte.
 - Porcentaje de reportes revisados.
 - Gráficas que responden a los filtros del dashboard.
+
+
+## Diseño gerencial Profuturo
+
+Se incorporó una interfaz con:
+
+- Menú lateral para resumen, actividades, asesores, reportes y exportación.
+- Encabezado gerencial con fecha actual.
+- Indicadores con tarjetas claras y códigos visuales.
+- Área principal clara y de alto contraste.
+- Diseño adaptable a computadora, tableta y teléfono.
+- Conservación de todos los IDs y funciones existentes.

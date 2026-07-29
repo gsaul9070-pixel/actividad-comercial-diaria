@@ -118,7 +118,12 @@ if(Object.values(firebaseConfig).some(value=>String(value).includes("REEMPLAZAR"
 
   function openDashboard(){
     document.getElementById("managerName").textContent =
-      `${state.manager.name} · Empleado ${state.manager.employeeNumber}`;
+      "Resumen general de la actividad comercial";
+    const sideManagerName = document.getElementById("sideManagerName");
+    if(sideManagerName){
+      sideManagerName.textContent =
+        `${state.manager.name} · ${state.manager.employeeNumber}`;
+    }
     authScreen.classList.add("hidden");
     appElement.classList.remove("hidden");
 
