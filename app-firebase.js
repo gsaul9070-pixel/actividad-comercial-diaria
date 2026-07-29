@@ -1,25 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import {
-  getAuth,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  updateDoc,
-  setDoc,
-  serverTimestamp
+  getFirestore, collection, doc, getDoc, getDocs, query, where,
+  setDoc, updateDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
-
 import {
-  firebaseConfig,
-  USERS_COLLECTION,
-  REPORTS_COLLECTION,
-  AUTH_EMAIL_DOMAIN
+  firebaseConfig, ADVISORS_COLLECTION, REPORTS_COLLECTION
 } from "./firebase-config.js";
 
 const authScreen = document.getElementById("authScreen");
@@ -28,244 +13,157 @@ const loginForm = document.getElementById("loginForm");
 const loginButton = document.getElementById("loginButton");
 const loginError = document.getElementById("loginError");
 
-function showError(message){
+const digits = value => String(value || "").replace(/\D/g,"");
+const showError = message => {
   loginError.textContent = message;
   loginError.classList.add("show");
-}
-function clearError(){
+};
+const clearError = () => {
   loginError.textContent = "";
   loginError.classList.remove("show");
-}
-function digits(value){
-  return String(value || "").replace(/\D/g,"");
-}
-function employeeEmail(number){
-  return `${number}@${AUTH_EMAIL_DOMAIN}`;
-}
-function firebaseAdvisorPassword(pin){
-  return `${pin}PF`;
-}
-const LEGACY_ADVISORS = {"130257": {"pin": "9435", "name": "CORREA CERON MARIA DEL CARMEN"}, "152642": {"pin": "2776", "name": "ALVAREZ SOLIS CLAUDIA IVETT"}, "158311": {"pin": "6364", "name": "RAMIREZ BLANCO ARACELI GUADALUPE"}, "161328": {"pin": "2229", "name": "GUERRERO VILLEGAS ELSA GABRIELA"}, "162129": {"pin": "1338", "name": "MEZA MELO CLAUDIA GUADALUPE"}, "164641": {"pin": "1327", "name": "MENDOZA SANTIAGO ADRIANA"}, "165555": {"pin": "5120", "name": "SALAS TORRES RUBI ANAKAREN"}, "169527": {"pin": "8122", "name": "PATIÑO SILVA FERNANDA MONSERRAT"}, "169884": {"pin": "3842", "name": "SOTO DOMINGUEZ DAYANI SHERLIN GUADALUPE"}, "171033": {"pin": "5553", "name": "REYNA ORTIZ ROSA NANCY"}, "171155": {"pin": "6810", "name": "VEGA LUNA MARIA DE JESUS"}, "172247": {"pin": "6627", "name": "GARCIA BERLANGA BRENDA BERENICE"}, "172852": {"pin": "8272", "name": "BLANCO TORRES GILDA YAMILY"}, "173151": {"pin": "6367", "name": "ANGUIANO BERLANGA FRANCISCO DE JESUS"}, "173159": {"pin": "1296", "name": "MORALES LEYVA KARLA SAMANTA"}, "502488": {"pin": "8144", "name": "RAMOS MARTINEZ LAURA GEORGINA"}};
-function currentLocalDate(){
+};
+const currentLocalDate = () => {
   const date = new Date();
-  const offset = date.getTimezoneOffset();
-  return new Date(date.getTime() - offset * 60000).toISOString().slice(0,10);
-}
-function reportDocumentId(uid, date){
-  return `${uid}_${date}`;
-}
+  return new Date(date.getTime() - date.getTimezoneOffset()*60000)
+    .toISOString().slice(0,10);
+};
+const activeAdvisor = advisor =>
+  advisor.active !== false &&
+  !["inactive","inactivo"].includes(String(advisor.status || "").toLowerCase());
+const storedPin = advisor =>
+  digits(advisor.pin ?? advisor.accessPin ?? advisor.password ?? advisor.PIN ?? "");
+const storedName = advisor =>
+  advisor.name || advisor.advisorName || advisor.fullName || "ASESOR";
 
-const hasPlaceholder = Object.values(firebaseConfig).some(value =>
-  String(value).includes("REEMPLAZAR")
-);
-
-if(hasPlaceholder){
+if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZAR"))){
   showError("Falta colocar la configuración real de Firebase.");
   loginButton.disabled = true;
-} else {
+}else{
   const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
   const db = getFirestore(app);
 
-  async function readProfile(user){
-    const profileRef = doc(db, USERS_COLLECTION, user.uid);
-    let snap = await getDoc(profileRef);
+  async function findAdvisor(employeeNumber){
+    const direct = await getDoc(doc(db,ADVISORS_COLLECTION,employeeNumber));
+    if(direct.exists()) return {id:direct.id,...direct.data()};
 
-    if(!snap.exists()){
-      const email = String(user.email || "").toLowerCase();
-      const match = email.match(/^([0-9]+)@actividad[.]local$/);
-      const employeeNumber = match?.[1] || "";
-      const advisor = LEGACY_ADVISORS[employeeNumber];
-
-      if(!advisor){
-        throw new Error("El asesor no está registrado.");
+    for(const field of ["employeeNumber","advisorEmployeeNumber","number"]){
+      const result = await getDocs(
+        query(collection(db,ADVISORS_COLLECTION),where(field,"==",employeeNumber))
+      );
+      if(!result.empty){
+        const item = result.docs[0];
+        return {id:item.id,...item.data()};
       }
-
-      await setDoc(profileRef,{
-        employeeNumber,
-        name:advisor.name,
-        role:"advisor",
-        active:true,
-        authEmail:email,
-        accessMode:"employee_pin",
-        createdAt:serverTimestamp(),
-        updatedAt:serverTimestamp()
-      },{merge:true});
-
-      snap = await getDoc(profileRef);
     }
-
-    return {uid:user.uid, ...snap.data()};
+    return null;
   }
 
-  async function openAdvisorSession(user, profile){
-    if(profile.active !== true){
-      await signOut(auth);
-      throw new Error("Tu acceso está desactivado. Consulta al gerente.");
-    }
-    if(profile.role !== "advisor"){
-      await signOut(auth);
-      window.location.assign("./dashboard.html");
-      return;
-    }
-
-    window.currentUserProfile = profile;
-    window.prepareAdvisorSession(profile);
-    authScreen.classList.add("hidden");
-    appRoot.classList.remove("hidden");
-    window.resetCommercialFormForSession();
-    window.prepareAdvisorSession(profile);
-
-    await updateDoc(doc(db, USERS_COLLECTION, user.uid), {
-      lastLoginAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-  }
-
-  loginForm.addEventListener("submit", async event=>{
+  loginForm.addEventListener("submit",async event=>{
     event.preventDefault();
     clearError();
 
     const employeeNumber = digits(document.getElementById("loginEmployee").value);
     const pin = digits(document.getElementById("loginPin").value);
 
-    if(!employeeNumber){
-      showError("Ingresa tu número de empleado.");
-      return;
-    }
-    if(pin.length !== 4){
-      showError("El PIN debe contener 4 dígitos.");
-      return;
-    }
+    if(!employeeNumber) return showError("Ingresa tu número de empleado.");
+    if(pin.length !== 4) return showError("El PIN debe contener 4 dígitos.");
 
     loginButton.disabled = true;
     loginButton.textContent = "Validando…";
 
     try{
-      const advisor = LEGACY_ADVISORS[employeeNumber];
-
-      if(!advisor || advisor.pin !== pin){
-        throw new Error("INVALID_LOCAL_CREDENTIALS");
+      const advisor = await findAdvisor(employeeNumber);
+      if(!advisor || storedPin(advisor) !== pin){
+        throw new Error("Número de empleado o PIN incorrecto.");
       }
+      if(!activeAdvisor(advisor)){
+        throw new Error("Tu acceso está desactivado. Consulta al gerente.");
+      }
+
+      const profile = {
+        uid:`employee-${employeeNumber}`,
+        advisorDocId:advisor.id,
+        employeeNumber:String(advisor.employeeNumber || advisor.advisorEmployeeNumber || employeeNumber),
+        name:storedName(advisor),
+        role:"advisor",
+        active:true
+      };
+
+      window.currentUserProfile = profile;
+      sessionStorage.setItem("commercial_advisor_session",JSON.stringify(profile));
 
       try{
-        await signInWithEmailAndPassword(
-          auth,
-          employeeEmail(employeeNumber),
-          firebaseAdvisorPassword(pin)
-        );
+        await updateDoc(doc(db,ADVISORS_COLLECTION,advisor.id),{
+          lastLoginAt:serverTimestamp(),
+          updatedAt:serverTimestamp()
+        });
       }catch(error){
-        const code = String(error?.code || "");
-
-        if(code === "auth/user-not-found" || code === "auth/invalid-credential"){
-          try{
-            await createUserWithEmailAndPassword(
-              auth,
-              employeeEmail(employeeNumber),
-              firebaseAdvisorPassword(pin)
-            );
-          }catch(createError){
-            if(String(createError?.code || "") === "auth/email-already-in-use"){
-              throw new Error("La cuenta del asesor ya existe con una clave distinta. El gerente debe reiniciar su acceso.");
-            }
-            throw createError;
-          }
-        }else{
-          throw error;
-        }
+        console.warn("No se actualizó el último acceso:",error);
       }
+
+      window.prepareAdvisorSession(profile);
+      authScreen.classList.add("hidden");
+      appRoot.classList.remove("hidden");
+      window.resetCommercialFormForSession();
+      window.prepareAdvisorSession(profile);
     }catch(error){
       console.error(error);
-      showError(error?.message === "INVALID_LOCAL_CREDENTIALS" ? "Número de empleado o PIN incorrecto." : `No fue posible iniciar sesión (${error?.code || error?.message || "error"}).`);
+      showError(error.message || "No fue posible iniciar sesión.");
+    }finally{
       loginButton.disabled = false;
       loginButton.textContent = "Continuar";
     }
   });
 
-  onAuthStateChanged(auth, async user=>{
-    if(!user){
-      window.currentUserProfile = null;
-      appRoot.classList.add("hidden");
-      authScreen.classList.remove("hidden");
-      loginButton.disabled = false;
-      loginButton.textContent = "Continuar";
-      return;
-    }
-
-    try{
-      const profile = await readProfile(user);
-      await openAdvisorSession(user, profile);
-    }catch(error){
-      console.error(error);
-      showError(error.message || "No fue posible validar el acceso.");
-      await signOut(auth);
-    }
-  });
-
-  window.logoutCommercialUser = async function(){
+  window.logoutCommercialUser = function(){
     if(confirm("¿Deseas cerrar la sesión?")){
-      await signOut(auth);
+      sessionStorage.removeItem("commercial_advisor_session");
       window.location.reload();
     }
   };
 
   window.saveFinalizedReportToFirebase = async function(data){
-    const user = auth.currentUser;
     const profile = window.currentUserProfile;
-
-    if(!user || !profile || profile.role !== "advisor"){
-      throw new Error("La sesión del asesor no está disponible.");
-    }
+    if(!profile) throw new Error("La sesión del asesor no está disponible.");
 
     const reportDate = currentLocalDate();
-    const reportId = reportDocumentId(user.uid, reportDate);
-    const reportRef = doc(db, REPORTS_COLLECTION, reportId);
-    const existing = await getDoc(reportRef);
-
-    if(existing.exists()){
-      throw new Error("Ya existe un reporte finalizado para este empleado en la fecha de hoy.");
-    }
-
+    const reportId = `${profile.employeeNumber}_${reportDate}_${Date.now()}`;
     const clients = (data.clients || []).map(client=>({
       ...client,
-      points: Number(client.points || 0)
+      points:Number(client.points || 0)
     }));
 
-    const procedureCount = clients.filter(
-      client => client.result === "Trámite realizado"
-    ).length;
-
-    await setDoc(reportRef, {
-      advisorUid: user.uid,
-      advisorName: profile.name,
-      advisorEmployeeNumber: profile.employeeNumber,
-      advisorRole: "advisor",
-      createdDate: reportDate,
-      createdAt: serverTimestamp(),
-      createdAtLocal: data.createdAt,
-      prospecting: data.prospecting,
-      activityPlace: data.activityPlace,
-      activitySchedule: data.activitySchedule,
-      contacts: Number(data.peopleContacted || 0),
-      appointmentsGenerated: Number(data.appointmentsGenerated || 0),
-      activityDescription: data.activityDescription,
+    await setDoc(doc(db,REPORTS_COLLECTION,reportId),{
+      advisorUid:`employee-${profile.employeeNumber}`,
+      advisorName:profile.name,
+      advisorEmployeeNumber:profile.employeeNumber,
+      advisorRole:"advisor",
+      createdDate:reportDate,
+      createdAt:serverTimestamp(),
+      createdAtLocal:data.createdAt,
+      prospecting:data.prospecting,
+      activityPlace:data.activityPlace,
+      activitySchedule:data.activitySchedule,
+      contacts:Number(data.peopleContacted || 0),
+      appointmentsGenerated:Number(data.appointmentsGenerated || 0),
+      activityDescription:data.activityDescription,
       clients,
-      clientCount: clients.length,
-      procedureCount,
-      plan: {
-        date: data.promiseDate,
-        place: data.promisePlace,
-        method: data.promiseMethod,
-        schedule: data.promiseSchedule,
-        contactGoal: Number(data.contactGoal || 0),
-        appointmentGoal: Number(data.appointmentGoal || 0),
-        description: data.promiseDescription
+      clientCount:clients.length,
+      procedureCount:clients.filter(c=>c.result === "Trámite realizado").length,
+      plan:{
+        date:data.promiseDate,
+        place:data.promisePlace,
+        method:data.promiseMethod,
+        schedule:data.promiseSchedule,
+        contactGoal:Number(data.contactGoal || 0),
+        appointmentGoal:Number(data.appointmentGoal || 0),
+        description:data.promiseDescription
       },
-      status: "finalized",
-      reviewStatus: "pending",
-      reviewedAt: null,
-      reviewedBy: null,
-      updatedAt: serverTimestamp()
+      status:"finalized",
+      reviewStatus:"pending",
+      reviewedAt:null,
+      reviewedBy:null,
+      updatedAt:serverTimestamp()
     });
 
     return reportId;

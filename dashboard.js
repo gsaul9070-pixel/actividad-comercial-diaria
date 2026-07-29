@@ -1,42 +1,33 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import {
-  getAuth,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
-import {
-  getFirestore,
-  collection,
-  doc,
-  getDoc,
-  setDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  updateDoc,
-  serverTimestamp
+  getFirestore, collection, doc, setDoc, onSnapshot, query,
+  orderBy, updateDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
-
 import {
-  firebaseConfig,
-  USERS_COLLECTION,
-  REPORTS_COLLECTION,
-  AUTH_EMAIL_DOMAIN
+  firebaseConfig, ADVISORS_COLLECTION, REPORTS_COLLECTION
 } from "./firebase-config.js";
 
-const state = { reports: [], users: [], manager: null };
+const state = {
+  reports:[],
+  advisors:[],
+  manager:{
+    uid:"manager-143561",
+    employeeNumber:"143561",
+    name:"SANTOS GUTIERREZ JACQUELINNE ADRIANA",
+    role:"manager",
+    active:true
+  }
+};
+
 const authScreen = document.getElementById("authScreen");
 const appElement = document.getElementById("app");
 const loginError = document.getElementById("loginError");
 const loginButton = document.getElementById("loginButton");
 
 const digits = value => String(value || "").replace(/\D/g,"");
-const employeeEmail = number => `${number}@${AUTH_EMAIL_DOMAIN}`;
 const localISO = () => {
   const d = new Date(), offset = d.getTimezoneOffset();
-  return new Date(d.getTime() - offset * 60000).toISOString().slice(0,10);
+  return new Date(d.getTime()-offset*60000).toISOString().slice(0,10);
 };
 const esc = value => String(value ?? "")
   .replaceAll("&","&amp;").replaceAll("<","&lt;")
@@ -64,208 +55,78 @@ const reviewLabel = report => {
   return '<span class="badge pending">Pendiente</span>';
 };
 const reportSearchText = report => [
-  report.advisorName, report.advisorEmployeeNumber, report.activityPlace,
-  report.prospecting, report.activityDescription,
+  report.advisorName,report.advisorEmployeeNumber,report.activityPlace,
+  report.prospecting,report.activityDescription,
   ...(report.clients || []).flatMap(c=>[
     c.name,c.nss,c.curp,c.phone,c.company,c.afore,c.notes
   ])
 ].join(" ").toLowerCase();
 
-if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZAR"))){
-  showError("Falta colocar la configuración real de Firebase en firebase-config.js.");
+if(Object.values(firebaseConfig).some(value=>String(value).includes("REEMPLAZAR"))){
+  showError("Falta colocar la configuración real de Firebase.");
   loginButton.disabled = true;
-} else {
+}else{
   const firebaseApp = initializeApp(firebaseConfig);
-  const auth = getAuth(firebaseApp);
   const db = getFirestore(firebaseApp);
-  let unsubscribeReports = null;
 
-  async function createAdvisorAuthAccount(employeeNumber, pin){
-    const endpoint = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${encodeURIComponent(firebaseConfig.apiKey)}`;
-    const response = await fetch(endpoint,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        email:employeeEmail(employeeNumber),
-        password:`${pin}PF`,
-        returnSecureToken:true
-      })
-    });
+  const normalizeAdvisor = item => {
+    const employeeNumber = String(
+      item.employeeNumber || item.advisorEmployeeNumber || item.id || ""
+    );
+    return {
+      ...item,
+      id:item.id || employeeNumber,
+      employeeNumber,
+      advisorUid:item.advisorUid || `employee-${employeeNumber}`,
+      name:item.name || item.advisorName || item.fullName || "ASESOR",
+      role:"advisor",
+      active:item.active !== false &&
+        !["inactive","inactivo"].includes(String(item.status || "").toLowerCase())
+    };
+  };
 
-    const payload = await response.json();
+  function openDashboard(){
+    document.getElementById("managerName").textContent =
+      `${state.manager.name} · Empleado ${state.manager.employeeNumber}`;
+    authScreen.classList.add("hidden");
+    appElement.classList.remove("hidden");
 
-    if(!response.ok){
-      const code = payload?.error?.message || "AUTH_ERROR";
-      if(code === "EMAIL_EXISTS"){
-        throw new Error("Ese número de empleado ya tiene una cuenta registrada.");
-      }
-      if(code.includes("WEAK_PASSWORD")){
-        throw new Error("El PIN no cumple con la configuración de contraseña de Firebase.");
-      }
-      throw new Error(`No se pudo crear la cuenta: ${code}`);
-    }
+    onSnapshot(
+      query(collection(db,REPORTS_COLLECTION),orderBy("createdAt","desc")),
+      snapshot=>{
+        state.reports = snapshot.docs.map(item=>({id:item.id,...item.data()}));
+        renderAll();
+      },
+      error=>showError(`No fue posible cargar reportes: ${error.code || error.message}`)
+    );
 
-    return payload.localId;
+    onSnapshot(
+      collection(db,ADVISORS_COLLECTION),
+      snapshot=>{
+        state.advisors = snapshot.docs
+          .map(item=>normalizeAdvisor({id:item.id,...item.data()}))
+          .sort((a,b)=>(a.name || "").localeCompare(b.name || ""));
+        renderAll();
+      },
+      error=>showError(`No fue posible cargar empleados: ${error.code || error.message}`)
+    );
   }
 
-  let unsubscribeUsers = null;
-
-  async function authenticateManagerFromDialog(){
-    loginError.classList.remove("show");
-
-    let password = null;
-    const alreadyGranted = sessionStorage.getItem("manager_dialog_access") === "granted";
-
-    if(alreadyGranted){
-      password = "Saltillo20$$";
+  const granted = sessionStorage.getItem("manager_dialog_access") === "granted";
+  if(granted){
+    openDashboard();
+  }else{
+    const password = window.prompt("Ingresa la contraseña gerencial:");
+    if(password === null){
+      window.location.assign("./index.html");
+    }else if(password !== "Saltillo20$$"){
+      window.alert("Contraseña gerencial incorrecta.");
+      window.location.assign("./index.html");
     }else{
-      password = window.prompt("Ingresa la contraseña gerencial:");
-
-      if(password === null){
-        window.location.assign("./index.html");
-        return;
-      }
-
-      if(password !== "Saltillo20$$"){
-        window.alert("Contraseña gerencial incorrecta.");
-        window.location.assign("./index.html");
-        return;
-      }
-
       sessionStorage.setItem("manager_dialog_access","granted");
-    }
-
-    try{
-      let credential;
-
-      try{
-        credential = await signInWithEmailAndPassword(
-          auth,
-          "manager.143561@actividad-comercial-diaria.com",
-          "Saltillo20$$"
-        );
-      }catch(error){
-        const code = String(error?.code || "");
-
-        if(code === "auth/user-not-found" || code === "auth/invalid-credential"){
-          credential = await createUserWithEmailAndPassword(
-            auth,
-            "manager.143561@actividad-comercial-diaria.com",
-            "Saltillo20$$"
-          );
-
-          await setDoc(doc(db,USERS_COLLECTION,credential.user.uid),{
-            employeeNumber:"143561",
-            name:"SANTOS GUTIERREZ JACQUELINNE ADRIANA",
-            role:"manager",
-            active:true,
-            authEmail:"manager.143561@actividad-comercial-diaria.com",
-            accessMode:"manager_dialog_password",
-            createdAt:serverTimestamp(),
-            updatedAt:serverTimestamp()
-          },{merge:true});
-        }else{
-          throw error;
-        }
-      }
-    }catch(error){
-      console.error(error);
-      sessionStorage.removeItem("manager_dialog_access");
-      const status = document.getElementById("managerDialogStatus");
-      if(status){
-        status.innerHTML = `
-          <p style="font-size:18px;font-weight:800;margin:0 0 8px;color:#FCA5A5">
-            No fue posible validar la cuenta gerencial en Firebase
-          </p>
-          <p style="margin:0 0 8px;color:#C8D7EE">
-            No fue posible crear o validar la sesión técnica del gerente.
-          </p>
-          <p style="margin:0 0 14px;color:#FDE68A;font-family:Consolas,monospace;font-size:13px">
-            ${String(error?.code || error?.message || "error-desconocido")}
-          </p>
-          <button type="button" class="accent" onclick="window.location.assign('./index.html')">
-            Regresar
-          </button>
-        `;
-      }
+      openDashboard();
     }
   }
-
-  authenticateManagerFromDialog();
-
-  onAuthStateChanged(auth, async user=>{
-    if(!user){
-      unsubscribeReports?.();
-      unsubscribeUsers?.();
-      authScreen.classList.remove("hidden");
-      appElement.classList.add("hidden");
-      loginButton.disabled = false;
-      loginButton.textContent = "Ingresar al dashboard";
-      return;
-    }
-
-    try{
-      const profileRef = doc(db, USERS_COLLECTION, user.uid);
-      let profileSnap = await getDoc(profileRef);
-
-      if(!profileSnap.exists()){
-        const managerEmail = String(user.email || "").toLowerCase();
-
-        if(managerEmail !== "manager.143561@actividad-comercial-diaria.com"){
-          throw new Error("Usuario no autorizado.");
-        }
-
-        await setDoc(profileRef,{
-          employeeNumber:"143561",
-          name:"SANTOS GUTIERREZ JACQUELINNE ADRIANA",
-          role:"manager",
-          active:true,
-          mustChangePassword:false,
-          authEmail:managerEmail,
-          accessMode:"username_password",
-          createdAt:serverTimestamp(),
-          updatedAt:serverTimestamp()
-        });
-
-        profileSnap = await getDoc(profileRef);
-      }
-
-      const profile = {uid:user.uid,...profileSnap.data()};
-      if(profile.active !== true || profile.role !== "manager"){
-        await signOut(auth);
-        throw new Error("Este acceso es exclusivo para gerentes.");
-      }
-
-      state.manager = profile;
-      document.getElementById("managerName").textContent =
-        `${profile.name} · Empleado ${profile.employeeNumber}`;
-      authScreen.classList.add("hidden");
-      appElement.classList.remove("hidden");
-
-      unsubscribeReports = onSnapshot(
-        query(collection(db, REPORTS_COLLECTION), orderBy("createdAt","desc")),
-        snapshot=>{
-          state.reports = snapshot.docs.map(item=>({id:item.id,...item.data()}));
-          renderAll();
-        },
-        error=>console.error("Reportes:",error)
-      );
-
-      unsubscribeUsers = onSnapshot(
-        collection(db, USERS_COLLECTION),
-        snapshot=>{
-          state.users = snapshot.docs
-            .map(item=>({uid:item.id,...item.data()}))
-            .sort((a,b)=>(a.name||"").localeCompare(b.name||""));
-          renderAll();
-        },
-        error=>console.error("Usuarios:",error)
-      );
-    }catch(error){
-      console.error(error);
-      showError(error.message || "No fue posible validar el acceso.");
-    }
-  });
 
   function filteredReports(){
     const from = document.getElementById("dateFrom").value;
@@ -299,16 +160,16 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
   function renderAdvisorFilter(){
     const select = document.getElementById("advisorFilter");
     const current = select.value;
-    const advisors = state.users.filter(u=>u.role === "advisor" && u.active);
+    const advisors = state.advisors.filter(u=>u.active !== false);
 
     select.innerHTML = '<option value="">Todos</option>' +
-      advisors.map(u=>`<option value="${u.uid}">${esc(u.name)}</option>`).join("");
+      advisors.map(u=>`<option value="${u.advisorUid}">${esc(u.name)}</option>`).join("");
     select.value = current;
   }
 
   function renderKPIs(){
     const today = localISO();
-    const activeAdvisors = state.users.filter(u=>u.role === "advisor" && u.active);
+    const activeAdvisors = state.advisors.filter(u=>u.active !== false);
     const todayReports = state.reports.filter(
       r=>r.createdDate === today && r.status !== "cancelled"
     );
@@ -334,8 +195,8 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
         .map(r=>r.advisorUid)
     );
 
-    const missing = state.users.filter(
-      u=>u.role === "advisor" && u.active && !reported.has(u.uid)
+    const missing = state.advisors.filter(
+      u=>u.active !== false && !reported.has(u.advisorUid)
     );
 
     document.getElementById("missingCount").textContent = missing.length;
@@ -379,7 +240,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
   }
 
   function renderStaff(){
-    const advisors = state.users.filter(user=>user.role === "advisor");
+    const advisors = state.advisors;
     const active = advisors.filter(user=>user.active === true).length;
     const inactive = advisors.filter(user=>user.active !== true).length;
 
@@ -388,7 +249,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
     document.getElementById("staffInactiveCount").textContent = `${inactive} retirado(s)`;
 
     const body = document.getElementById("staffBody");
-    const users = state.users.filter(user=>user.uid !== state.manager?.uid);
+    const users = state.advisors;
 
     if(!users.length){
       body.innerHTML = '<tr><td colspan="6" class="empty">Todavía no hay asesores asignados.</td></tr>';
@@ -398,15 +259,15 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
     body.innerHTML = users.map(user=>`
       <tr>
         <td>${esc(user.employeeNumber)}</td>
-        <td><strong>${esc(user.name)}</strong><br><small>${esc(user.authEmail || "")}</small></td>
-        <td><span class="badge ${user.role === "manager" ? "reviewed" : "pending"}">${user.role === "manager" ? "Gerente" : "Asesor"}</span></td>
+        <td><strong>${esc(user.name)}</strong><br><small>${user.pin ? "PIN configurado" : "Sin PIN"}</small></td>
+        <td><span class="badge ${"pending"}">${"Asesor"}</span></td>
         <td><span class="badge ${user.active ? "reviewed" : "cancelled-badge"}">${user.active ? "Activo" : "Retirado"}</span></td>
         <td>${timestampText(user.lastLoginAt)}</td>
         <td>
           <div class="actions">
             ${user.active
-              ? `<button class="danger" onclick="window.removeEmployee('${user.uid}')">Quitar acceso</button>`
-              : `<button class="accent" onclick="window.restoreEmployee('${user.uid}')">Reasignar</button>`}
+              ? `<button class="danger" onclick="window.removeEmployee('${user.id}')">Quitar acceso</button>`
+              : `<button class="accent" onclick="window.restoreEmployee('${user.id}')">Reasignar</button>`}
           </div>
         </td>
       </tr>
@@ -473,7 +334,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
     await updateDoc(doc(db, REPORTS_COLLECTION, id),{
       reviewStatus:"reviewed",
       reviewedAt:serverTimestamp(),
-      reviewedBy:state.manager.uid,
+      reviewedBy:"manager-143561",
       reviewedByName:state.manager.name,
       updatedAt:serverTimestamp()
     });
@@ -487,7 +348,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       status:"cancelled",
       cancellationReason:reason.trim(),
       cancelledAt:serverTimestamp(),
-      cancelledBy:state.manager.uid,
+      cancelledBy:"manager-143561",
       cancelledByName:state.manager.name,
       updatedAt:serverTimestamp()
     });
@@ -534,24 +395,24 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       if(employeeNumber === "143561"){
         throw new Error("Ese número pertenece al usuario gerencial.");
       }
-      if(state.users.some(user=>String(user.employeeNumber) === employeeNumber)){
+      if(state.advisors.some(user=>String(user.employeeNumber) === employeeNumber)){
         throw new Error("Ese número de empleado ya está asignado.");
       }
 
       button.disabled = true;
       button.textContent = "Asignando…";
 
-      const uid = await createAdvisorAuthAccount(employeeNumber,pin);
+      const uid = employeeNumber;
 
-      await setDoc(doc(db,USERS_COLLECTION,uid),{
+      await setDoc(doc(db,ADVISORS_COLLECTION,employeeNumber),{
         employeeNumber,
         name:name.toUpperCase(),
         role:"advisor",
         active:true,
-        authEmail:employeeEmail(employeeNumber),
-        accessMode:"employee_pin",
+        pin,
+        
         createdAt:serverTimestamp(),
-        createdBy:state.manager.uid,
+        createdBy:"manager-143561",
         createdByName:state.manager.name,
         updatedAt:serverTimestamp()
       });
@@ -569,7 +430,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
   });
 
   window.removeEmployee = async function(uid){
-    const user = state.users.find(item=>item.uid === uid);
+    const user = state.advisors.find(item=>item.uid === uid);
     if(!user) return;
 
     const confirmation = prompt(
@@ -581,32 +442,31 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       return;
     }
 
-    await updateDoc(doc(db,USERS_COLLECTION,uid),{
+    await updateDoc(doc(db,ADVISORS_COLLECTION,uid),{
       active:false,
       removedAt:serverTimestamp(),
-      removedBy:state.manager.uid,
+      removedBy:"manager-143561",
       removedByName:state.manager.name,
       updatedAt:serverTimestamp()
     });
   };
 
   window.restoreEmployee = async function(uid){
-    const user = state.users.find(item=>item.uid === uid);
+    const user = state.advisors.find(item=>item.uid === uid);
     if(!user) return;
     if(!confirm(`¿Reasignar el acceso a ${user.name}?`)) return;
 
-    await updateDoc(doc(db,USERS_COLLECTION,uid),{
+    await updateDoc(doc(db,ADVISORS_COLLECTION,uid),{
       active:true,
       restoredAt:serverTimestamp(),
-      restoredBy:state.manager.uid,
+      restoredBy:"manager-143561",
       restoredByName:state.manager.name,
       updatedAt:serverTimestamp()
     });
   };
 
-  window.logoutManager = async function(){
+  window.logoutManager = function(){
     sessionStorage.removeItem("manager_dialog_access");
-    await signOut(auth);
     window.location.assign("./index.html");
   };
 

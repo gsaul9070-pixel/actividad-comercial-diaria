@@ -8,6 +8,6 @@ export const firebaseConfig = {
   measurementId: "G-TFVVHVZ545"
 };
 
-export const USERS_COLLECTION = "commercial_users";
+export const ADVISORS_COLLECTION = "commercial_advisors";
 export const REPORTS_COLLECTION = "commercial_activity_reports";
-export const AUTH_EMAIL_DOMAIN = "actividad-comercial-diaria.com";
+export const SETTINGS_COLLECTION = "commercial_settings";
