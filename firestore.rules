@@ -10,25 +10,49 @@ service cloud.firestore {
       return /databases/$(database)/documents/commercial_users/$(request.auth.uid);
     }
 
+    function currentUserExists() {
+      return signedIn() && exists(currentUserPath());
+    }
+
     function currentUser() {
       return get(currentUserPath()).data;
     }
 
     function isActive() {
-      return signedIn()
-        && exists(currentUserPath())
-        && currentUser().active == true;
+      return currentUserExists() && currentUser().active == true;
     }
 
     function isManager() {
       return isActive() && currentUser().role == "manager";
     }
 
-    match /commercial_users/{userId} {
-      allow read: if signedIn() && (request.auth.uid == userId || isManager());
-      allow create: if isManager()
+    function isManagerBootstrap(userId) {
+      return signedIn()
+        && request.auth.uid == userId
+        && request.auth.token.email == "jacquelinne.santos@profuturo.com.mx"
+        && request.resource.data.employeeNumber == "143561"
+        && request.resource.data.role == "manager"
+        && request.resource.data.active == true;
+    }
+
+    function isAdvisorBootstrap(userId) {
+      return signedIn()
+        && request.auth.uid == userId
+        && request.auth.token.email.matches('^[0-9]+@actividad[.]local$')
+        && request.resource.data.employeeNumber is string
         && request.resource.data.role == "advisor"
         && request.resource.data.active == true;
+    }
+
+    match /commercial_users/{userId} {
+      allow read: if signedIn() && (
+        request.auth.uid == userId ||
+        isManager()
+      );
+
+      allow create: if isManager()
+        || isManagerBootstrap(userId)
+        || isAdvisorBootstrap(userId);
 
       allow update: if isManager()
         || (

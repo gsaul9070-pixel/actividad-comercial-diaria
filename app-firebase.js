@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/fireba
 import {
   getAuth,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
@@ -41,6 +42,10 @@ function digits(value){
 function employeeEmail(number){
   return `${number}@${AUTH_EMAIL_DOMAIN}`;
 }
+function firebaseAdvisorPassword(pin){
+  return `${pin}PF`;
+}
+const LEGACY_ADVISORS = {"130257": {"pin": "9435", "name": "CORREA CERON MARIA DEL CARMEN"}, "152642": {"pin": "2776", "name": "ALVAREZ SOLIS CLAUDIA IVETT"}, "158311": {"pin": "6364", "name": "RAMIREZ BLANCO ARACELI GUADALUPE"}, "161328": {"pin": "2229", "name": "GUERRERO VILLEGAS ELSA GABRIELA"}, "162129": {"pin": "1338", "name": "MEZA MELO CLAUDIA GUADALUPE"}, "164641": {"pin": "1327", "name": "MENDOZA SANTIAGO ADRIANA"}, "165555": {"pin": "5120", "name": "SALAS TORRES RUBI ANAKAREN"}, "169527": {"pin": "8122", "name": "PATIÑO SILVA FERNANDA MONSERRAT"}, "169884": {"pin": "3842", "name": "SOTO DOMINGUEZ DAYANI SHERLIN GUADALUPE"}, "171033": {"pin": "5553", "name": "REYNA ORTIZ ROSA NANCY"}, "171155": {"pin": "6810", "name": "VEGA LUNA MARIA DE JESUS"}, "172247": {"pin": "6627", "name": "GARCIA BERLANGA BRENDA BERENICE"}, "172852": {"pin": "8272", "name": "BLANCO TORRES GILDA YAMILY"}, "173151": {"pin": "6367", "name": "ANGUIANO BERLANGA FRANCISCO DE JESUS"}, "173159": {"pin": "1296", "name": "MORALES LEYVA KARLA SAMANTA"}, "502488": {"pin": "8144", "name": "RAMOS MARTINEZ LAURA GEORGINA"}};
 function currentLocalDate(){
   const date = new Date();
   const offset = date.getTimezoneOffset();
@@ -112,7 +117,42 @@ if(hasPlaceholder){
     loginButton.textContent = "Validando…";
 
     try{
-      await signInWithEmailAndPassword(auth, employeeEmail(employeeNumber), pin);
+      const advisor = LEGACY_ADVISORS[employeeNumber];
+
+      if(!advisor || advisor.pin !== pin){
+        throw new Error("INVALID_LOCAL_CREDENTIALS");
+      }
+
+      try{
+        await signInWithEmailAndPassword(
+          auth,
+          employeeEmail(employeeNumber),
+          firebaseAdvisorPassword(pin)
+        );
+      }catch(error){
+        const code = String(error?.code || "");
+
+        if(code === "auth/user-not-found" || code === "auth/invalid-credential"){
+          const credential = await createUserWithEmailAndPassword(
+            auth,
+            employeeEmail(employeeNumber),
+            firebaseAdvisorPassword(pin)
+          );
+
+          await setDoc(doc(db, USERS_COLLECTION, credential.user.uid), {
+            employeeNumber,
+            name: advisor.name,
+            role: "advisor",
+            active: true,
+            authEmail: employeeEmail(employeeNumber),
+            accessMode: "employee_pin",
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          }, {merge:true});
+        }else{
+          throw error;
+        }
+      }
     }catch(error){
       console.error(error);
       showError("Número de empleado o PIN incorrecto.");

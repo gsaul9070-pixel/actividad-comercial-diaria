@@ -160,3 +160,16 @@ Quitar acceso desactiva el perfil en Firestore. La cuenta técnica de Authentica
 
 El botón Gerente ahora solicita la contraseña mediante un cuadro de diálogo, como en el HTML anterior.
 Los asesores conservan el acceso mediante número de empleado y PIN.
+
+
+## Corrección de accesos
+
+Firebase Authentication exige contraseñas de al menos seis caracteres. Por eso, el sistema ahora:
+
+- Sigue mostrando y aceptando el PIN anterior de cuatro dígitos.
+- Convierte internamente el PIN a una clave técnica compatible con Firebase.
+- Crea automáticamente la cuenta del asesor la primera vez que inicia sesión.
+- Crea automáticamente la cuenta gerencial la primera vez que se usa la contraseña del diálogo.
+- Conserva los mismos enlaces de GitHub Pages y códigos QR.
+
+Es obligatorio publicar el archivo `firestore.rules` actualizado.

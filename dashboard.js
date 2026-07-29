@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/fireba
 import {
   getAuth,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
@@ -86,7 +87,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
         email:employeeEmail(employeeNumber),
-        password:pin,
+        password:`${pin}PF`,
         returnSecureToken:true
       })
     });
@@ -135,11 +136,38 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
     }
 
     try{
-      await signInWithEmailAndPassword(
-        auth,
-        "jacquelinne.santos@profuturo.com.mx",
-        "Saltillo20$$"
-      );
+      let credential;
+
+      try{
+        credential = await signInWithEmailAndPassword(
+          auth,
+          "jacquelinne.santos@profuturo.com.mx",
+          "Saltillo20$$"
+        );
+      }catch(error){
+        const code = String(error?.code || "");
+
+        if(code === "auth/user-not-found" || code === "auth/invalid-credential"){
+          credential = await createUserWithEmailAndPassword(
+            auth,
+            "jacquelinne.santos@profuturo.com.mx",
+            "Saltillo20$$"
+          );
+
+          await setDoc(doc(db,USERS_COLLECTION,credential.user.uid),{
+            employeeNumber:"143561",
+            name:"JACQUELINNE SANTOS",
+            role:"manager",
+            active:true,
+            authEmail:"jacquelinne.santos@profuturo.com.mx",
+            accessMode:"manager_dialog_password",
+            createdAt:serverTimestamp(),
+            updatedAt:serverTimestamp()
+          },{merge:true});
+        }else{
+          throw error;
+        }
+      }
     }catch(error){
       console.error(error);
       sessionStorage.removeItem("manager_dialog_access");
