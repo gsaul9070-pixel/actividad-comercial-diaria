@@ -79,6 +79,7 @@ if(Object.values(firebaseConfig).some(value=>String(value).includes("REEMPLAZAR"
       employeeNumber,
       advisorUid:item.advisorUid || `employee-${employeeNumber}`,
       name:item.name || item.advisorName || item.fullName || "ASESOR",
+      pin:String(item.pin ?? item.accessPin ?? item.password ?? item.PIN ?? "").replace(/\D/g,""),
       role:"advisor",
       active:item.active !== false &&
         !["inactive","inactivo"].includes(String(item.status || "").toLowerCase())
@@ -249,30 +250,108 @@ if(Object.values(firebaseConfig).some(value=>String(value).includes("REEMPLAZAR"
     document.getElementById("staffInactiveCount").textContent = `${inactive} retirado(s)`;
 
     const body = document.getElementById("staffBody");
-    const users = state.advisors;
 
-    if(!users.length){
-      body.innerHTML = '<tr><td colspan="6" class="empty">Todavía no hay asesores asignados.</td></tr>';
+    if(!advisors.length){
+      body.innerHTML = '<tr><td colspan="7" class="empty">Todavía no hay asesores asignados.</td></tr>';
       return;
     }
 
-    body.innerHTML = users.map(user=>`
+    body.innerHTML = advisors.map(user=>`
       <tr>
-        <td>${esc(user.employeeNumber)}</td>
-        <td><strong>${esc(user.name)}</strong><br><small>${user.pin ? "PIN configurado" : "Sin PIN"}</small></td>
-        <td><span class="badge ${"pending"}">${"Asesor"}</span></td>
-        <td><span class="badge ${user.active ? "reviewed" : "cancelled-badge"}">${user.active ? "Activo" : "Retirado"}</span></td>
+        <td><strong>${esc(user.employeeNumber)}</strong></td>
+        <td>
+          <strong class="staff-name">${esc(user.name)}</strong>
+          <br><small class="staff-subtext">Asesor comercial</small>
+        </td>
+        <td class="nip-cell">
+          <div class="nip-wrap">
+            <span
+              id="nip-${esc(user.id)}"
+              class="nip-value"
+              data-pin="${esc(user.pin || "")}"
+              data-visible="false"
+            >${user.pin ? "••••" : "Sin NIP"}</span>
+            ${user.pin ? `
+              <button
+                type="button"
+                class="icon-button"
+                title="Mostrar u ocultar NIP"
+                onclick="window.toggleEmployeePin('${esc(user.id)}')"
+              >👁</button>
+            ` : ""}
+          </div>
+        </td>
+        <td><span class="badge pending">Asesor</span></td>
+        <td>
+          <span class="badge ${user.active ? "reviewed" : "cancelled-badge"}">
+            ${user.active ? "Activo" : "Retirado"}
+          </span>
+        </td>
         <td>${timestampText(user.lastLoginAt)}</td>
         <td>
           <div class="actions">
+            <button class="soft" onclick="window.changeEmployeePin('${esc(user.id)}')">
+              Cambiar NIP
+            </button>
             ${user.active
-              ? `<button class="danger" onclick="window.removeEmployee('${user.id}')">Quitar acceso</button>`
-              : `<button class="accent" onclick="window.restoreEmployee('${user.id}')">Reasignar</button>`}
+              ? `<button class="danger" onclick="window.removeEmployee('${esc(user.id)}')">Quitar acceso</button>`
+              : `<button class="accent" onclick="window.restoreEmployee('${esc(user.id)}')">Reasignar</button>`}
           </div>
         </td>
       </tr>
     `).join("");
   }
+
+  window.toggleEmployeePin = function(id){
+    const element = document.getElementById(`nip-${id}`);
+    if(!element) return;
+
+    const pin = element.dataset.pin || "";
+    const visible = element.dataset.visible === "true";
+
+    element.textContent = visible ? "••••" : pin;
+    element.dataset.visible = visible ? "false" : "true";
+
+    if(!visible){
+      window.setTimeout(()=>{
+        if(element && element.dataset.visible === "true"){
+          element.textContent = "••••";
+          element.dataset.visible = "false";
+        }
+      },10000);
+    }
+  };
+
+  window.changeEmployeePin = async function(id){
+    const advisor = state.advisors.find(item=>item.id === id);
+    if(!advisor) return;
+
+    const newPin = digits(window.prompt(
+      `Escribe el nuevo NIP de 4 dígitos para ${advisor.name}:`,
+      ""
+    ));
+
+    if(!newPin) return;
+    if(newPin.length !== 4){
+      window.alert("El NIP debe contener exactamente 4 dígitos.");
+      return;
+    }
+
+    const confirmation = digits(window.prompt("Confirma nuevamente el NIP:",""));
+    if(confirmation !== newPin){
+      window.alert("Los NIP no coinciden. No se realizaron cambios.");
+      return;
+    }
+
+    await updateDoc(doc(db,ADVISORS_COLLECTION,id),{
+      pin:newPin,
+      updatedAt:serverTimestamp(),
+      pinUpdatedAt:serverTimestamp(),
+      pinUpdatedBy:"manager-143561"
+    });
+
+    window.alert(`NIP actualizado para ${advisor.name}.`);
+  };
 
   window.openReportDetail = function(id){
     const report = state.reports.find(r=>r.id === id);
@@ -387,7 +466,7 @@ if(Object.values(firebaseConfig).some(value=>String(value).includes("REEMPLAZAR"
         throw new Error("Ingresa un número de empleado válido.");
       }
       if(pin.length !== 4){
-        throw new Error("El PIN debe contener exactamente 4 dígitos.");
+        throw new Error("El NIP debe contener exactamente 4 dígitos.");
       }
       if(name.length < 5){
         throw new Error("Ingresa el nombre completo del empleado.");

@@ -61,6 +61,39 @@
     .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;flex-wrap:wrap}
     .help-text{margin-top:6px;color:#6B7280;font-size:12px;line-height:1.4}
     .pin-box{font-family:Consolas,monospace;letter-spacing:3px;font-weight:900}
+
+    /* Mejoras de legibilidad */
+    .kpi span{color:#D7E7FF}
+    .kpi strong{color:#FFFFFF}
+    .filters label{color:#FFFFFF}
+    .filters input,.filters select{background:#FFFFFF;color:#102A4C}
+    .card{background:#FFFFFF;color:#17233A}
+    .card h2,.card-head h2{color:#123A63}
+    .card-head span{color:#374151;font-weight:800}
+    .table-wrap{background:#FFFFFF}
+    tbody tr{background:#FFFFFF}
+    tbody tr:nth-child(even){background:#F7FAFD}
+    tbody td{color:#17233A}
+    tbody td small{color:#52657A}
+    .detail-box{color:#FFFFFF}
+    .detail-box strong{color:#A9CCFF}
+    .nip-cell{min-width:135px}
+    .nip-wrap{display:flex;align-items:center;gap:7px}
+    .nip-value{
+      min-width:58px;
+      font-family:Consolas,monospace;
+      letter-spacing:2px;
+      font-weight:900;
+      color:#123A63;
+    }
+    .icon-button{
+      width:34px;height:34px;padding:0;border-radius:9px;
+      background:#EAF2F8;color:#123A63;font-size:16px
+    }
+    .icon-button:hover{background:#D8E8F5}
+    .staff-name{color:#12233F}
+    .staff-subtext{color:#52657A}
+
     @media(max-width:650px){.form-grid{grid-template-columns:1fr}}
     @media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:650px){.app{padding:9px}.top{align-items:flex-start;flex-direction:column}.kpis{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
@@ -161,7 +194,7 @@
 
         <div class="table-wrap" style="margin-top:14px">
           <table>
-            <thead><tr><th>No. empleado</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Administración</th></tr></thead>
+            <thead><tr><th>No. empleado</th><th>Nombre</th><th>NIP</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Administración</th></tr></thead>
             <tbody id="staffBody"></tbody>
           </table>
         </div>
@@ -175,7 +208,7 @@
       <div class="modal-head">
         <div>
           <h2 style="margin:0">Asignar nuevo empleado</h2>
-          <p style="margin:5px 0 0;color:#6B7280">El asesor ingresará con su número de empleado y PIN.</p>
+          <p style="margin:5px 0 0;color:#6B7280">El asesor ingresará con su número de empleado y NIP.</p>
         </div>
         <button class="danger" type="button" onclick="window.closeEmployeeModal()">Cerrar</button>
       </div>
@@ -187,9 +220,9 @@
             <input id="newEmployeeNumber" inputmode="numeric" maxlength="10" placeholder="Ej. 175000" required>
           </div>
           <div>
-            <label for="newEmployeePin">PIN de 4 dígitos</label>
-            <input id="newEmployeePin" class="pin-box" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="••••" required>
-            <div class="help-text">El PIN será la contraseña inicial del asesor.</div>
+            <label for="newEmployeePin">NIP de 4 dígitos</label>
+            <input id="newEmployeePin" class="pin-box" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="NIP" required>
+            <div class="help-text">El NIP será la clave personal de acceso del asesor.</div>
           </div>
           <div class="full">
             <label for="newEmployeeName">Nombre completo</label>
