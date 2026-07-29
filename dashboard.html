@@ -94,6 +94,99 @@
     .staff-name{color:#12233F}
     .staff-subtext{color:#52657A}
 
+
+    .analytics-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1.45fr) minmax(320px,.85fr);
+      gap:14px;
+      margin-top:14px;
+    }
+    .chart-card{
+      background:#FFFFFF;
+      color:#17233A;
+      border:1px solid #DCE3EC;
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 12px 30px rgba(18,58,99,.09);
+      min-width:0;
+    }
+    .chart-card.wide{grid-column:1/-1}
+    .chart-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:15px;
+    }
+    .chart-title h2{margin:0;color:#123A63;font-size:18px}
+    .chart-title p{margin:5px 0 0;color:#64748B;font-size:12px;line-height:1.4}
+    .chart-badge{
+      display:inline-flex;
+      align-items:center;
+      padding:7px 10px;
+      border-radius:999px;
+      background:#EAF2F8;
+      color:#123A63;
+      font-size:11px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .chart-canvas-wrap{position:relative;height:300px}
+    #trendCanvas{width:100%;height:100%;display:block}
+    .legend{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-top:12px;
+      color:#52657A;
+      font-size:12px;
+      font-weight:700;
+    }
+    .legend-item{display:flex;align-items:center;gap:6px}
+    .legend-dot{width:10px;height:10px;border-radius:50%}
+    .top-list{display:flex;flex-direction:column;gap:13px}
+    .top-row{display:grid;grid-template-columns:minmax(120px,1fr) 2fr auto;gap:10px;align-items:center}
+    .top-name{font-size:12px;font-weight:800;color:#17233A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .top-meta{display:block;color:#64748B;font-size:10px;font-weight:600;margin-top:3px}
+    .bar-track{height:12px;border-radius:999px;background:#E8EEF5;overflow:hidden}
+    .bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#1C5D99,#0E9F6E)}
+    .top-value{min-width:36px;text-align:right;color:#123A63;font-size:13px;font-weight:900}
+    .conversion-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .conversion-item{
+      background:linear-gradient(145deg,#F8FBFF,#EEF5FB);
+      border:1px solid #DCE7F1;
+      border-radius:15px;
+      padding:14px;
+    }
+    .conversion-item span{display:block;color:#64748B;font-size:11px;font-weight:800;text-transform:uppercase}
+    .conversion-item strong{display:block;color:#123A63;font-size:24px;margin-top:6px}
+    .conversion-item small{display:block;color:#52657A;margin-top:4px;font-size:11px}
+    .progress-line{height:8px;border-radius:999px;background:#DEE8F1;margin-top:11px;overflow:hidden}
+    .progress-line i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#FFB71B,#0E9F6E)}
+    .activity-summary{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:10px;
+      margin-top:14px;
+    }
+    .mini-metric{
+      background:#071F4E;
+      border-radius:14px;
+      padding:13px;
+      color:#FFFFFF;
+    }
+    .mini-metric span{display:block;color:#BFD2ED;font-size:10px;font-weight:800;text-transform:uppercase}
+    .mini-metric strong{display:block;font-size:22px;margin-top:5px}
+    @media(max-width:1050px){
+      .analytics-grid{grid-template-columns:1fr}
+      .chart-card.wide{grid-column:auto}
+    }
+    @media(max-width:720px){
+      .conversion-grid,.activity-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .chart-canvas-wrap{height:250px}
+      .top-row{grid-template-columns:minmax(100px,1fr) 1.4fr auto}
+    }
+
     @media(max-width:650px){.form-grid{grid-template-columns:1fr}}
     @media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:650px){.app{padding:9px}.top{align-items:flex-start;flex-direction:column}.kpis{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
@@ -158,6 +251,73 @@
         <div><label>Asesor</label><select id="advisorFilter"><option value="">Todos</option></select></div>
         <div><label>Estado</label><select id="statusFilter"><option value="">Todos</option><option value="pending">Pendiente de revisión</option><option value="reviewed">Revisado</option><option value="cancelled">Anulado</option></select></div>
         <div><label>Buscar</label><input id="searchFilter" placeholder="Nombre, empresa, NSS o teléfono"></div>
+      </div>
+
+      <div class="analytics-grid">
+        <div class="chart-card">
+          <div class="chart-title">
+            <div>
+              <h2>Tendencia de actividad comercial</h2>
+              <p>Contactos, citas y trámites de acuerdo con los filtros seleccionados.</p>
+            </div>
+            <span id="trendRangeBadge" class="chart-badge">Últimos registros</span>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="trendCanvas"></canvas>
+          </div>
+          <div class="legend">
+            <span class="legend-item"><i class="legend-dot" style="background:#1C5D99"></i>Contactos</span>
+            <span class="legend-item"><i class="legend-dot" style="background:#FFB71B"></i>Citas</span>
+            <span class="legend-item"><i class="legend-dot" style="background:#0E9F6E"></i>Trámites</span>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">
+            <div>
+              <h2>Top de asesores</h2>
+              <p>Clasificación por número de trámites realizados.</p>
+            </div>
+            <span class="chart-badge">Top 7</span>
+          </div>
+          <div id="topAdvisorsChart" class="top-list"></div>
+        </div>
+
+        <div class="chart-card wide">
+          <div class="chart-title">
+            <div>
+              <h2>Embudo de conversión</h2>
+              <p>Relación entre contactos, citas generadas y trámites realizados.</p>
+            </div>
+            <span id="conversionBadge" class="chart-badge">0% conversión</span>
+          </div>
+          <div class="conversion-grid">
+            <div class="conversion-item">
+              <span>Contactos</span>
+              <strong id="chartContacts">0</strong>
+              <small>Base total de prospectos</small>
+              <div class="progress-line"><i id="contactsProgress" style="width:100%"></i></div>
+            </div>
+            <div class="conversion-item">
+              <span>Citas</span>
+              <strong id="chartAppointments">0</strong>
+              <small id="appointmentRate">0% de los contactos</small>
+              <div class="progress-line"><i id="appointmentsProgress" style="width:0%"></i></div>
+            </div>
+            <div class="conversion-item">
+              <span>Trámites</span>
+              <strong id="chartProcedures">0</strong>
+              <small id="procedureRate">0% de los contactos</small>
+              <div class="progress-line"><i id="proceduresProgress" style="width:0%"></i></div>
+            </div>
+          </div>
+          <div class="activity-summary">
+            <div class="mini-metric"><span>Promedio contactos/reporte</span><strong id="avgContacts">0</strong></div>
+            <div class="mini-metric"><span>Promedio citas/reporte</span><strong id="avgAppointments">0</strong></div>
+            <div class="mini-metric"><span>Promedio trámites/reporte</span><strong id="avgProcedures">0</strong></div>
+            <div class="mini-metric"><span>Reportes revisados</span><strong id="reviewedRate">0%</strong></div>
+          </div>
+        </div>
       </div>
 
       <div class="card">

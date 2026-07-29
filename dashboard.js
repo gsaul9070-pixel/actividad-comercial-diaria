@@ -184,6 +184,7 @@ if(Object.values(firebaseConfig).some(value=>String(value).includes("REEMPLAZAR"
   function renderAll(){
     renderAdvisorFilter();
     renderKPIs();
+    renderCharts();
     renderMissing();
     renderReports();
     renderStaff();
@@ -217,6 +218,201 @@ if(Object.values(firebaseConfig).some(value=>String(value).includes("REEMPLAZAR"
       visible.reduce((sum,r)=>sum + Number(r.appointmentsGenerated || 0),0);
     document.getElementById("kpiProcedures").textContent =
       visible.reduce((sum,r)=>sum + Number(r.procedureCount || 0),0);
+  }
+
+
+  function reportDateLabel(date){
+    if(!date) return "—";
+    const parts = String(date).split("-");
+    return parts.length === 3 ? `${parts[2]}/${parts[1]}` : date;
+  }
+
+  function percent(value,total){
+    if(!total) return 0;
+    return Math.round((value / total) * 100);
+  }
+
+  function renderTrendCanvas(dayRows){
+    const canvas = document.getElementById("trendCanvas");
+    if(!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1,Math.round(rect.width * ratio));
+    canvas.height = Math.max(1,Math.round(rect.height * ratio));
+
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(ratio,0,0,ratio,0,0);
+
+    const width = rect.width;
+    const height = rect.height;
+    const pad = {left:42,right:18,top:18,bottom:38};
+    const chartW = Math.max(1,width-pad.left-pad.right);
+    const chartH = Math.max(1,height-pad.top-pad.bottom);
+
+    ctx.clearRect(0,0,width,height);
+    ctx.font = "11px Segoe UI, Arial";
+    ctx.textBaseline = "middle";
+
+    if(!dayRows.length){
+      ctx.fillStyle = "#64748B";
+      ctx.textAlign = "center";
+      ctx.fillText("No hay datos para representar.",width/2,height/2);
+      return;
+    }
+
+    const maxValue = Math.max(
+      1,
+      ...dayRows.flatMap(row=>[row.contacts,row.appointments,row.procedures])
+    );
+    const steps = 4;
+
+    ctx.strokeStyle = "#E1E8F0";
+    ctx.lineWidth = 1;
+    ctx.fillStyle = "#64748B";
+    ctx.textAlign = "right";
+
+    for(let i=0;i<=steps;i++){
+      const y = pad.top + chartH - (chartH * i / steps);
+      ctx.beginPath();
+      ctx.moveTo(pad.left,y);
+      ctx.lineTo(width-pad.right,y);
+      ctx.stroke();
+      ctx.fillText(String(Math.round(maxValue*i/steps)),pad.left-8,y);
+    }
+
+    const xFor = index => dayRows.length === 1
+      ? pad.left + chartW/2
+      : pad.left + chartW * index/(dayRows.length-1);
+    const yFor = value => pad.top + chartH - chartH*(value/maxValue);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#64748B";
+    const labelEvery = Math.max(1,Math.ceil(dayRows.length/7));
+    dayRows.forEach((row,index)=>{
+      if(index % labelEvery === 0 || index === dayRows.length-1){
+        ctx.fillText(reportDateLabel(row.date),xFor(index),height-15);
+      }
+    });
+
+    const series = [
+      {key:"contacts",color:"#1C5D99"},
+      {key:"appointments",color:"#FFB71B"},
+      {key:"procedures",color:"#0E9F6E"}
+    ];
+
+    series.forEach(item=>{
+      ctx.strokeStyle = item.color;
+      ctx.fillStyle = item.color;
+      ctx.lineWidth = 3;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.beginPath();
+
+      dayRows.forEach((row,index)=>{
+        const x=xFor(index), y=yFor(row[item.key]);
+        if(index===0) ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+
+      dayRows.forEach((row,index)=>{
+        const x=xFor(index), y=yFor(row[item.key]);
+        ctx.beginPath();
+        ctx.arc(x,y,3.5,0,Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle="#FFFFFF";
+        ctx.lineWidth=2;
+        ctx.stroke();
+      });
+    });
+  }
+
+  function renderCharts(){
+    const reports = filteredReports().filter(report=>report.status !== "cancelled");
+    const totals = reports.reduce((acc,report)=>{
+      acc.contacts += Number(report.contacts || 0);
+      acc.appointments += Number(report.appointmentsGenerated || 0);
+      acc.procedures += Number(report.procedureCount || 0);
+      if(report.reviewStatus === "reviewed") acc.reviewed += 1;
+      return acc;
+    },{contacts:0,appointments:0,procedures:0,reviewed:0});
+
+    const appointmentRate = percent(totals.appointments,totals.contacts);
+    const procedureRate = percent(totals.procedures,totals.contacts);
+    const reviewedRate = percent(totals.reviewed,reports.length);
+
+    document.getElementById("chartContacts").textContent = totals.contacts;
+    document.getElementById("chartAppointments").textContent = totals.appointments;
+    document.getElementById("chartProcedures").textContent = totals.procedures;
+    document.getElementById("appointmentRate").textContent = `${appointmentRate}% de los contactos`;
+    document.getElementById("procedureRate").textContent = `${procedureRate}% de los contactos`;
+    document.getElementById("appointmentsProgress").style.width = `${Math.min(100,appointmentRate)}%`;
+    document.getElementById("proceduresProgress").style.width = `${Math.min(100,procedureRate)}%`;
+    document.getElementById("conversionBadge").textContent = `${procedureRate}% conversión`;
+
+    const divisor = reports.length || 1;
+    document.getElementById("avgContacts").textContent = (totals.contacts/divisor).toFixed(1);
+    document.getElementById("avgAppointments").textContent = (totals.appointments/divisor).toFixed(1);
+    document.getElementById("avgProcedures").textContent = (totals.procedures/divisor).toFixed(1);
+    document.getElementById("reviewedRate").textContent = `${reviewedRate}%`;
+
+    const byDay = new Map();
+    reports.forEach(report=>{
+      const date = report.createdDate || "Sin fecha";
+      if(!byDay.has(date)){
+        byDay.set(date,{date,contacts:0,appointments:0,procedures:0});
+      }
+      const item = byDay.get(date);
+      item.contacts += Number(report.contacts || 0);
+      item.appointments += Number(report.appointmentsGenerated || 0);
+      item.procedures += Number(report.procedureCount || 0);
+    });
+
+    const dayRows = [...byDay.values()]
+      .sort((a,b)=>String(a.date).localeCompare(String(b.date)))
+      .slice(-14);
+
+    renderTrendCanvas(dayRows);
+    document.getElementById("trendRangeBadge").textContent =
+      dayRows.length ? `${dayRows.length} día(s)` : "Sin datos";
+
+    const advisorMap = new Map();
+    reports.forEach(report=>{
+      const key = report.advisorUid || report.advisorEmployeeNumber || report.advisorName;
+      if(!advisorMap.has(key)){
+        advisorMap.set(key,{
+          name:report.advisorName || "Sin nombre",
+          number:report.advisorEmployeeNumber || "",
+          procedures:0,
+          contacts:0
+        });
+      }
+      const item = advisorMap.get(key);
+      item.procedures += Number(report.procedureCount || 0);
+      item.contacts += Number(report.contacts || 0);
+    });
+
+    const top = [...advisorMap.values()]
+      .sort((a,b)=>b.procedures-a.procedures || b.contacts-a.contacts)
+      .slice(0,7);
+    const max = Math.max(1,...top.map(item=>item.procedures));
+    const container = document.getElementById("topAdvisorsChart");
+
+    container.innerHTML = top.length
+      ? top.map((item,index)=>`
+          <div class="top-row">
+            <div class="top-name">
+              ${index+1}. ${esc(item.name)}
+              <span class="top-meta">${esc(item.number)} · ${item.contacts} contacto(s)</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${Math.max(4,(item.procedures/max)*100)}%"></div>
+            </div>
+            <div class="top-value">${item.procedures}</div>
+          </div>
+        `).join("")
+      : '<div class="empty">No hay información para generar el ranking.</div>';
   }
 
   function renderMissing(){

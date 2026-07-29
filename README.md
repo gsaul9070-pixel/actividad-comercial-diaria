@@ -20,3 +20,15 @@ Al abrir el dashboard gerencial, el sistema revisa la colección
 en los empleados que todavía no tengan el campo `pin`.
 
 Los NIP existentes no se reemplazan.
+
+
+## Dashboard gráfico
+
+Se agregaron:
+
+- Tendencia diaria de contactos, citas y trámites.
+- Top 7 de asesores por trámites realizados.
+- Embudo de conversión.
+- Promedios por reporte.
+- Porcentaje de reportes revisados.
+- Gráficas que responden a los filtros del dashboard.
