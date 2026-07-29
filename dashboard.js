@@ -141,7 +141,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       try{
         credential = await signInWithEmailAndPassword(
           auth,
-          "143561@actividad.local",
+          "manager.143561@actividad-comercial-diaria.com",
           "Saltillo20$$"
         );
       }catch(error){
@@ -150,7 +150,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
         if(code === "auth/user-not-found" || code === "auth/invalid-credential"){
           credential = await createUserWithEmailAndPassword(
             auth,
-            "143561@actividad.local",
+            "manager.143561@actividad-comercial-diaria.com",
             "Saltillo20$$"
           );
 
@@ -159,7 +159,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
             name:"SANTOS GUTIERREZ JACQUELINNE ADRIANA",
             role:"manager",
             active:true,
-            authEmail:"143561@actividad.local",
+            authEmail:"manager.143561@actividad-comercial-diaria.com",
             accessMode:"manager_dialog_password",
             createdAt:serverTimestamp(),
             updatedAt:serverTimestamp()
@@ -177,8 +177,11 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
           <p style="font-size:18px;font-weight:800;margin:0 0 8px;color:#FCA5A5">
             No fue posible validar la cuenta gerencial en Firebase
           </p>
-          <p style="margin:0 0 14px;color:#C8D7EE">
+          <p style="margin:0 0 8px;color:#C8D7EE">
             No fue posible crear o validar la sesión técnica del gerente.
+          </p>
+          <p style="margin:0 0 14px;color:#FDE68A;font-family:Consolas,monospace;font-size:13px">
+            ${String(error?.code || error?.message || "error-desconocido")}
           </p>
           <button type="button" class="accent" onclick="window.location.assign('./index.html')">
             Regresar
@@ -208,7 +211,7 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
       if(!profileSnap.exists()){
         const managerEmail = String(user.email || "").toLowerCase();
 
-        if(managerEmail !== "143561@actividad.local"){
+        if(managerEmail !== "manager.143561@actividad-comercial-diaria.com"){
           throw new Error("Usuario no autorizado.");
         }
 

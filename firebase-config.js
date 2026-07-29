@@ -10,4 +10,4 @@ export const firebaseConfig = {
 
 export const USERS_COLLECTION = "commercial_users";
 export const REPORTS_COLLECTION = "commercial_activity_reports";
-export const AUTH_EMAIL_DOMAIN = "actividad.local";
+export const AUTH_EMAIL_DOMAIN = "actividad-comercial-diaria.com";

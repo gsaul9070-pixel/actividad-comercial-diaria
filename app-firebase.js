@@ -176,7 +176,7 @@ if(hasPlaceholder){
       }
     }catch(error){
       console.error(error);
-      showError("Número de empleado o PIN incorrecto.");
+      showError(error?.message === "INVALID_LOCAL_CREDENTIALS" ? "Número de empleado o PIN incorrecto." : `No fue posible iniciar sesión (${error?.code || error?.message || "error"}).`);
       loginButton.disabled = false;
       loginButton.textContent = "Continuar";
     }

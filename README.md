@@ -13,7 +13,7 @@
 ## Seguridad incluida
 
 1. Inicio de sesión con Firebase Authentication.
-2. El número de empleado se transforma internamente a `NUMERO@actividad.local`.
+2. El número de empleado se transforma internamente a `NUMERO@actividad-comercial-diaria.com`.
 3. La contraseña temporal debe cambiarse durante el primer acceso.
 4. Nombre y número de empleado quedan bloqueados en el reporte.
 5. Solo el rol `manager` puede ver y administrar el dashboard.
@@ -181,7 +181,7 @@ La interfaz queda simple para el usuario:
 
 - Asesores: número de empleado + PIN de cuatro dígitos.
 - Gerente: cuadro de diálogo de contraseña.
-- La cuenta técnica del gerente usa `143561@actividad.local`, evitando conflictos con cuentas anteriores.
+- La cuenta técnica del gerente usa `manager.143561@actividad-comercial-diaria.com`, evitando conflictos con cuentas anteriores.
 - Firebase Authentication trabaja únicamente en segundo plano.
 - Los perfiles faltantes se generan automáticamente en Firestore durante el primer acceso válido.
 - Los enlaces de GitHub Pages y códigos QR permanecen iguales.
