@@ -52,6 +52,16 @@
     .modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
     .detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.detail-box{background:#091D45;border:1px solid var(--line);border-radius:12px;padding:11px}.detail-box strong{display:block;color:var(--primary);font-size:12px;margin-bottom:4px}
     .client-table{min-width:900px}
+
+    .staff-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .staff-summary{display:flex;gap:8px;flex-wrap:wrap}
+    .staff-chip{padding:8px 11px;border-radius:999px;background:#EAF2F8;color:#123A63;font-size:12px;font-weight:800}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .form-grid .full{grid-column:1/-1}
+    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;flex-wrap:wrap}
+    .help-text{margin-top:6px;color:#6B7280;font-size:12px;line-height:1.4}
+    .pin-box{font-family:Consolas,monospace;letter-spacing:3px;font-weight:900}
+    @media(max-width:650px){.form-grid{grid-template-columns:1fr}}
     @media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:650px){.app{padding:9px}.top{align-items:flex-start;flex-direction:column}.kpis{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
   </style>
@@ -63,12 +73,12 @@
       <h1>Acceso Gerencial</h1>
       <p>Ingresa tus credenciales para consultar el seguimiento comercial.</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;overflow:hidden;margin:22px 0 26px;border-radius:14px;border:1px solid rgba(121,173,245,.36);background:rgba(1,17,54,.66)">
-        <a href="index.html" style="min-height:54px;display:flex;align-items:center;justify-content:center;color:#D7E7FF;text-decoration:none;font-weight:800">👤 Empleado</a>
-        <span style="min-height:54px;display:flex;align-items:center;justify-content:center;color:#071B42;font-weight:800;background:linear-gradient(135deg,#FFB71B,#FFD369)">🔒 Gerente</span>
+        <button id="goEmployee" type="button" style="min-height:54px;display:flex;align-items:center;justify-content:center;color:#D7E7FF;background:transparent;border:0;cursor:pointer;font-weight:800;width:100%">👤 Empleado</button>
+        <button type="button" aria-current="page" style="min-height:54px;display:flex;align-items:center;justify-content:center;color:#071B42;font-weight:800;background:linear-gradient(135deg,#FFB71B,#FFD369);border:0;width:100%">🔒 Gerente</button>
       </div>
       <form id="loginForm">
         <label for="employee">Usuario gerencial</label>
-        <input id="employee" type="email" inputmode="email" autocomplete="username" placeholder="correo@empresa.com" required>
+        <input id="employee" type="text" inputmode="numeric" autocomplete="username" maxlength="6" placeholder="Ingresa tu usuario" required>
         <label for="password" style="margin-top:13px">Contraseña</label>
         <input id="password" type="password" autocomplete="current-password" placeholder="Ingresa tu contraseña" required>
         <button id="loginButton" class="primary" style="width:100%;margin-top:18px" type="submit">Ingresar al dashboard →</button>
@@ -131,8 +141,21 @@
 
     <section id="staffPanel" class="panel">
       <div class="card">
-        <div class="card-head"><h2>Personal autorizado</h2><span id="staffCount"></span></div>
-        <div class="table-wrap">
+        <div class="staff-toolbar">
+          <div>
+            <h2 style="margin:0;color:var(--primary)">Administración de empleados</h2>
+            <p style="margin:5px 0 0;color:var(--muted)">Asigna nuevos asesores, activa o retira accesos.</p>
+          </div>
+          <button class="accent" onclick="window.openEmployeeModal()">＋ Asignar empleado</button>
+        </div>
+
+        <div class="staff-summary">
+          <span id="staffCount" class="staff-chip">0 usuarios</span>
+          <span id="staffActiveCount" class="staff-chip">0 activos</span>
+          <span id="staffInactiveCount" class="staff-chip">0 inactivos</span>
+        </div>
+
+        <div class="table-wrap" style="margin-top:14px">
           <table>
             <thead><tr><th>No. empleado</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Administración</th></tr></thead>
             <tbody id="staffBody"></tbody>
@@ -142,6 +165,44 @@
     </section>
   </main>
 
+
+  <div id="employeeModal" class="modal">
+    <div class="modal-card" style="width:min(680px,100%)">
+      <div class="modal-head">
+        <div>
+          <h2 style="margin:0">Asignar nuevo empleado</h2>
+          <p style="margin:5px 0 0;color:#6B7280">El asesor ingresará con su número de empleado y PIN.</p>
+        </div>
+        <button class="danger" type="button" onclick="window.closeEmployeeModal()">Cerrar</button>
+      </div>
+
+      <form id="employeeForm" style="margin-top:18px">
+        <div class="form-grid">
+          <div>
+            <label for="newEmployeeNumber">Número de empleado</label>
+            <input id="newEmployeeNumber" inputmode="numeric" maxlength="10" placeholder="Ej. 175000" required>
+          </div>
+          <div>
+            <label for="newEmployeePin">PIN de 4 dígitos</label>
+            <input id="newEmployeePin" class="pin-box" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="••••" required>
+            <div class="help-text">El PIN será la contraseña inicial del asesor.</div>
+          </div>
+          <div class="full">
+            <label for="newEmployeeName">Nombre completo</label>
+            <input id="newEmployeeName" maxlength="120" placeholder="Nombre completo del asesor" required>
+          </div>
+        </div>
+
+        <div id="employeeFormError" class="error"></div>
+
+        <div class="modal-actions">
+          <button class="soft" type="button" onclick="window.closeEmployeeModal()">Cancelar</button>
+          <button id="saveEmployeeButton" class="accent" type="submit">Asignar empleado</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="detailModal" class="modal">
     <div class="modal-card">
       <div class="modal-head"><h2 id="detailTitle">Detalle</h2><button class="danger" onclick="document.getElementById('detailModal').classList.remove('show')">Cerrar</button></div>
@@ -150,6 +211,16 @@
   </div>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function(){
+      const employeeButton = document.getElementById("goEmployee");
+      if(employeeButton){
+        employeeButton.addEventListener("click", function(){
+          window.location.assign("./index.html");
+        });
+      }
+    });
+  </script>
   <script type="module" src="dashboard.js"></script>
 </body>
 </html>

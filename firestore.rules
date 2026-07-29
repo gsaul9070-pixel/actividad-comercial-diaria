@@ -14,69 +14,48 @@ service cloud.firestore {
       return get(currentUserPath()).data;
     }
 
-    function isActiveManager() {
+    function isActive() {
       return signedIn()
         && exists(currentUserPath())
-        && currentUser().active == true
-        && currentUser().role == "manager";
+        && currentUser().active == true;
     }
 
-    function isInitialManagerAccount() {
-      return signedIn()
-        && request.auth.token.email == "jacquelinne.santos@profuturo.com.mx";
-    }
-
-    function validAdvisor(number, name) {
-      return (number == "130257" && name == "CORREA CERON MARIA DEL CARMEN")
-        || (number == "152642" && name == "ALVAREZ SOLIS CLAUDIA IVETT")
-        || (number == "158311" && name == "RAMIREZ BLANCO ARACELI GUADALUPE")
-        || (number == "161328" && name == "GUERRERO VILLEGAS ELSA GABRIELA")
-        || (number == "162129" && name == "MEZA MELO CLAUDIA GUADALUPE")
-        || (number == "164641" && name == "MENDOZA SANTIAGO ADRIANA")
-        || (number == "165555" && name == "SALAS TORRES RUBI ANAKAREN")
-        || (number == "169527" && name == "PATIÑO SILVA FERNANDA MONSERRAT")
-        || (number == "169884" && name == "SOTO DOMINGUEZ DAYANI SHERLIN GUADALUPE")
-        || (number == "171033" && name == "REYNA ORTIZ ROSA NANCY")
-        || (number == "171155" && name == "VEGA LUNA MARIA DE JESUS")
-        || (number == "172247" && name == "GARCIA BERLANGA BRENDA BERENICE")
-        || (number == "172852" && name == "BLANCO TORRES GILDA YAMILY")
-        || (number == "173151" && name == "ANGUIANO BERLANGA FRANCISCO DE JESUS")
-        || (number == "173159" && name == "MORALES LEYVA KARLA SAMANTA")
-        || (number == "502488" && name == "RAMOS MARTINEZ LAURA GEORGINA");
+    function isManager() {
+      return isActive() && currentUser().role == "manager";
     }
 
     match /commercial_users/{userId} {
-      allow create: if request.auth.uid == userId
-        && isInitialManagerAccount()
-        && request.resource.data.employeeNumber == "143561"
-        && request.resource.data.name == "SANTOS GUTIERREZ JACQUELINNE ADRIANA"
-        && request.resource.data.role == "manager"
+      allow read: if signedIn() && (request.auth.uid == userId || isManager());
+      allow create: if isManager()
+        && request.resource.data.role == "advisor"
         && request.resource.data.active == true;
 
-      allow read: if signedIn()
-        && (request.auth.uid == userId || isActiveManager());
-
-      allow update: if isActiveManager();
+      allow update: if isManager()
+        || (
+          signedIn()
+          && request.auth.uid == userId
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(["lastLoginAt", "updatedAt"])
+        );
 
       allow delete: if false;
     }
 
     match /commercial_activity_reports/{reportId} {
-      allow create: if request.auth == null
-        && request.resource.data.status == "finalized"
-        && request.resource.data.advisorRole == "advisor"
-        && validAdvisor(
-          request.resource.data.advisorEmployeeNumber,
-          request.resource.data.advisorName
-        )
-        && reportId == (
-          request.resource.data.advisorEmployeeNumber
-          + "_"
-          + request.resource.data.createdDate
+      allow create: if isActive()
+        && currentUser().role == "advisor"
+        && request.resource.data.advisorUid == request.auth.uid
+        && request.resource.data.advisorEmployeeNumber == currentUser().employeeNumber
+        && request.resource.data.advisorName == currentUser().name
+        && request.resource.data.status == "finalized";
+
+      allow read: if isActive()
+        && (
+          isManager()
+          || resource.data.advisorUid == request.auth.uid
         );
 
-      allow read, update: if isActiveManager();
-
+      allow update: if isManager();
       allow delete: if false;
     }
   }

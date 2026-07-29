@@ -142,3 +142,15 @@ El dashboard utiliza un correo real como usuario gerencial:
 - Perfil requerido en Firestore: documento con el mismo UID de Authentication y `role: "manager"`.
 
 Los asesores continúan accediendo a `index.html` solamente con su número de empleado.
+
+
+## Administración de empleados desde el dashboard
+
+El gerente puede:
+
+- Asignar un asesor nuevo con número de empleado, nombre y PIN de cuatro dígitos.
+- Quitar su acceso sin borrar los reportes históricos.
+- Reasignar posteriormente a un asesor retirado.
+- Consultar el total de asesores activos y retirados.
+
+Quitar acceso desactiva el perfil en Firestore. La cuenta técnica de Authentication se conserva para preservar la trazabilidad y permitir una futura reasignación.

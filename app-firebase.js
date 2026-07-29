@@ -1,114 +1,25 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+import {
   getFirestore,
   doc,
+  getDoc,
+  updateDoc,
   setDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 import {
   firebaseConfig,
-  REPORTS_COLLECTION
+  USERS_COLLECTION,
+  REPORTS_COLLECTION,
+  AUTH_EMAIL_DOMAIN
 } from "./firebase-config.js";
-
-const EMPLOYEE_DIRECTORY = {
-  "130257": {
-    "employeeNumber": "130257",
-    "name": "CORREA CERON MARIA DEL CARMEN",
-    "role": "advisor",
-    "active": true
-  },
-  "152642": {
-    "employeeNumber": "152642",
-    "name": "ALVAREZ SOLIS CLAUDIA IVETT",
-    "role": "advisor",
-    "active": true
-  },
-  "158311": {
-    "employeeNumber": "158311",
-    "name": "RAMIREZ BLANCO ARACELI GUADALUPE",
-    "role": "advisor",
-    "active": true
-  },
-  "161328": {
-    "employeeNumber": "161328",
-    "name": "GUERRERO VILLEGAS ELSA GABRIELA",
-    "role": "advisor",
-    "active": true
-  },
-  "162129": {
-    "employeeNumber": "162129",
-    "name": "MEZA MELO CLAUDIA GUADALUPE",
-    "role": "advisor",
-    "active": true
-  },
-  "164641": {
-    "employeeNumber": "164641",
-    "name": "MENDOZA SANTIAGO ADRIANA",
-    "role": "advisor",
-    "active": true
-  },
-  "165555": {
-    "employeeNumber": "165555",
-    "name": "SALAS TORRES RUBI ANAKAREN",
-    "role": "advisor",
-    "active": true
-  },
-  "169527": {
-    "employeeNumber": "169527",
-    "name": "PATIÑO SILVA FERNANDA MONSERRAT",
-    "role": "advisor",
-    "active": true
-  },
-  "169884": {
-    "employeeNumber": "169884",
-    "name": "SOTO DOMINGUEZ DAYANI SHERLIN GUADALUPE",
-    "role": "advisor",
-    "active": true
-  },
-  "171033": {
-    "employeeNumber": "171033",
-    "name": "REYNA ORTIZ ROSA NANCY",
-    "role": "advisor",
-    "active": true
-  },
-  "171155": {
-    "employeeNumber": "171155",
-    "name": "VEGA LUNA MARIA DE JESUS",
-    "role": "advisor",
-    "active": true
-  },
-  "172247": {
-    "employeeNumber": "172247",
-    "name": "GARCIA BERLANGA BRENDA BERENICE",
-    "role": "advisor",
-    "active": true
-  },
-  "172852": {
-    "employeeNumber": "172852",
-    "name": "BLANCO TORRES GILDA YAMILY",
-    "role": "advisor",
-    "active": true
-  },
-  "173151": {
-    "employeeNumber": "173151",
-    "name": "ANGUIANO BERLANGA FRANCISCO DE JESUS",
-    "role": "advisor",
-    "active": true
-  },
-  "173159": {
-    "employeeNumber": "173159",
-    "name": "MORALES LEYVA KARLA SAMANTA",
-    "role": "advisor",
-    "active": true
-  },
-  "502488": {
-    "employeeNumber": "502488",
-    "name": "RAMOS MARTINEZ LAURA GEORGINA",
-    "role": "advisor",
-    "active": true
-  }
-};
 
 const authScreen = document.getElementById("authScreen");
 const appRoot = document.getElementById("appRoot");
@@ -120,24 +31,23 @@ function showError(message){
   loginError.textContent = message;
   loginError.classList.add("show");
 }
-
 function clearError(){
   loginError.textContent = "";
   loginError.classList.remove("show");
 }
-
-function normalizeEmployee(value){
+function digits(value){
   return String(value || "").replace(/\D/g,"");
 }
-
+function employeeEmail(number){
+  return `${number}@${AUTH_EMAIL_DOMAIN}`;
+}
 function currentLocalDate(){
   const date = new Date();
   const offset = date.getTimezoneOffset();
   return new Date(date.getTime() - offset * 60000).toISOString().slice(0,10);
 }
-
-function reportDocumentId(employeeNumber, date){
-  return `${employeeNumber}_${date}`;
+function reportDocumentId(uid, date){
+  return `${uid}_${date}`;
 }
 
 const hasPlaceholder = Object.values(firebaseConfig).some(value =>
@@ -149,60 +59,111 @@ if(hasPlaceholder){
   loginButton.disabled = true;
 } else {
   const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
   const db = getFirestore(app);
 
-  function openEmployeeSession(profile){
-    window.currentUserProfile = {
-      uid: `employee-${profile.employeeNumber}`,
-      ...profile
-    };
+  async function readProfile(uid){
+    const snap = await getDoc(doc(db, USERS_COLLECTION, uid));
+    if(!snap.exists()) throw new Error("El asesor no está registrado.");
+    return {uid, ...snap.data()};
+  }
 
-    window.prepareAdvisorSession(window.currentUserProfile);
+  async function openAdvisorSession(user, profile){
+    if(profile.active !== true){
+      await signOut(auth);
+      throw new Error("Tu acceso está desactivado. Consulta al gerente.");
+    }
+    if(profile.role !== "advisor"){
+      await signOut(auth);
+      window.location.assign("./dashboard.html");
+      return;
+    }
+
+    window.currentUserProfile = profile;
+    window.prepareAdvisorSession(profile);
     authScreen.classList.add("hidden");
     appRoot.classList.remove("hidden");
     window.resetCommercialFormForSession();
-    window.prepareAdvisorSession(window.currentUserProfile);
+    window.prepareAdvisorSession(profile);
+
+    await updateDoc(doc(db, USERS_COLLECTION, user.uid), {
+      lastLoginAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
   }
 
-  loginForm.addEventListener("submit", event=>{
+  loginForm.addEventListener("submit", async event=>{
     event.preventDefault();
     clearError();
 
-    const employeeNumber = normalizeEmployee(
-      document.getElementById("loginEmployee").value
-    );
+    const employeeNumber = digits(document.getElementById("loginEmployee").value);
+    const pin = digits(document.getElementById("loginPin").value);
 
-    const profile = EMPLOYEE_DIRECTORY[employeeNumber];
-
-    if(!profile || profile.active !== true){
-      showError("Número de empleado no reconocido o acceso desactivado.");
+    if(!employeeNumber){
+      showError("Ingresa tu número de empleado.");
+      return;
+    }
+    if(pin.length !== 4){
+      showError("El PIN debe contener 4 dígitos.");
       return;
     }
 
     loginButton.disabled = true;
-    loginButton.textContent = "Ingresando…";
-    openEmployeeSession(profile);
-    loginButton.disabled = false;
-    loginButton.textContent = "Ingresar";
+    loginButton.textContent = "Validando…";
+
+    try{
+      await signInWithEmailAndPassword(auth, employeeEmail(employeeNumber), pin);
+    }catch(error){
+      console.error(error);
+      showError("Número de empleado o PIN incorrecto.");
+      loginButton.disabled = false;
+      loginButton.textContent = "Continuar";
+    }
   });
 
-  window.logoutCommercialUser = function(){
-    if(confirm("¿Deseas cerrar la sesión?")){
+  onAuthStateChanged(auth, async user=>{
+    if(!user){
       window.currentUserProfile = null;
+      appRoot.classList.add("hidden");
+      authScreen.classList.remove("hidden");
+      loginButton.disabled = false;
+      loginButton.textContent = "Continuar";
+      return;
+    }
+
+    try{
+      const profile = await readProfile(user.uid);
+      await openAdvisorSession(user, profile);
+    }catch(error){
+      console.error(error);
+      showError(error.message || "No fue posible validar el acceso.");
+      await signOut(auth);
+    }
+  });
+
+  window.logoutCommercialUser = async function(){
+    if(confirm("¿Deseas cerrar la sesión?")){
+      await signOut(auth);
       window.location.reload();
     }
   };
 
   window.saveFinalizedReportToFirebase = async function(data){
+    const user = auth.currentUser;
     const profile = window.currentUserProfile;
 
-    if(!profile || profile.role !== "advisor"){
+    if(!user || !profile || profile.role !== "advisor"){
       throw new Error("La sesión del asesor no está disponible.");
     }
 
     const reportDate = currentLocalDate();
-    const reportId = reportDocumentId(profile.employeeNumber, reportDate);
+    const reportId = reportDocumentId(user.uid, reportDate);
     const reportRef = doc(db, REPORTS_COLLECTION, reportId);
+    const existing = await getDoc(reportRef);
+
+    if(existing.exists()){
+      throw new Error("Ya existe un reporte finalizado para este empleado en la fecha de hoy.");
+    }
 
     const clients = (data.clients || []).map(client=>({
       ...client,
@@ -213,8 +174,8 @@ if(hasPlaceholder){
       client => client.result === "Trámite realizado"
     ).length;
 
-    const payload = {
-      advisorUid: `employee-${profile.employeeNumber}`,
+    await setDoc(reportRef, {
+      advisorUid: user.uid,
       advisorName: profile.name,
       advisorEmployeeNumber: profile.employeeNumber,
       advisorRole: "advisor",
@@ -244,10 +205,8 @@ if(hasPlaceholder){
       reviewedAt: null,
       reviewedBy: null,
       updatedAt: serverTimestamp()
-    };
+    });
 
-    // setDoc falla si las reglas detectan que ya existe ese reporte.
-    await setDoc(reportRef, payload);
     return reportId;
   };
 }

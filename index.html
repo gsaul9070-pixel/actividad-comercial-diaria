@@ -515,7 +515,7 @@
     }
     .access-tab{
       min-height:54px;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;
-      color:#D7E7FF;font-weight:800;text-decoration:none;border-radius:0
+      color:#D7E7FF;font-weight:800;text-decoration:none;border-radius:0;cursor:pointer;width:100%
     }
     .access-tab.active{color:#071B42;background:linear-gradient(135deg,#FFB71B,#FFD369);box-shadow:0 8px 28px rgba(255,183,27,.24)}
     .access-tab:hover{transform:none}
@@ -624,8 +624,8 @@
         <h2>Bienvenido</h2>
         <p class="auth-subtitle">Selecciona tu tipo de acceso y continúa.</p>
         <div class="access-tabs" aria-label="Tipo de acceso">
-          <span class="access-tab active">👤 Empleado</span>
-          <a class="access-tab" href="dashboard.html">🔒 Gerente</a>
+          <button class="access-tab active" type="button" aria-current="page">👤 Empleado</button>
+          <button class="access-tab" type="button" id="goManager">🔒 Gerente</button>
         </div>
         <div class="auth-user-icon" aria-hidden="true">◎</div>
         <form id="loginForm">
@@ -633,10 +633,14 @@
             <label class="required" for="loginEmployee">Número de empleado</label>
             <input id="loginEmployee" type="text" inputmode="numeric" autocomplete="username" maxlength="10" placeholder="Ingresa tu número de empleado" required>
           </div>
+          <div class="field" style="margin-top:14px">
+            <label class="required" for="loginPin">PIN de acceso</label>
+            <input id="loginPin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="4" pattern="[0-9]{4}" placeholder="Ingresa tu PIN de 4 dígitos" required>
+          </div>
           <button id="loginButton" class="btn-primary btn-full" type="submit">Continuar</button>
           <div id="loginError" class="auth-error"></div>
         </form>
-        <div class="access-note">Los empleados ingresan únicamente con su número de empleado. El acceso gerencial requiere usuario y contraseña.</div>
+        <div class="access-note">Los empleados ingresan con su número de empleado y PIN personal. El acceso gerencial requiere usuario y contraseña.</div>
       </div>
     </div>
   </section>
@@ -1760,6 +1764,16 @@
     $("promiseDate").value = tomorrowISO();
     addClient();
     setFinalizedState(false);
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function(){
+      const managerButton = document.getElementById("goManager");
+      if(managerButton){
+        managerButton.addEventListener("click", function(){
+          window.location.assign("./dashboard.html");
+        });
+      }
+    });
   </script>
   <script type="module" src="app-firebase.js"></script>
 </body>

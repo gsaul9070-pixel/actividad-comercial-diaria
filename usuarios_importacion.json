@@ -1,10 +1,8 @@
 {
   "instructions": [
-    "El gerente 143561 accede al dashboard con el correo jacquelinne.santos@profuturo.com.mx y su contraseña privada.",
-    "La contraseña del gerente no se guarda en archivos públicos.",
-    "Los asesores acceden a index.html únicamente con su número de empleado.",
-    "No subas serviceAccountKey.json ni archivos con contraseñas a GitHub.",
-    "MORALES VILLARREAL ARTEMIA JANETH sigue pendiente porque el Excel no contiene su número de empleado."
+    "Gerente: usuario visible 143561; Authentication usa jacquelinne.santos@profuturo.com.mx.",
+    "Asesores: número de empleado y los mismos PIN de cuatro dígitos del sistema anterior.",
+    "No subas archivos de cuenta de servicio ni listas de PIN a GitHub."
   ],
   "users": [
     {
@@ -18,97 +16,113 @@
       "employeeNumber": "130257",
       "name": "CORREA CERON MARIA DEL CARMEN",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "9435"
     },
     {
       "employeeNumber": "152642",
       "name": "ALVAREZ SOLIS CLAUDIA IVETT",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "2776"
     },
     {
       "employeeNumber": "158311",
       "name": "RAMIREZ BLANCO ARACELI GUADALUPE",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "6364"
     },
     {
       "employeeNumber": "161328",
       "name": "GUERRERO VILLEGAS ELSA GABRIELA",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "2229"
     },
     {
       "employeeNumber": "162129",
       "name": "MEZA MELO CLAUDIA GUADALUPE",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "1338"
     },
     {
       "employeeNumber": "164641",
       "name": "MENDOZA SANTIAGO ADRIANA",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "1327"
     },
     {
       "employeeNumber": "165555",
       "name": "SALAS TORRES RUBI ANAKAREN",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "5120"
     },
     {
       "employeeNumber": "169527",
       "name": "PATIÑO SILVA FERNANDA MONSERRAT",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "8122"
     },
     {
       "employeeNumber": "169884",
       "name": "SOTO DOMINGUEZ DAYANI SHERLIN GUADALUPE",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "3842"
     },
     {
       "employeeNumber": "171033",
       "name": "REYNA ORTIZ ROSA NANCY",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "5553"
     },
     {
       "employeeNumber": "171155",
       "name": "VEGA LUNA MARIA DE JESUS",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "6810"
     },
     {
       "employeeNumber": "172247",
       "name": "GARCIA BERLANGA BRENDA BERENICE",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "6627"
     },
     {
       "employeeNumber": "172852",
       "name": "BLANCO TORRES GILDA YAMILY",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "8272"
     },
     {
       "employeeNumber": "173151",
       "name": "ANGUIANO BERLANGA FRANCISCO DE JESUS",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "6367"
     },
     {
       "employeeNumber": "173159",
       "name": "MORALES LEYVA KARLA SAMANTA",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "1296"
     },
     {
       "employeeNumber": "502488",
       "name": "RAMOS MARTINEZ LAURA GEORGINA",
       "role": "advisor",
-      "active": true
+      "active": true,
+      "pin": "8144"
     }
   ]
 }

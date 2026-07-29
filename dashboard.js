@@ -78,6 +78,35 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
   const auth = getAuth(firebaseApp);
   const db = getFirestore(firebaseApp);
   let unsubscribeReports = null;
+
+  async function createAdvisorAuthAccount(employeeNumber, pin){
+    const endpoint = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${encodeURIComponent(firebaseConfig.apiKey)}`;
+    const response = await fetch(endpoint,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        email:employeeEmail(employeeNumber),
+        password:pin,
+        returnSecureToken:true
+      })
+    });
+
+    const payload = await response.json();
+
+    if(!response.ok){
+      const code = payload?.error?.message || "AUTH_ERROR";
+      if(code === "EMAIL_EXISTS"){
+        throw new Error("Ese número de empleado ya tiene una cuenta registrada.");
+      }
+      if(code.includes("WEAK_PASSWORD")){
+        throw new Error("El PIN no cumple con la configuración de contraseña de Firebase.");
+      }
+      throw new Error(`No se pudo crear la cuenta: ${code}`);
+    }
+
+    return payload.localId;
+  }
+
   let unsubscribeUsers = null;
 
   document.getElementById("loginForm").addEventListener("submit", async event=>{
@@ -87,14 +116,22 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
     loginButton.textContent = "Validando…";
 
     try{
-      const managerEmail = document.getElementById("employee").value.trim().toLowerCase();
+      const managerUser = digits(document.getElementById("employee").value);
       const password = document.getElementById("password").value;
 
-      if(!managerEmail || !password){
+      if(!managerUser || !password){
         throw new Error("Completa el usuario gerencial y la contraseña.");
       }
 
-      await signInWithEmailAndPassword(auth, managerEmail, password);
+      if(managerUser !== "143561"){
+        throw new Error("Usuario gerencial no autorizado.");
+      }
+
+      await signInWithEmailAndPassword(
+        auth,
+        "jacquelinne.santos@profuturo.com.mx",
+        password
+      );
     }catch(error){
       console.error(error);
       showError("Usuario gerencial o contraseña incorrectos.");
@@ -289,20 +326,34 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
   }
 
   function renderStaff(){
-    document.getElementById("staffCount").textContent = `${state.users.length} usuario(s)`;
-    document.getElementById("staffBody").innerHTML = state.users.map(user=>`
+    const advisors = state.users.filter(user=>user.role === "advisor");
+    const active = advisors.filter(user=>user.active === true).length;
+    const inactive = advisors.filter(user=>user.active !== true).length;
+
+    document.getElementById("staffCount").textContent = `${advisors.length} asesor(es)`;
+    document.getElementById("staffActiveCount").textContent = `${active} activo(s)`;
+    document.getElementById("staffInactiveCount").textContent = `${inactive} retirado(s)`;
+
+    const body = document.getElementById("staffBody");
+    const users = state.users.filter(user=>user.uid !== state.manager?.uid);
+
+    if(!users.length){
+      body.innerHTML = '<tr><td colspan="6" class="empty">Todavía no hay asesores asignados.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = users.map(user=>`
       <tr>
         <td>${esc(user.employeeNumber)}</td>
-        <td><strong>${esc(user.name)}</strong></td>
+        <td><strong>${esc(user.name)}</strong><br><small>${esc(user.authEmail || "")}</small></td>
         <td><span class="badge ${user.role === "manager" ? "reviewed" : "pending"}">${user.role === "manager" ? "Gerente" : "Asesor"}</span></td>
-        <td><span class="badge ${user.active ? "reviewed" : "cancelled-badge"}">${user.active ? "Activo" : "Inactivo"}</span></td>
+        <td><span class="badge ${user.active ? "reviewed" : "cancelled-badge"}">${user.active ? "Activo" : "Retirado"}</span></td>
         <td>${timestampText(user.lastLoginAt)}</td>
         <td>
           <div class="actions">
-            <button class="soft" onclick="window.toggleUser('${user.uid}',${!user.active})">${user.active ? "Desactivar" : "Activar"}</button>
-            ${user.uid !== state.manager?.uid
-              ? `<button class="soft" onclick="window.toggleRole('${user.uid}','${user.role === "manager" ? "advisor" : "manager"}')">${user.role === "manager" ? "Cambiar a asesor" : "Cambiar a gerente"}</button>`
-              : ""}
+            ${user.active
+              ? `<button class="danger" onclick="window.removeEmployee('${user.uid}')">Quitar acceso</button>`
+              : `<button class="accent" onclick="window.restoreEmployee('${user.uid}')">Reasignar</button>`}
           </div>
         </td>
       </tr>
@@ -389,25 +440,113 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
     });
   };
 
-  window.toggleUser = async function(uid, active){
-    const user = state.users.find(u=>u.uid === uid);
-    if(!user) return;
-    if(!confirm(`${active ? "Activar" : "Desactivar"} a ${user.name}?`)) return;
+  window.openEmployeeModal = function(){
+    const modal = document.getElementById("employeeModal");
+    const form = document.getElementById("employeeForm");
+    const errorBox = document.getElementById("employeeFormError");
 
-    await updateDoc(doc(db, USERS_COLLECTION, uid),{
-      active,
+    form.reset();
+    errorBox.classList.remove("show");
+    errorBox.textContent = "";
+    modal.classList.add("show");
+    setTimeout(()=>document.getElementById("newEmployeeNumber").focus(),50);
+  };
+
+  window.closeEmployeeModal = function(){
+    document.getElementById("employeeModal").classList.remove("show");
+  };
+
+  document.getElementById("employeeForm").addEventListener("submit", async event=>{
+    event.preventDefault();
+
+    const button = document.getElementById("saveEmployeeButton");
+    const errorBox = document.getElementById("employeeFormError");
+    const employeeNumber = digits(document.getElementById("newEmployeeNumber").value);
+    const pin = digits(document.getElementById("newEmployeePin").value);
+    const name = document.getElementById("newEmployeeName").value.trim().replace(/\s+/g," ");
+
+    errorBox.classList.remove("show");
+    errorBox.textContent = "";
+
+    try{
+      if(employeeNumber.length < 4){
+        throw new Error("Ingresa un número de empleado válido.");
+      }
+      if(pin.length !== 4){
+        throw new Error("El PIN debe contener exactamente 4 dígitos.");
+      }
+      if(name.length < 5){
+        throw new Error("Ingresa el nombre completo del empleado.");
+      }
+      if(employeeNumber === "143561"){
+        throw new Error("Ese número pertenece al usuario gerencial.");
+      }
+      if(state.users.some(user=>String(user.employeeNumber) === employeeNumber)){
+        throw new Error("Ese número de empleado ya está asignado.");
+      }
+
+      button.disabled = true;
+      button.textContent = "Asignando…";
+
+      const uid = await createAdvisorAuthAccount(employeeNumber,pin);
+
+      await setDoc(doc(db,USERS_COLLECTION,uid),{
+        employeeNumber,
+        name:name.toUpperCase(),
+        role:"advisor",
+        active:true,
+        authEmail:employeeEmail(employeeNumber),
+        accessMode:"employee_pin",
+        createdAt:serverTimestamp(),
+        createdBy:state.manager.uid,
+        createdByName:state.manager.name,
+        updatedAt:serverTimestamp()
+      });
+
+      window.closeEmployeeModal();
+      alert(`Empleado ${employeeNumber} asignado correctamente.`);
+    }catch(error){
+      console.error(error);
+      errorBox.textContent = error.message || "No fue posible asignar al empleado.";
+      errorBox.classList.add("show");
+    }finally{
+      button.disabled = false;
+      button.textContent = "Asignar empleado";
+    }
+  });
+
+  window.removeEmployee = async function(uid){
+    const user = state.users.find(item=>item.uid === uid);
+    if(!user) return;
+
+    const confirmation = prompt(
+      `Para quitar el acceso de ${user.name}, escribe su número de empleado:`
+    );
+
+    if(confirmation !== String(user.employeeNumber)){
+      if(confirmation !== null) alert("El número no coincide. No se realizaron cambios.");
+      return;
+    }
+
+    await updateDoc(doc(db,USERS_COLLECTION,uid),{
+      active:false,
+      removedAt:serverTimestamp(),
+      removedBy:state.manager.uid,
+      removedByName:state.manager.name,
       updatedAt:serverTimestamp()
     });
   };
 
-  window.toggleRole = async function(uid, role){
-    const user = state.users.find(u=>u.uid === uid);
+  window.restoreEmployee = async function(uid){
+    const user = state.users.find(item=>item.uid === uid);
     if(!user) return;
-    const roleLabel = role === "manager" ? "Gerente" : "Asesor";
-    if(!confirm(`Cambiar a ${user.name} al rol ${roleLabel}?`)) return;
+    if(!confirm(`¿Reasignar el acceso a ${user.name}?`)) return;
 
-    await updateDoc(doc(db, USERS_COLLECTION, uid),{
-      role,
+    await updateDoc(doc(db,USERS_COLLECTION,uid),{
+      active:true,
+      restoredAt:serverTimestamp(),
+      restoredBy:state.manager.uid,
+      restoredByName:state.manager.name,
       updatedAt:serverTimestamp()
     });
   };
