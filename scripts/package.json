@@ -1,0 +1,8 @@
+{
+  "name": "actividad-comercial-user-import",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "firebase-admin": "^14.2.0"
+  }
+}

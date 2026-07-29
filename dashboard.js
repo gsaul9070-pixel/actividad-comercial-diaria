@@ -1,500 +1,51 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+import {
   getFirestore,
   collection,
   doc,
   getDoc,
   setDoc,
-  deleteDoc,
   onSnapshot,
   query,
   orderBy,
   updateDoc,
-  serverTimestamp,
-  writeBatch
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 import {
   firebaseConfig,
-  ADVISORS_COLLECTION,
+  USERS_COLLECTION,
   REPORTS_COLLECTION,
-  SETTINGS_COLLECTION
+  AUTH_EMAIL_DOMAIN
 } from "./firebase-config.js";
 
-const INITIAL_ADVISORS = [
-  {
-    "employeeNumber": "130257",
-    "name": "CORREA CERON MARIA DEL CARMEN",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "152642",
-    "name": "ALVAREZ SOLIS CLAUDIA IVETT",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "158311",
-    "name": "RAMIREZ BLANCO ARACELI GUADALUPE",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "161328",
-    "name": "GUERRERO VILLEGAS ELSA GABRIELA",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "162129",
-    "name": "MEZA MELO CLAUDIA GUADALUPE",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "164641",
-    "name": "MENDOZA SANTIAGO ADRIANA",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "165555",
-    "name": "SALAS TORRES RUBI ANAKAREN",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "169527",
-    "name": "PATIÑO SILVA FERNANDA MONSERRAT",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "169884",
-    "name": "SOTO DOMINGUEZ DAYANI SHERLIN GUADALUPE",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "171033",
-    "name": "REYNA ORTIZ ROSA NANCY",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "171155",
-    "name": "VEGA LUNA MARIA DE JESUS",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "172247",
-    "name": "GARCIA BERLANGA BRENDA BERENICE",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "172852",
-    "name": "BLANCO TORRES GILDA YAMILY",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "173151",
-    "name": "ANGUIANO BERLANGA FRANCISCO DE JESUS",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "173159",
-    "name": "MORALES LEYVA KARLA SAMANTA",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  },
-  {
-    "employeeNumber": "502488",
-    "name": "RAMOS MARTINEZ LAURA GEORGINA",
-    "role": "advisor",
-    "active": true,
-    "accessMode": "employee_number_only"
-  }
-];
-const INITIAL_ADVISOR_PIN_HASHES = {
-  "130257": "99529c2976202f50fed82d5c940126be745a5ac2a20e864e3ceaf24658f0af32",
-  "152642": "d7fcb83baff340632f21132053f767e40b38be6bc8202f2282689db95b0567be",
-  "158311": "472103ca9d0cc86abc0b5912161938d8f892b281e182a3538e84e1fa3aae11e5",
-  "161328": "bf26fde81678761ffc17a8b7d035b5add4e35a519042b6bb09a221b815a74563",
-  "162129": "f801ae1c445a21eafa59d53271fab28a012c3c594163cad56a4c264fd403bb94",
-  "164641": "c3e8a20da78d7fdcc547a3f822b184efdf34867567864332248ea07ed96f8892",
-  "165555": "840bdc7edae5507ecfc5d40028f473370998314b798a6559f65d2566ad5133ab",
-  "169527": "d0e8d98bdf542abb3ec72604e5675dd592a470bec7a39d4dacdb718e32e9d2b1",
-  "169884": "80fc610537ed26e2cd61bbfe4f2f9d08da333ca96b6983e41b7002d8c120a43c",
-  "171033": "2bd74ca25282ca2947279b7224986049b494905b048ab8b11bf828a6647efdb4",
-  "171155": "f72b1863e685713a80d9dbeeb9cc90a31a7c696a52bbe97421f44be9fb80da79",
-  "172247": "8e3067bef11dac1c37508aa3f9bc626172786f3e002bcdf1cf0b36715dd7d338",
-  "172852": "e9b08f027d649403701647e92db43485b016c232b7dd60f9c374f1ddfef6e7f7",
-  "173151": "2966a0f8d5b2b3f83911fb5cb03397a72466a88dd9b9ed5a7710d58650db52e3",
-  "173159": "86057ebdac4b526ced430f5ae2490d8675c66be5b8cba5eab146121125bb59f4",
-  "502488": "a8486ecf79291f49ca260fdc11e3309a65ed5437693e2026452f320286e5f520"
-};
-
-const INITIAL_ADVISOR_PIN_VAULT = {
-  "130257": {
-    "pinHash": "99529c2976202f50fed82d5c940126be745a5ac2a20e864e3ceaf24658f0af32",
-    "pinCipher": "WQBySK7xR76Kt0NUhz5Q2u8VdQM=",
-    "pinIv": "LaBiJaV804KIKYA0",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "152642": {
-    "pinHash": "d7fcb83baff340632f21132053f767e40b38be6bc8202f2282689db95b0567be",
-    "pinCipher": "Yj43FofUPcDd1UcMCJoaOlrlbfE=",
-    "pinIv": "opNdRXtcwKsAgL81",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "158311": {
-    "pinHash": "472103ca9d0cc86abc0b5912161938d8f892b281e182a3538e84e1fa3aae11e5",
-    "pinCipher": "KzGsBYnhoPi6avyYoDTLtFK8yFQ=",
-    "pinIv": "uIMgtAlE0j7M3dp4",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "161328": {
-    "pinHash": "bf26fde81678761ffc17a8b7d035b5add4e35a519042b6bb09a221b815a74563",
-    "pinCipher": "lcuzpF2wlv6OwbueikKVbTBT4Dg=",
-    "pinIv": "/Dw59Nq2ZQYgx+Z8",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "162129": {
-    "pinHash": "f801ae1c445a21eafa59d53271fab28a012c3c594163cad56a4c264fd403bb94",
-    "pinCipher": "KHoMh2pPGQNNWj4f+tW9IzqSPrc=",
-    "pinIv": "MzZPc97zUdGHd8XL",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "164641": {
-    "pinHash": "c3e8a20da78d7fdcc547a3f822b184efdf34867567864332248ea07ed96f8892",
-    "pinCipher": "C7qmvZIURpP5IMrCXWf666VIcsQ=",
-    "pinIv": "lSkkG927jsNqBqqm",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "165555": {
-    "pinHash": "840bdc7edae5507ecfc5d40028f473370998314b798a6559f65d2566ad5133ab",
-    "pinCipher": "o4lpFql7JZCC0WooSa0+Kf03vGE=",
-    "pinIv": "3bFJDqdfnbFx14gM",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "169527": {
-    "pinHash": "d0e8d98bdf542abb3ec72604e5675dd592a470bec7a39d4dacdb718e32e9d2b1",
-    "pinCipher": "PxmBfLZCiOTmI3Gaz11fzhLBpCE=",
-    "pinIv": "mleoE3nuFV7qR2MV",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "169884": {
-    "pinHash": "80fc610537ed26e2cd61bbfe4f2f9d08da333ca96b6983e41b7002d8c120a43c",
-    "pinCipher": "Cmun614iY2LgV3PzRpNIx/TeQ6I=",
-    "pinIv": "ZbTHJlx0mRYCxLE/",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "171033": {
-    "pinHash": "2bd74ca25282ca2947279b7224986049b494905b048ab8b11bf828a6647efdb4",
-    "pinCipher": "ksWWkWN+uThnITbt5xh8Em0AvuI=",
-    "pinIv": "Jzj7OtZAtaqaO2+h",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "171155": {
-    "pinHash": "f72b1863e685713a80d9dbeeb9cc90a31a7c696a52bbe97421f44be9fb80da79",
-    "pinCipher": "+WaXfVv8wHgQUneKwpLSLEkkV6g=",
-    "pinIv": "tyFjyaQekeLr7FB1",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "172247": {
-    "pinHash": "8e3067bef11dac1c37508aa3f9bc626172786f3e002bcdf1cf0b36715dd7d338",
-    "pinCipher": "7+0cdKPAmsT+5KBd+4MQnOW9wEY=",
-    "pinIv": "HZb2HIpJEyztR+9E",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "172852": {
-    "pinHash": "e9b08f027d649403701647e92db43485b016c232b7dd60f9c374f1ddfef6e7f7",
-    "pinCipher": "UTknvBgZZmbzS3ceO7hiOIfTsfM=",
-    "pinIv": "wLA2YLB29iwkyukU",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "173151": {
-    "pinHash": "2966a0f8d5b2b3f83911fb5cb03397a72466a88dd9b9ed5a7710d58650db52e3",
-    "pinCipher": "c4CuD1+ANcSREtGJTsIbCqbkl00=",
-    "pinIv": "+utew4GwDhF+LhX4",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "173159": {
-    "pinHash": "86057ebdac4b526ced430f5ae2490d8675c66be5b8cba5eab146121125bb59f4",
-    "pinCipher": "JC5ceqK8DCkYJeSeckTgBpPXuV4=",
-    "pinIv": "+UMjB2LZ6lUi2HRL",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  },
-  "502488": {
-    "pinHash": "a8486ecf79291f49ca260fdc11e3309a65ed5437693e2026452f320286e5f520",
-    "pinCipher": "zSvJ/0DHLYV4hPHEfxHJkv24d6E=",
-    "pinIv": "gFRQ5/SP1Ui5ys0G",
-    "pinEncryption": "aes-gcm-pbkdf2-v1"
-  }
-};
-const PIN_VAULT_SALT = "actividad-comercial-pin-vault-v1";
-const PIN_VAULT_ITERATIONS = 120000;
-
-
-
-const state = {
-  reports: [],
-  advisors: [],
-  manager: {
-    uid:"public-dashboard",
-    employeeNumber:"PUBLIC",
-    name:"ADMINISTRADOR GENERAL",
-    role:"manager",
-    active:true
-  },
-  editingReportId: null,
-  editingClientCounter: 0,
-  visiblePins: {}
-};
-
+const state = { reports: [], users: [], manager: null };
+const authScreen = document.getElementById("authScreen");
 const appElement = document.getElementById("app");
+const loginError = document.getElementById("loginError");
+const loginButton = document.getElementById("loginButton");
 
-const ADMIN_PASSWORD_HASH =
-  "26afffd013603c1547932de323cc757340eeeefac0dd4f085697751b4792afd5";
-let dashboardUnlockedUntil = 0;
-let dashboardAdminSecret = "";
-let cachedPinVaultKey = null;
-
-async function dashboardSha256(value){
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256",bytes);
-  return [...new Uint8Array(digest)]
-    .map(byte=>byte.toString(16).padStart(2,"0"))
-    .join("");
-}
-
-
-async function advisorPinHash(employeeNumber,pin){
-  return dashboardSha256(
-    `${employeeNumber}:${pin}`
-  );
-}
-
-function createFourDigitPin(){
-  const values = new Uint32Array(1);
-  crypto.getRandomValues(values);
-  return String(1000 + (values[0] % 9000));
-}
-
-window.generateAdvisorPin = function(){
-  const input = document.getElementById("advisorPin");
-  input.value = createFourDigitPin();
-  input.type = "text";
-  input.focus();
-  input.select();
-};
-
-
-function bytesToBase64(bytes){
-  let binary = "";
-  bytes.forEach(byte=>{
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary);
-}
-
-function base64ToBytes(value){
-  const binary = atob(value);
-  return Uint8Array.from(
-    binary,
-    character=>character.charCodeAt(0)
-  );
-}
-
-async function derivePinVaultKey(password){
-  if(cachedPinVaultKey){
-    return cachedPinVaultKey;
-  }
-
-  const sourceKey = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(password),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
-
-  cachedPinVaultKey = await crypto.subtle.deriveKey(
-    {
-      name:"PBKDF2",
-      salt:new TextEncoder().encode(PIN_VAULT_SALT),
-      iterations:PIN_VAULT_ITERATIONS,
-      hash:"SHA-256"
-    },
-    sourceKey,
-    {
-      name:"AES-GCM",
-      length:256
-    },
-    false,
-    ["encrypt","decrypt"]
-  );
-
-  return cachedPinVaultKey;
-}
-
-async function encryptAdvisorPin(pin){
-  if(!dashboardAdminSecret){
-    throw new Error(
-      "Vuelve a validar la contraseña administrativa."
-    );
-  }
-
-  const key = await derivePinVaultKey(
-    dashboardAdminSecret
-  );
-  const iv = crypto.getRandomValues(
-    new Uint8Array(12)
-  );
-  const encrypted = await crypto.subtle.encrypt(
-    {
-      name:"AES-GCM",
-      iv
-    },
-    key,
-    new TextEncoder().encode(pin)
-  );
-
-  return {
-    pinCipher:bytesToBase64(
-      new Uint8Array(encrypted)
-    ),
-    pinIv:bytesToBase64(iv),
-    pinEncryption:"aes-gcm-pbkdf2-v1"
-  };
-}
-
-async function decryptAdvisorPin(advisor){
-  if(
-    !advisor?.pinCipher
-    || !advisor?.pinIv
-    || !dashboardAdminSecret
-  ){
-    return "";
-  }
-
-  try{
-    const key = await derivePinVaultKey(
-      dashboardAdminSecret
-    );
-    const decrypted = await crypto.subtle.decrypt(
-      {
-        name:"AES-GCM",
-        iv:base64ToBytes(advisor.pinIv)
-      },
-      key,
-      base64ToBytes(advisor.pinCipher)
-    );
-
-    return new TextDecoder().decode(decrypted);
-  }catch(error){
-    console.error(
-      "No fue posible descifrar el PIN:",
-      error
-    );
-    return "";
-  }
-}
-
-async function loadVisibleAdvisorPins(){
-  const visiblePins = {};
-
-  try{
-    const results = await Promise.all(
-      state.advisors.map(async advisor=>{
-        const pin = await decryptAdvisorPin(advisor);
-        return [
-          advisor.employeeNumber,
-          pin || "No asignado"
-        ];
-      })
-    );
-
-    results.forEach(([employeeNumber,pin])=>{
-      visiblePins[employeeNumber] = pin;
-    });
-  }catch(error){
-    console.error("Error al cargar PIN:",error);
-
-    state.advisors.forEach(advisor=>{
-      visiblePins[advisor.employeeNumber] =
-        "No disponible";
-    });
-  }
-
-  state.visiblePins = visiblePins;
-  renderStaff();
-}
-
-async function requireDashboardPassword(action="realizar este cambio"){
-  if(
-    Date.now() < dashboardUnlockedUntil
-    && dashboardAdminSecret
-  ){
-    return true;
-  }
-
-  const password = prompt(
-    `Ingresa la contraseña para ${action}:`
-  );
-
-  if(password === null) return false;
-
-  if(await dashboardSha256(password) !== ADMIN_PASSWORD_HASH){
-    alert("Contraseña incorrecta.");
-    return false;
-  }
-
-  dashboardAdminSecret = password;
-  cachedPinVaultKey = null;
-  await derivePinVaultKey(password);
-
-  dashboardUnlockedUntil =
-    Date.now() + (10 * 60 * 1000);
-  return true;
-}
-
+const digits = value => String(value || "").replace(/\D/g,"");
+const employeeEmail = number => `${number}@${AUTH_EMAIL_DOMAIN}`;
 const localISO = () => {
   const d = new Date(), offset = d.getTimezoneOffset();
   return new Date(d.getTime() - offset * 60000).toISOString().slice(0,10);
 };
-
 const esc = value => String(value ?? "")
   .replaceAll("&","&amp;").replaceAll("<","&lt;")
   .replaceAll(">","&gt;").replaceAll('"',"&quot;")
   .replaceAll("'","&#039;");
-
 const formatDate = value => {
   if(!value) return "—";
   const p = String(value).slice(0,10).split("-");
   return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : value;
 };
-
 const timestampText = value => {
   if(!value) return "—";
   try{
@@ -502,25 +53,15 @@ const timestampText = value => {
     return d.toLocaleString("es-MX");
   }catch{return "—";}
 };
-
-const normalizeEmployee = value => String(value || "").replace(/\D/g,"");
-
-const setBox = (id, message="", kind="error") => {
-  const box = document.getElementById(id);
-  if(!box) return;
-  box.textContent = message;
-  box.classList.remove("show");
-  if(message){
-    box.className = `${kind} show`;
-  }
+const showError = message => {
+  loginError.textContent = message;
+  loginError.classList.add("show");
 };
-
 const reviewLabel = report => {
   if(report.status === "cancelled") return '<span class="badge cancelled-badge">Anulado</span>';
   if(report.reviewStatus === "reviewed") return '<span class="badge reviewed">Revisado</span>';
   return '<span class="badge pending">Pendiente</span>';
 };
-
 const reportSearchText = report => [
   report.advisorName, report.advisorEmployeeNumber, report.activityPlace,
   report.prospecting, report.activityDescription,
@@ -529,180 +70,111 @@ const reportSearchText = report => [
   ])
 ].join(" ").toLowerCase();
 
-function advisorUid(employeeNumber){
-  return `employee-${employeeNumber}`;
-}
-
-function advisorsForFilter(){
-  const map = new Map();
-
-  state.advisors.forEach(advisor=>{
-    map.set(advisor.employeeNumber,{
-      employeeNumber:advisor.employeeNumber,
-      name:advisor.name,
-      uid:advisorUid(advisor.employeeNumber),
-      active:advisor.active === true
-    });
-  });
-
-  state.reports.forEach(report=>{
-    const number = String(report.advisorEmployeeNumber || "");
-    if(number && !map.has(number)){
-      map.set(number,{
-        employeeNumber:number,
-        name:report.advisorName || number,
-        uid:advisorUid(number),
-        active:false
-      });
-    }
-  });
-
-  return [...map.values()].sort((a,b)=>(a.name || "").localeCompare(b.name || ""));
-}
-
-if(Object.values(firebaseConfig).some(value =>
-  String(value).includes("REEMPLAZAR")
-)){
-  appElement.classList.remove("hidden");
-  document.getElementById("managerName").textContent =
-    "Falta configurar Firebase en firebase-config.js";
-  alert("Falta colocar la configuración real de Firebase.");
+if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZAR"))){
+  showError("Falta colocar la configuración real de Firebase en firebase-config.js.");
+  loginButton.disabled = true;
 } else {
   const firebaseApp = initializeApp(firebaseConfig);
+  const auth = getAuth(firebaseApp);
   const db = getFirestore(firebaseApp);
   let unsubscribeReports = null;
-  let unsubscribeAdvisors = null;
+  let unsubscribeUsers = null;
 
-  async function seedInitialAdvisors(){
-    const markerRef = doc(db, SETTINGS_COLLECTION, "advisor_seed_v1");
-    const marker = await getDoc(markerRef);
+  document.getElementById("loginForm").addEventListener("submit", async event=>{
+    event.preventDefault();
+    loginError.classList.remove("show");
+    loginButton.disabled = true;
+    loginButton.textContent = "Validando…";
 
-    if(marker.exists()) return;
+    try{
+      const managerEmail = document.getElementById("employee").value.trim().toLowerCase();
+      const password = document.getElementById("password").value;
 
-    const batch = writeBatch(db);
-
-    INITIAL_ADVISORS.forEach(advisor=>{
-      const ref = doc(db, ADVISORS_COLLECTION, advisor.employeeNumber);
-      batch.set(ref,{
-        ...advisor,
-        accessMode:"public_selector",
-        createdAt:serverTimestamp(),
-        updatedAt:serverTimestamp()
-      },{merge:true});
-    });
-
-    batch.set(markerRef,{
-      completed:true,
-      advisorCount:INITIAL_ADVISORS.length,
-      completedAt:serverTimestamp(),
-      completedBy:state.manager.uid
-    });
-
-    await batch.commit();
-  }
-
-
-  async function seedInitialAdvisorPins(){
-    const markerRef = doc(
-      db,
-      SETTINGS_COLLECTION,
-      "advisor_pin_vault_seed_v2"
-    );
-    const marker = await getDoc(markerRef);
-
-    if(marker.exists()) return;
-
-    const batch = writeBatch(db);
-    let migratedCount = 0;
-
-    for(
-      const [
-        employeeNumber,
-        vaultRecord
-      ] of Object.entries(
-        INITIAL_ADVISOR_PIN_VAULT
-      )
-    ){
-      const advisorRef = doc(
-        db,
-        ADVISORS_COLLECTION,
-        employeeNumber
-      );
-      const advisorSnapshot = await getDoc(
-        advisorRef
-      );
-
-      if(!advisorSnapshot.exists()) continue;
-
-      const advisor = advisorSnapshot.data();
-
-      // Solo migra el PIN inicial cuando su hash no fue cambiado.
-      if(
-        !advisor.pinCipher
-        && advisor.pinHash === vaultRecord.pinHash
-      ){
-        batch.set(
-          advisorRef,
-          {
-            pinCipher:vaultRecord.pinCipher,
-            pinIv:vaultRecord.pinIv,
-            pinEncryption:
-              vaultRecord.pinEncryption,
-            pinEnabled:true,
-            accessMode:"employee_pin",
-            pinUpdatedAt:serverTimestamp()
-          },
-          {merge:true}
-        );
-        migratedCount += 1;
+      if(!managerEmail || !password){
+        throw new Error("Completa el usuario gerencial y la contraseña.");
       }
+
+      await signInWithEmailAndPassword(auth, managerEmail, password);
+    }catch(error){
+      console.error(error);
+      showError("Usuario gerencial o contraseña incorrectos.");
+      loginButton.disabled = false;
+      loginButton.textContent = "Ingresar al dashboard";
+    }
+  });
+
+  onAuthStateChanged(auth, async user=>{
+    if(!user){
+      unsubscribeReports?.();
+      unsubscribeUsers?.();
+      authScreen.classList.remove("hidden");
+      appElement.classList.add("hidden");
+      loginButton.disabled = false;
+      loginButton.textContent = "Ingresar al dashboard";
+      return;
     }
 
-    batch.set(markerRef,{
-      completed:true,
-      migratedCount,
-      completedAt:serverTimestamp()
-    });
+    try{
+      const profileRef = doc(db, USERS_COLLECTION, user.uid);
+      let profileSnap = await getDoc(profileRef);
 
-    await batch.commit();
-  }
+      if(!profileSnap.exists()){
+        const managerEmail = String(user.email || "").toLowerCase();
 
-  async function startPublicDashboard(){
-    appElement.classList.remove("hidden");
-    document.getElementById("managerName").textContent =
-      "Acceso directo · Administración en tiempo real";
+        if(managerEmail !== "jacquelinne.santos@profuturo.com.mx"){
+          throw new Error("Usuario no autorizado.");
+        }
 
-    await seedInitialAdvisors();
-    await seedInitialAdvisorPins();
+        await setDoc(profileRef,{
+          employeeNumber:"143561",
+          name:"SANTOS GUTIERREZ JACQUELINNE ADRIANA",
+          role:"manager",
+          active:true,
+          mustChangePassword:false,
+          authEmail:managerEmail,
+          accessMode:"username_password",
+          createdAt:serverTimestamp(),
+          updatedAt:serverTimestamp()
+        });
 
-    unsubscribeAdvisors = onSnapshot(
-      collection(db, ADVISORS_COLLECTION),
-      snapshot=>{
-        state.advisors = snapshot.docs
-          .map(item=>({id:item.id,employeeNumber:item.id,...item.data()}))
-          .sort((a,b)=>(a.name || "").localeCompare(b.name || ""));
-        renderAll();
-      },
-      error=>console.error("Asesores:",error)
-    );
+        profileSnap = await getDoc(profileRef);
+      }
 
-    unsubscribeReports = onSnapshot(
-      query(collection(db, REPORTS_COLLECTION),orderBy("createdAt","desc")),
-      snapshot=>{
-        state.reports = snapshot.docs.map(
-          item=>({id:item.id,...item.data()})
-        );
-        renderAll();
-      },
-      error=>console.error("Reportes:",error)
-    );
-  }
+      const profile = {uid:user.uid,...profileSnap.data()};
+      if(profile.active !== true || profile.role !== "manager"){
+        await signOut(auth);
+        throw new Error("Este acceso es exclusivo para gerentes.");
+      }
 
-  startPublicDashboard().catch(error=>{
-    console.error(error);
-    document.getElementById("managerName").textContent =
-      "No fue posible conectar con Firebase";
-    alert(error?.message || "No fue posible abrir el dashboard.");
+      state.manager = profile;
+      document.getElementById("managerName").textContent =
+        `${profile.name} · Empleado ${profile.employeeNumber}`;
+      authScreen.classList.add("hidden");
+      appElement.classList.remove("hidden");
+
+      unsubscribeReports = onSnapshot(
+        query(collection(db, REPORTS_COLLECTION), orderBy("createdAt","desc")),
+        snapshot=>{
+          state.reports = snapshot.docs.map(item=>({id:item.id,...item.data()}));
+          renderAll();
+        },
+        error=>console.error("Reportes:",error)
+      );
+
+      unsubscribeUsers = onSnapshot(
+        collection(db, USERS_COLLECTION),
+        snapshot=>{
+          state.users = snapshot.docs
+            .map(item=>({uid:item.id,...item.data()}))
+            .sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+          renderAll();
+        },
+        error=>console.error("Usuarios:",error)
+      );
+    }catch(error){
+      console.error(error);
+      showError(error.message || "No fue posible validar el acceso.");
+    }
   });
 
   function filteredReports(){
@@ -737,56 +209,49 @@ if(Object.values(firebaseConfig).some(value =>
   function renderAdvisorFilter(){
     const select = document.getElementById("advisorFilter");
     const current = select.value;
-    const advisors = advisorsForFilter();
+    const advisors = state.users.filter(u=>u.role === "advisor" && u.active);
 
     select.innerHTML = '<option value="">Todos</option>' +
-      advisors.map(advisor=>
-        `<option value="${esc(advisor.uid)}">${esc(advisor.name)} · ${esc(advisor.employeeNumber)}</option>`
-      ).join("");
-
-    if([...select.options].some(option=>option.value === current)){
-      select.value = current;
-    }
+      advisors.map(u=>`<option value="${u.uid}">${esc(u.name)}</option>`).join("");
+    select.value = current;
   }
 
   function renderKPIs(){
     const today = localISO();
-    const activeAdvisors = state.advisors.filter(advisor=>advisor.active === true);
+    const activeAdvisors = state.users.filter(u=>u.role === "advisor" && u.active);
     const todayReports = state.reports.filter(
-      report=>report.createdDate === today && report.status !== "cancelled"
+      r=>r.createdDate === today && r.status !== "cancelled"
     );
-    const reported = new Set(todayReports.map(report=>report.advisorUid));
-    const visible = filteredReports().filter(report=>report.status !== "cancelled");
+    const reported = new Set(todayReports.map(r=>r.advisorUid));
+    const visible = filteredReports().filter(r=>r.status !== "cancelled");
 
     document.getElementById("kpiReports").textContent = visible.length;
     document.getElementById("kpiActive").textContent = activeAdvisors.length;
     document.getElementById("kpiReported").textContent = reported.size;
     document.getElementById("kpiContacts").textContent =
-      visible.reduce((sum,report)=>sum + Number(report.contacts || 0),0);
+      visible.reduce((sum,r)=>sum + Number(r.contacts || 0),0);
     document.getElementById("kpiAppointments").textContent =
-      visible.reduce((sum,report)=>sum + Number(report.appointmentsGenerated || 0),0);
+      visible.reduce((sum,r)=>sum + Number(r.appointmentsGenerated || 0),0);
     document.getElementById("kpiProcedures").textContent =
-      visible.reduce((sum,report)=>sum + Number(report.procedureCount || 0),0);
+      visible.reduce((sum,r)=>sum + Number(r.procedureCount || 0),0);
   }
 
   function renderMissing(){
     const today = localISO();
     const reported = new Set(
       state.reports
-        .filter(report=>report.createdDate === today && report.status !== "cancelled")
-        .map(report=>report.advisorUid)
+        .filter(r=>r.createdDate === today && r.status !== "cancelled")
+        .map(r=>r.advisorUid)
     );
 
-    const missing = state.advisors.filter(
-      advisor=>advisor.active === true && !reported.has(advisorUid(advisor.employeeNumber))
+    const missing = state.users.filter(
+      u=>u.role === "advisor" && u.active && !reported.has(u.uid)
     );
 
     document.getElementById("missingCount").textContent = missing.length;
     document.getElementById("missingAdvisors").innerHTML =
       missing.length
-        ? missing.map(advisor=>
-            `<span>${esc(advisor.employeeNumber)} · ${esc(advisor.name)}</span>`
-          ).join("")
+        ? missing.map(u=>`<span>${esc(u.employeeNumber)} · ${esc(u.name)}</span>`).join("")
         : '<span style="background:#E8F8F0;color:#087554">Todos los asesores activos han reportado.</span>';
   }
 
@@ -813,12 +278,10 @@ if(Object.values(firebaseConfig).some(value =>
         <td>
           <div class="actions">
             <button class="soft" onclick="window.openReportDetail('${report.id}')">Ver</button>
-            <button class="warning" onclick="window.openEditReport('${report.id}')">Editar</button>
             ${report.status !== "cancelled" && report.reviewStatus !== "reviewed"
               ? `<button class="accent" onclick="window.markReviewed('${report.id}')">Revisar</button>` : ""}
             ${report.status !== "cancelled"
               ? `<button class="danger" onclick="window.cancelReport('${report.id}')">Anular</button>` : ""}
-            <button class="danger" onclick="window.deleteReport('${report.id}')">Eliminar</button>
           </div>
         </td>
       </tr>
@@ -826,86 +289,34 @@ if(Object.values(firebaseConfig).some(value =>
   }
 
   function renderStaff(){
-    document.getElementById("staffCount").textContent =
-      `${state.advisors.length} asesor(es)`;
-
-    const body = document.getElementById("staffBody");
-
-    if(!state.advisors.length){
-      body.innerHTML =
-        '<tr><td colspan="5" class="empty">'
-        + 'No hay asesores registrados.</td></tr>';
-      return;
-    }
-
-    body.innerHTML = state.advisors.map(advisor=>{
-      const visiblePin =
-        state.visiblePins[advisor.employeeNumber]
-        || "••••";
-
-      return `
-        <tr>
-          <td>${esc(advisor.employeeNumber)}</td>
-          <td><strong>${esc(advisor.name)}</strong></td>
-          <td>
-            <strong style="letter-spacing:2px">
-              ${esc(visiblePin)}
-            </strong>
-          </td>
-          <td>
-            <span class="badge ${
-              advisor.active
-                ? "reviewed"
-                : "cancelled-badge"
-            }">
-              ${advisor.active ? "Activo" : "Inactivo"}
-            </span>
-          </td>
-          <td>
-            <div class="actions">
-              <button class="warning"
-                onclick="window.openEditAdvisor(
-                  '${advisor.employeeNumber}'
-                )">
-                Editar
-              </button>
-              <button class="soft"
-                onclick="window.toggleAdvisor(
-                  '${advisor.employeeNumber}',
-                  ${!advisor.active}
-                )">
-                ${
-                  advisor.active
-                    ? "Desactivar"
-                    : "Activar"
-                }
-              </button>
-              <button class="danger"
-                onclick="window.deleteAdvisor(
-                  '${advisor.employeeNumber}'
-                )">
-                Eliminar
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
-    }).join("");
+    document.getElementById("staffCount").textContent = `${state.users.length} usuario(s)`;
+    document.getElementById("staffBody").innerHTML = state.users.map(user=>`
+      <tr>
+        <td>${esc(user.employeeNumber)}</td>
+        <td><strong>${esc(user.name)}</strong></td>
+        <td><span class="badge ${user.role === "manager" ? "reviewed" : "pending"}">${user.role === "manager" ? "Gerente" : "Asesor"}</span></td>
+        <td><span class="badge ${user.active ? "reviewed" : "cancelled-badge"}">${user.active ? "Activo" : "Inactivo"}</span></td>
+        <td>${timestampText(user.lastLoginAt)}</td>
+        <td>
+          <div class="actions">
+            <button class="soft" onclick="window.toggleUser('${user.uid}',${!user.active})">${user.active ? "Desactivar" : "Activar"}</button>
+            ${user.uid !== state.manager?.uid
+              ? `<button class="soft" onclick="window.toggleRole('${user.uid}','${user.role === "manager" ? "advisor" : "manager"}')">${user.role === "manager" ? "Cambiar a asesor" : "Cambiar a gerente"}</button>`
+              : ""}
+          </div>
+        </td>
+      </tr>
+    `).join("");
   }
 
-  window.closeModal = function(id){
-    document.getElementById(id)?.classList.remove("show");
-  };
-
   window.openReportDetail = function(id){
-    const report = state.reports.find(item=>item.id === id);
+    const report = state.reports.find(r=>r.id === id);
     if(!report) return;
 
     document.getElementById("detailTitle").textContent =
       `${report.advisorName} · ${formatDate(report.createdDate)}`;
 
     const clients = report.clients || [];
-
     document.getElementById("detailContent").innerHTML = `
       <div class="detail-grid">
         <div class="detail-box"><strong>Medio</strong>${esc(report.prospecting)}</div>
@@ -923,16 +334,16 @@ if(Object.values(firebaseConfig).some(value =>
       <div class="table-wrap">
         <table class="client-table">
           <thead><tr><th>Cliente</th><th>NSS / CURP</th><th>Teléfono</th><th>Empresa</th><th>Puntos</th><th>AFORE</th><th>Resultado</th><th>Observación</th></tr></thead>
-          <tbody>${clients.map(client=>`
+          <tbody>${clients.map(c=>`
             <tr>
-              <td>${esc(client.name)}</td>
-              <td>${esc(client.nss)}<br>${esc(client.curp)}</td>
-              <td>${esc(client.phone)}</td>
-              <td>${esc(client.company)}</td>
-              <td>${Number(client.points || 0)}</td>
-              <td>${esc(client.afore)}</td>
-              <td>${esc(client.result)}</td>
-              <td>${esc(client.notes)}${client.appointment ? `<br><strong>Cita:</strong> ${formatDate(client.appointment)}`:""}</td>
+              <td>${esc(c.name)}</td>
+              <td>${esc(c.nss)}<br>${esc(c.curp)}</td>
+              <td>${esc(c.phone)}</td>
+              <td>${esc(c.company)}</td>
+              <td>${Number(c.points || 0)}</td>
+              <td>${esc(c.afore)}</td>
+              <td>${esc(c.result)}</td>
+              <td>${esc(c.notes)}${c.appointment ? `<br><strong>Cita:</strong> ${formatDate(c.appointment)}`:""}</td>
             </tr>
           `).join("")}</tbody>
         </table>
@@ -950,584 +361,11 @@ if(Object.values(firebaseConfig).some(value =>
       <p>${esc(report.plan?.description)}</p>
       ${report.cancellationReason ? `<h3>Motivo de anulación</h3><p>${esc(report.cancellationReason)}</p>`:""}
     `;
-
     document.getElementById("detailModal").classList.add("show");
   };
 
-  window.openAddAdvisor = async function(){
-    if(!await requireDashboardPassword("agregar un empleado")) return;
-    document.getElementById("advisorForm").reset();
-    document.getElementById("advisorOriginalNumber").value = "";
-    document.getElementById("advisorActive").checked = true;
-    document.getElementById("advisorPin").value =
-      createFourDigitPin();
-    document.getElementById("advisorPin").type = "text";
-    document.getElementById("advisorPinHelp").textContent =
-      "PIN nuevo generado. Puedes modificarlo antes de guardar.";
-    document.getElementById("advisorModalTitle").textContent = "Agregar asesor";
-    setBox("advisorError");
-    setBox("advisorSuccess");
-    document.getElementById("advisorModal").classList.add("show");
-  };
-
-  window.openEditAdvisor = async function(employeeNumber){
-    if(
-      !await requireDashboardPassword(
-        "editar un empleado"
-      )
-    ) return;
-
-    const advisor = state.advisors.find(
-      item=>
-        item.employeeNumber === employeeNumber
-    );
-    if(!advisor) return;
-
-    const currentPin = await decryptAdvisorPin(
-      advisor
-    );
-
-    document.getElementById(
-      "advisorOriginalNumber"
-    ).value = advisor.employeeNumber;
-    document.getElementById(
-      "advisorEmployeeNumber"
-    ).value = advisor.employeeNumber;
-    document.getElementById(
-      "advisorName"
-    ).value = advisor.name || "";
-    document.getElementById(
-      "advisorPin"
-    ).value = currentPin;
-    document.getElementById(
-      "advisorPin"
-    ).type = "text";
-    document.getElementById(
-      "advisorActive"
-    ).checked = advisor.active === true;
-    document.getElementById(
-      "advisorModalTitle"
-    ).textContent = "Editar asesor";
-
-    document.getElementById(
-      "advisorPinHelp"
-    ).textContent = currentPin
-      ? "PIN actual cargado. Puedes verlo o modificarlo."
-      : (
-        "Este PIN fue guardado antes de esta actualización "
-        + "y no puede recuperarse. Asigna uno nuevo una sola vez."
-      );
-
-    setBox("advisorError");
-    setBox("advisorSuccess");
-    document.getElementById(
-      "advisorModal"
-    ).classList.add("show");
-  };
-
-  document.getElementById("advisorForm")
-    .addEventListener("submit",async event=>{
-      event.preventDefault();
-
-      if(!await requireDashboardPassword(
-        "guardar los cambios del empleado"
-      )) return;
-
-      setBox("advisorError");
-      setBox("advisorSuccess");
-
-      const originalNumber = normalizeEmployee(
-        document.getElementById(
-          "advisorOriginalNumber"
-        ).value
-      );
-      const employeeNumber = normalizeEmployee(
-        document.getElementById(
-          "advisorEmployeeNumber"
-        ).value
-      );
-      const name = document.getElementById(
-        "advisorName"
-      ).value.trim().toUpperCase();
-      const pin = document.getElementById(
-        "advisorPin"
-      ).value.trim();
-      const active = document.getElementById(
-        "advisorActive"
-      ).checked;
-      const saveButton = document.getElementById(
-        "advisorSaveButton"
-      );
-      const numberChanged =
-        Boolean(originalNumber)
-        && originalNumber !== employeeNumber;
-
-      if(!employeeNumber || employeeNumber.length < 3){
-        setBox(
-          "advisorError",
-          "Ingresa un número de empleado válido."
-        );
-        return;
-      }
-
-      if(!name){
-        setBox(
-          "advisorError",
-          "Ingresa el nombre completo."
-        );
-        return;
-      }
-
-      if(
-        (!originalNumber || numberChanged)
-        && !/^\d{4}$/.test(pin)
-      ){
-        setBox(
-          "advisorError",
-          "Asigna un PIN de cuatro dígitos."
-        );
-        return;
-      }
-
-      if(pin && !/^\d{4}$/.test(pin)){
-        setBox(
-          "advisorError",
-          "El PIN debe contener exactamente cuatro dígitos."
-        );
-        return;
-      }
-
-      saveButton.disabled = true;
-      saveButton.textContent = "Guardando…";
-
-      try{
-        const targetRef = doc(
-          db,
-          ADVISORS_COLLECTION,
-          employeeNumber
-        );
-        const existingTarget = await getDoc(targetRef);
-
-        if(
-          existingTarget.exists()
-          && employeeNumber !== originalNumber
-        ){
-          throw new Error(
-            "Ese número de empleado ya está registrado."
-          );
-        }
-
-        const data = {
-          employeeNumber,
-          name,
-          role:"advisor",
-          active,
-          accessMode:"employee_pin",
-          pinEnabled:true,
-          updatedAt:serverTimestamp(),
-          updatedBy:state.manager.uid,
-          updatedByName:state.manager.name
-        };
-
-        if(pin){
-          data.pinHash = await advisorPinHash(
-            employeeNumber,
-            pin
-          );
-
-          const encryptedPin = await encryptAdvisorPin(
-            pin
-          );
-
-          Object.assign(data,encryptedPin);
-          data.pinUpdatedAt = serverTimestamp();
-        }
-
-        if(!originalNumber){
-          await setDoc(targetRef,{
-            ...data,
-            createdAt:serverTimestamp(),
-            createdBy:state.manager.uid,
-            createdByName:state.manager.name
-          });
-        }else if(originalNumber === employeeNumber){
-          await setDoc(targetRef,data,{merge:true});
-        }else{
-          const batch = writeBatch(db);
-
-          batch.set(targetRef,{
-            ...data,
-            createdAt:serverTimestamp(),
-            createdBy:state.manager.uid,
-            createdByName:state.manager.name
-          });
-          batch.delete(
-            doc(
-              db,
-              ADVISORS_COLLECTION,
-              originalNumber
-            )
-          );
-
-          await batch.commit();
-
-          const relatedReports = state.reports.filter(
-            report=>
-              String(report.advisorEmployeeNumber)
-              === originalNumber
-          );
-
-          for(const report of relatedReports){
-            await updateDoc(
-              doc(
-                db,
-                REPORTS_COLLECTION,
-                report.id
-              ),
-              {
-                advisorUid:advisorUid(employeeNumber),
-                advisorEmployeeNumber:employeeNumber,
-                advisorName:name,
-                updatedAt:serverTimestamp(),
-                editedBy:state.manager.uid,
-                editedByName:state.manager.name
-              }
-            );
-          }
-        }
-
-        if(pin){
-          delete state.visiblePins[originalNumber];
-          state.visiblePins[employeeNumber] = pin;
-        }
-
-        const message = pin
-          ? `Empleado guardado. PIN asignado: ${pin}`
-          : "Empleado guardado correctamente.";
-
-        setBox(
-          "advisorSuccess",
-          message,
-          "success"
-        );
-
-        setTimeout(
-          ()=>window.closeModal("advisorModal"),
-          pin ? 1800 : 700
-        );
-      }catch(error){
-        console.error(error);
-        setBox(
-          "advisorError",
-          error?.message
-          || "No fue posible guardar el empleado."
-        );
-      }finally{
-        saveButton.disabled = false;
-        saveButton.textContent = "Guardar asesor";
-      }
-    });
-
-  window.toggleAdvisor = async function(employeeNumber, active){
-    if(!await requireDashboardPassword("cambiar el estado de un empleado")) return;
-    const advisor = state.advisors.find(item=>item.employeeNumber === employeeNumber);
-    if(!advisor) return;
-
-    const action = active ? "activar" : "desactivar";
-    if(!confirm(`¿Deseas ${action} a ${advisor.name}?`)) return;
-
-    await updateDoc(doc(db, ADVISORS_COLLECTION, employeeNumber),{
-      active,
-      updatedAt:serverTimestamp(),
-      updatedBy:state.manager.uid,
-      updatedByName:state.manager.name
-    });
-  };
-
-  window.deleteAdvisor = async function(employeeNumber){
-    if(!await requireDashboardPassword("eliminar un empleado")) return;
-    const advisor = state.advisors.find(item=>item.employeeNumber === employeeNumber);
-    if(!advisor) return;
-
-    if(!confirm(
-      `¿Eliminar definitivamente a ${advisor.name}?\n\nSus reportes históricos no se eliminarán.`
-    )) return;
-
-    await deleteDoc(doc(db, ADVISORS_COLLECTION, employeeNumber));
-  };
-
-  function populateEditAdvisorSelect(report){
-    const select = document.getElementById("editReportAdvisor");
-    const options = [...state.advisors];
-
-    if(report && !options.some(
-      advisor=>advisor.employeeNumber === String(report.advisorEmployeeNumber)
-    )){
-      options.push({
-        employeeNumber:String(report.advisorEmployeeNumber || ""),
-        name:report.advisorName || "Asesor histórico",
-        active:false
-      });
-    }
-
-    select.innerHTML = options
-      .sort((a,b)=>(a.name || "").localeCompare(b.name || ""))
-      .map(advisor=>
-        `<option value="${esc(advisor.employeeNumber)}">${esc(advisor.name)} · ${esc(advisor.employeeNumber)}${advisor.active ? "" : " (inactivo)"}</option>`
-      ).join("");
-  }
-
-  function clientEditorTemplate(client={}, index){
-    return `
-      <div class="client-editor" data-client-index="${index}">
-        <div class="client-editor-head">
-          <strong>Cliente</strong>
-          <button class="danger" type="button" onclick="window.removeReportClient(${index})">Eliminar cliente</button>
-        </div>
-        <div class="form-grid">
-          <div><label>Nombre</label><input data-field="name" value="${esc(client.name || "")}"></div>
-          <div><label>NSS</label><input data-field="nss" value="${esc(client.nss || "")}"></div>
-          <div><label>CURP</label><input data-field="curp" value="${esc(client.curp || "")}"></div>
-          <div><label>Teléfono</label><input data-field="phone" value="${esc(client.phone || "")}"></div>
-          <div><label>Correo o dirección</label><input data-field="email" value="${esc(client.email || "")}"></div>
-          <div><label>Empresa</label><input data-field="company" value="${esc(client.company || "")}"></div>
-          <div><label>Puntos</label><input data-field="points" type="number" min="0" value="${Number(client.points || 0)}"></div>
-          <div><label>AFORE</label><input data-field="afore" value="${esc(client.afore || "")}"></div>
-          <div>
-            <label>Resultado</label>
-            <select data-field="result" required>
-              <option value="">Seleccionar...</option>
-              ${[
-                "Posible cita",
-                "Cita agendada",
-                "Enviar información",
-                "Regresar llamada",
-                "Inconsistencia de documentos",
-                "Inconsistencia de datos",
-                "Trámite realizado"
-              ].map(option=>
-                `<option value="${esc(option)}" ${
-                  (client.result === option
-                    || (option === "Enviar información"
-                      && client.result === "Información pendiente"))
-                    ? "selected"
-                    : ""
-                }>${esc(option)}</option>`
-              ).join("")}
-            </select>
-          </div>
-          <div><label>Fecha posible de cita</label><input data-field="appointment" type="date" value="${esc(client.appointment || "")}"></div>
-          <div class="full"><label>Observación</label><textarea data-field="notes">${esc(client.notes || "")}</textarea></div>
-        </div>
-      </div>
-    `;
-  }
-
-  window.addReportClient = function(client={}){
-    state.editingClientCounter += 1;
-    const container = document.getElementById("editClientsContainer");
-    container.insertAdjacentHTML(
-      "beforeend",
-      clientEditorTemplate(client,state.editingClientCounter)
-    );
-  };
-
-  window.removeReportClient = function(index){
-    document.querySelector(
-      `.client-editor[data-client-index="${index}"]`
-    )?.remove();
-  };
-
-  function collectEditedClients(){
-    return [...document.querySelectorAll("#editClientsContainer .client-editor")]
-      .map((card,index)=>{
-        const value = field =>
-          card.querySelector(`[data-field="${field}"]`)?.value.trim() || "";
-
-        return {
-          number:index + 1,
-          name:value("name"),
-          nss:value("nss"),
-          curp:value("curp"),
-          phone:value("phone"),
-          email:value("email"),
-          company:value("company"),
-          points:Number(value("points") || 0),
-          afore:value("afore"),
-          result:value("result"),
-          appointment:value("appointment"),
-          notes:value("notes")
-        };
-      });
-  }
-
-  window.openEditReport = async function(id){
-    if(!await requireDashboardPassword("editar un reporte")) return;
-    const report = state.reports.find(item=>item.id === id);
-    if(!report) return;
-
-    state.editingReportId = id;
-    state.editingClientCounter = 0;
-
-    document.getElementById("editReportOriginalId").value = id;
-    document.getElementById("editReportDate").value = report.createdDate || localISO();
-    populateEditAdvisorSelect(report);
-    document.getElementById("editReportAdvisor").value =
-      String(report.advisorEmployeeNumber || "");
-    document.getElementById("editReportProspecting").value = report.prospecting || "";
-    document.getElementById("editReportPlace").value = report.activityPlace || "";
-    document.getElementById("editReportSchedule").value = report.activitySchedule || "";
-    document.getElementById("editReportContacts").value = Number(report.contacts || 0);
-    document.getElementById("editReportAppointments").value =
-      Number(report.appointmentsGenerated || 0);
-    document.getElementById("editReportStatus").value =
-      report.status === "cancelled" ? "cancelled" : "finalized";
-    document.getElementById("editReportReview").value =
-      report.reviewStatus === "reviewed" ? "reviewed" : "pending";
-    document.getElementById("editReportDescription").value =
-      report.activityDescription || "";
-    document.getElementById("editCancellationReason").value =
-      report.cancellationReason || "";
-    document.getElementById("editPlanDate").value = report.plan?.date || "";
-    document.getElementById("editPlanPlace").value = report.plan?.place || "";
-    document.getElementById("editPlanMethod").value = report.plan?.method || "";
-    document.getElementById("editPlanSchedule").value = report.plan?.schedule || "";
-    document.getElementById("editPlanContactGoal").value =
-      Number(report.plan?.contactGoal || 0);
-    document.getElementById("editPlanAppointmentGoal").value =
-      Number(report.plan?.appointmentGoal || 0);
-    document.getElementById("editPlanDescription").value =
-      report.plan?.description || "";
-
-    const container = document.getElementById("editClientsContainer");
-    container.innerHTML = "";
-
-    (report.clients || []).forEach(client=>window.addReportClient(client));
-
-    setBox("reportEditError");
-    setBox("reportEditSuccess");
-    document.getElementById("reportEditModal").classList.add("show");
-  };
-
-  document.getElementById("reportEditForm").addEventListener("submit", async event=>{
-    event.preventDefault();
-    if(!await requireDashboardPassword("guardar los cambios del reporte")) return;
-    setBox("reportEditError");
-    setBox("reportEditSuccess");
-
-    const originalId = document.getElementById("editReportOriginalId").value;
-    const original = state.reports.find(item=>item.id === originalId);
-
-    if(!original){
-      setBox("reportEditError","El reporte ya no está disponible.");
-      return;
-    }
-
-    const employeeNumber = normalizeEmployee(
-      document.getElementById("editReportAdvisor").value
-    );
-    const advisor = state.advisors.find(
-      item=>item.employeeNumber === employeeNumber
-    ) || {
-      employeeNumber,
-      name:original.advisorName
-    };
-    const createdDate = document.getElementById("editReportDate").value;
-    const clients = collectEditedClients();
-    const saveButton = document.getElementById("reportEditSaveButton");
-
-    if(!employeeNumber || !createdDate){
-      setBox("reportEditError","Selecciona asesor y fecha.");
-      return;
-    }
-
-    saveButton.disabled = true;
-    saveButton.textContent = "Guardando…";
-
-    try{
-      const reviewStatus = document.getElementById("editReportReview").value;
-      const status = document.getElementById("editReportStatus").value;
-      const procedureCount = clients.filter(
-        client=>client.result === "Trámite realizado"
-      ).length;
-
-      const changes = {
-        advisorUid:advisorUid(employeeNumber),
-        advisorName:advisor.name || original.advisorName,
-        advisorEmployeeNumber:employeeNumber,
-        advisorRole:"advisor",
-        createdDate,
-        prospecting:document.getElementById("editReportProspecting").value.trim(),
-        activityPlace:document.getElementById("editReportPlace").value.trim(),
-        activitySchedule:document.getElementById("editReportSchedule").value.trim(),
-        contacts,
-        appointmentsGenerated:appointments,
-        activityDescription:
-          document.getElementById("editReportDescription").value.trim(),
-        clients,
-        clientCount:clients.length,
-        procedureCount,
-        plan:{
-          date:document.getElementById("editPlanDate").value,
-          place:document.getElementById("editPlanPlace").value.trim(),
-          method:document.getElementById("editPlanMethod").value.trim(),
-          schedule:document.getElementById("editPlanSchedule").value.trim(),
-          contactGoal:Number(
-            document.getElementById("editPlanContactGoal").value || 0
-          ),
-          appointmentGoal:Number(
-            document.getElementById("editPlanAppointmentGoal").value || 0
-          ),
-          description:
-            document.getElementById("editPlanDescription").value.trim()
-        },
-        status,
-        reviewStatus,
-        cancellationReason:
-          status === "cancelled"
-            ? document.getElementById("editCancellationReason").value.trim()
-            : "",
-        reviewedAt:
-          reviewStatus === "reviewed"
-            ? (original.reviewedAt || serverTimestamp())
-            : null,
-        reviewedBy:
-          reviewStatus === "reviewed"
-            ? state.manager.uid
-            : null,
-        reviewedByName:
-          reviewStatus === "reviewed"
-            ? state.manager.name
-            : null,
-        updatedAt:serverTimestamp(),
-        editedAt:serverTimestamp(),
-        editedBy:state.manager.uid,
-        editedByName:state.manager.name
-      };
-
-      await updateDoc(
-        doc(db, REPORTS_COLLECTION, originalId),
-        changes
-      );
-
-      setBox("reportEditSuccess","Reporte actualizado correctamente.","success");
-      setTimeout(()=>window.closeModal("reportEditModal"),700);
-    }catch(error){
-      console.error(error);
-      setBox(
-        "reportEditError",
-        error?.message || "No fue posible actualizar el reporte."
-      );
-    }finally{
-      saveButton.disabled = false;
-      saveButton.textContent = "Guardar cambios";
-    }
-  });
-
   window.markReviewed = async function(id){
-    if(!await requireDashboardPassword("marcar un reporte como revisado")) return;
     if(!confirm("¿Marcar este reporte como revisado?")) return;
-
     await updateDoc(doc(db, REPORTS_COLLECTION, id),{
       reviewStatus:"reviewed",
       reviewedAt:serverTimestamp(),
@@ -1538,7 +376,6 @@ if(Object.values(firebaseConfig).some(value =>
   };
 
   window.cancelReport = async function(id){
-    if(!await requireDashboardPassword("anular un reporte")) return;
     const reason = prompt("Escribe el motivo de la anulación:");
     if(!reason?.trim()) return;
 
@@ -1552,91 +389,83 @@ if(Object.values(firebaseConfig).some(value =>
     });
   };
 
-  window.deleteReport = async function(id){
-    if(!await requireDashboardPassword("eliminar un reporte")) return;
-    const report = state.reports.find(item=>item.id === id);
-    if(!report) return;
+  window.toggleUser = async function(uid, active){
+    const user = state.users.find(u=>u.uid === uid);
+    if(!user) return;
+    if(!confirm(`${active ? "Activar" : "Desactivar"} a ${user.name}?`)) return;
 
-    if(!confirm(
-      `¿Eliminar definitivamente el reporte de ${report.advisorName} del ${formatDate(report.createdDate)}?\n\nEsta acción no se puede deshacer.`
-    )) return;
-
-    await deleteDoc(doc(db, REPORTS_COLLECTION, id));
+    await updateDoc(doc(db, USERS_COLLECTION, uid),{
+      active,
+      updatedAt:serverTimestamp()
+    });
   };
+
+  window.toggleRole = async function(uid, role){
+    const user = state.users.find(u=>u.uid === uid);
+    if(!user) return;
+    const roleLabel = role === "manager" ? "Gerente" : "Asesor";
+    if(!confirm(`Cambiar a ${user.name} al rol ${roleLabel}?`)) return;
+
+    await updateDoc(doc(db, USERS_COLLECTION, uid),{
+      role,
+      updatedAt:serverTimestamp()
+    });
+  };
+
+  window.logoutManager = async function(){
+    await signOut(auth);
+    window.location.reload();
+  };
+
   window.exportDashboardExcel = function(){
     const reports = filteredReports();
 
-    const reportRows = reports.map(report=>({
-      "Fecha":report.createdDate,
-      "Fecha y hora local":report.createdAtLocal,
-      "Número de empleado":report.advisorEmployeeNumber,
-      "Asesor":report.advisorName,
-      "Medio de prospección":report.prospecting,
-      "Lugar":report.activityPlace,
-      "Horario":report.activitySchedule,
-      "Contactos":Number(report.contacts || 0),
-      "Citas generadas":Number(report.appointmentsGenerated || 0),
-      "Clientes":Number(report.clientCount || (report.clients || []).length),
-      "Trámites realizados":Number(report.procedureCount || 0),
-      "Descripción":report.activityDescription,
-      "Estado":report.status === "cancelled" ? "Anulado" : "Finalizado",
-      "Revisión":report.reviewStatus === "reviewed" ? "Revisado" : "Pendiente",
-      "Plan - fecha":report.plan?.date,
-      "Plan - lugar":report.plan?.place,
-      "Plan - medio":report.plan?.method,
-      "Plan - horario":report.plan?.schedule,
-      "Plan - meta contactos":Number(report.plan?.contactGoal || 0),
-      "Plan - meta citas":Number(report.plan?.appointmentGoal || 0),
-      "Plan - descripción":report.plan?.description,
-      "Motivo de anulación":report.cancellationReason || ""
+    const reportRows = reports.map(r=>({
+      "Fecha":r.createdDate,
+      "Fecha y hora local":r.createdAtLocal,
+      "Número de empleado":r.advisorEmployeeNumber,
+      "Asesor":r.advisorName,
+      "Medio de prospección":r.prospecting,
+      "Lugar":r.activityPlace,
+      "Horario":r.activitySchedule,
+      "Contactos":Number(r.contacts || 0),
+      "Citas generadas":Number(r.appointmentsGenerated || 0),
+      "Clientes":Number(r.clientCount || (r.clients || []).length),
+      "Trámites realizados":Number(r.procedureCount || 0),
+      "Descripción":r.activityDescription,
+      "Estado":r.status === "cancelled" ? "Anulado" : "Finalizado",
+      "Revisión":r.reviewStatus === "reviewed" ? "Revisado" : "Pendiente",
+      "Plan - fecha":r.plan?.date,
+      "Plan - lugar":r.plan?.place,
+      "Plan - medio":r.plan?.method,
+      "Plan - horario":r.plan?.schedule,
+      "Plan - meta contactos":Number(r.plan?.contactGoal || 0),
+      "Plan - meta citas":Number(r.plan?.appointmentGoal || 0),
+      "Plan - descripción":r.plan?.description,
+      "Motivo de anulación":r.cancellationReason || ""
     }));
 
-    const clientRows = reports.flatMap(report=>
-      (report.clients || []).map(client=>({
-        "Fecha":report.createdDate,
-        "Número de empleado":report.advisorEmployeeNumber,
-        "Asesor":report.advisorName,
-        "Cliente":client.name,
-        "CURP":client.curp,
-        "NSS":client.nss,
-        "Teléfono":client.phone,
-        "Correo o dirección":client.email,
-        "Empresa":client.company,
-        "Puntos":Number(client.points || 0),
-        "AFORE":client.afore,
-        "Resultado":client.result,
-        "Fecha posible de cita":client.appointment,
-        "Observación":client.notes,
-        "Estado del reporte":
-          report.status === "cancelled" ? "Anulado" : "Finalizado"
-      }))
-    );
-
-    const advisorRows = state.advisors.map(advisor=>({
-      "Número de empleado":advisor.employeeNumber,
-      "Nombre":advisor.name,
-      "Estado":advisor.active ? "Activo" : "Inactivo",
-      "Modalidad":"Selección directa",
-      "Última actualización":timestampText(advisor.updatedAt)
-    }));
+    const clientRows = reports.flatMap(r=>(r.clients || []).map(c=>({
+      "Fecha":r.createdDate,
+      "Número de empleado":r.advisorEmployeeNumber,
+      "Asesor":r.advisorName,
+      "Cliente":c.name,
+      "CURP":c.curp,
+      "NSS":c.nss,
+      "Teléfono":c.phone,
+      "Correo o dirección":c.email,
+      "Empresa":c.company,
+      "Puntos":Number(c.points || 0),
+      "AFORE":c.afore,
+      "Resultado":c.result,
+      "Fecha posible de cita":c.appointment,
+      "Observación":c.notes,
+      "Estado del reporte":r.status === "cancelled" ? "Anulado" : "Finalizado"
+    })));
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(
-      workbook,
-      XLSX.utils.json_to_sheet(reportRows),
-      "Reportes"
-    );
-    XLSX.utils.book_append_sheet(
-      workbook,
-      XLSX.utils.json_to_sheet(clientRows),
-      "Clientes"
-    );
-    XLSX.utils.book_append_sheet(
-      workbook,
-      XLSX.utils.json_to_sheet(advisorRows),
-      "Asesores"
-    );
-
+    XLSX.utils.book_append_sheet(workbook,XLSX.utils.json_to_sheet(reportRows),"Reportes");
+    XLSX.utils.book_append_sheet(workbook,XLSX.utils.json_to_sheet(clientRows),"Clientes");
     XLSX.writeFile(
       workbook,
       `Actividad_Comercial_Dashboard_${localISO()}.xlsx`,
@@ -1651,95 +480,12 @@ if(Object.values(firebaseConfig).some(value =>
     );
   });
 
-  function showEmployeePanel(){
-    document.querySelectorAll(".tab").forEach(
-      item=>item.classList.remove("active")
-    );
-    document.querySelectorAll(".panel").forEach(
-      panel=>panel.classList.remove("active")
-    );
-
-    const staffTab = document.querySelector(
-      '.tab[data-panel="staffPanel"]'
-    );
-
-    staffTab?.classList.add("active");
-    document.getElementById(
-      "staffPanel"
-    )?.classList.add("active");
-
-    window.scrollTo({
-      top:0,
-      behavior:"smooth"
-    });
-  }
-
-  window.openEmployeeAdministration = async function(){
-    try{
-      const authorized = await requireDashboardPassword(
-        "administrar empleados"
-      );
-
-      if(!authorized) return;
-
-      showEmployeePanel();
-
-      document.getElementById(
-        "staffCount"
-      ).textContent = "Cargando empleados y PIN…";
-
-      await loadVisibleAdvisorPins();
-    }catch(error){
-      console.error(
-        "No fue posible abrir empleados:",
-        error
-      );
-
-      showEmployeePanel();
-      document.getElementById(
-        "staffCount"
-      ).textContent =
-        "La sección se abrió, pero no fue posible cargar los PIN.";
-    }
-  };
-
   document.querySelectorAll(".tab").forEach(button=>{
-    button.addEventListener("click",async ()=>{
-      if(button.dataset.panel === "staffPanel"){
-        try{
-          if(
-            !await requireDashboardPassword(
-              "administrar empleados"
-            )
-          ){
-            return;
-          }
-
-          showEmployeePanel();
-          document.getElementById(
-            "staffCount"
-          ).textContent =
-            "Cargando empleados y PIN…";
-
-          await loadVisibleAdvisorPins();
-        }catch(error){
-          console.error(error);
-          showEmployeePanel();
-        }
-
-        return;
-      }
-
-      document.querySelectorAll(".tab").forEach(
-        item=>item.classList.remove("active")
-      );
-      document.querySelectorAll(".panel").forEach(
-        panel=>panel.classList.remove("active")
-      );
+    button.addEventListener("click",()=>{
+      document.querySelectorAll(".tab").forEach(item=>item.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(panel=>panel.classList.remove("active"));
       button.classList.add("active");
-      document.getElementById(
-        button.dataset.panel
-      ).classList.add("active");
+      document.getElementById(button.dataset.panel).classList.add("active");
     });
   });
 

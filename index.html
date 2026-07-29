@@ -474,92 +474,77 @@
 
 
     .auth-screen{
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      padding:20px;
-      background:
-        radial-gradient(circle at top right,rgba(28,93,153,.18),transparent 35%),
-        linear-gradient(145deg,#EDF4FB,#F8FAFC);
+      min-height:100vh;display:grid;place-items:center;padding:28px;position:relative;overflow:hidden;
+      background:linear-gradient(110deg,rgba(1,17,51,.96),rgba(2,28,82,.78)),url("profuturo-acceso.png") center/cover no-repeat;
     }
+    .auth-screen::before{
+      content:"";position:absolute;inset:0;
+      background:radial-gradient(circle at 84% 16%,rgba(34,111,255,.30),transparent 28%),
+                 radial-gradient(circle at 12% 84%,rgba(2,83,214,.24),transparent 32%);
+      pointer-events:none;
+    }
+    .auth-shell{
+      width:min(1080px,100%);position:relative;z-index:2;display:grid;
+      grid-template-columns:minmax(320px,.9fr) minmax(390px,1.05fr);
+      border:1px solid rgba(137,185,255,.34);border-radius:30px;overflow:hidden;
+      background:rgba(2,19,55,.70);box-shadow:0 32px 90px rgba(0,0,0,.42);
+      backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);
+    }
+    .auth-brand-panel{
+      min-height:590px;padding:42px;display:flex;flex-direction:column;justify-content:space-between;color:#fff;
+      background:linear-gradient(180deg,rgba(1,25,74,.24),rgba(1,13,42,.78)),url("profuturo-acceso.png") center/cover no-repeat;
+      border-right:1px solid rgba(137,185,255,.28);
+    }
+    .brand-logo{font-size:39px;font-weight:900;letter-spacing:-1.5px;text-shadow:0 4px 20px rgba(0,0,0,.30)}
+    .brand-logo span{color:#FFB71B}
+    .brand-copy h1{margin:0 0 12px;font-size:clamp(34px,4vw,53px);line-height:1.02;letter-spacing:-1.7px}
+    .brand-copy p{margin:0;max-width:420px;color:#D9E8FF;font-size:17px;line-height:1.5}
+    .brand-benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:32px}
+    .brand-benefit{padding:12px 8px;text-align:center;border-radius:14px;background:rgba(4,35,91,.58);border:1px solid rgba(126,175,244,.23)}
+    .brand-benefit strong{display:block;margin-top:5px;font-size:13px}
+    .brand-benefit small{display:block;margin-top:3px;color:#BFD3F2;line-height:1.25}
     .auth-card{
-      width:min(440px,100%);
-      background:#fff;
-      border-radius:24px;
-      box-shadow:0 18px 55px rgba(18,58,99,.16);
-      padding:28px;
-      border:1px solid #DCE6F0;
+      min-height:590px;width:100%;padding:44px;color:#fff;display:flex;flex-direction:column;justify-content:center;
+      background:linear-gradient(145deg,rgba(3,31,82,.93),rgba(1,17,53,.96));
     }
-    .auth-brand{
-      width:58px;height:58px;border-radius:18px;
-      display:grid;place-items:center;
-      background:linear-gradient(135deg,var(--primary),var(--primary-2));
-      color:#fff;font-size:27px;margin-bottom:16px;
+    .auth-card h2{margin:0;text-align:center;font-size:34px;letter-spacing:-.8px}
+    .auth-card .auth-subtitle{margin:9px 0 26px;text-align:center;color:#C9DBF7;line-height:1.45}
+    .access-tabs{
+      display:grid;grid-template-columns:1fr 1fr;overflow:hidden;margin-bottom:25px;border-radius:14px;
+      border:1px solid rgba(121,173,245,.36);background:rgba(1,17,54,.66)
     }
-    .auth-card h1{margin:0 0 6px;color:var(--primary);font-size:28px}
-    .auth-card p{margin:0 0 20px;color:var(--muted);line-height:1.45}
+    .access-tab{
+      min-height:54px;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;
+      color:#D7E7FF;font-weight:800;text-decoration:none;border-radius:0
+    }
+    .access-tab.active{color:#071B42;background:linear-gradient(135deg,#FFB71B,#FFD369);box-shadow:0 8px 28px rgba(255,183,27,.24)}
+    .access-tab:hover{transform:none}
+    .auth-user-icon{
+      width:72px;height:72px;margin:0 auto 19px;display:grid;place-items:center;border-radius:22px;color:#FFBE2E;
+      font-size:34px;background:linear-gradient(145deg,rgba(255,183,27,.16),rgba(31,105,238,.16));
+      border:1px solid rgba(255,190,46,.40)
+    }
+    .auth-card label{color:#F6F9FF;font-size:14px;font-weight:800}
+    .auth-card input{
+      min-height:58px;padding:14px 16px;color:#fff;background:rgba(2,20,59,.82);
+      border:1px solid rgba(114,166,239,.68);border-radius:14px
+    }
+    .auth-card input::placeholder{color:#AFC5E6}
+    .auth-card input:focus{border-color:#FFBC28;box-shadow:0 0 0 4px rgba(255,183,27,.14)}
+    .auth-card .btn-primary{
+      width:100%;min-height:60px;margin-top:18px!important;color:#071B42;font-size:18px;border-radius:14px;
+      background:linear-gradient(135deg,#FFB71B,#FFD56E);box-shadow:0 16px 34px rgba(255,183,27,.22)
+    }
+    .auth-card .btn-primary::after{content:"→";margin-left:auto;font-size:25px}
+    .access-note{
+      margin-top:20px;padding:14px 16px;color:#DCE9FB;font-size:13px;line-height:1.45;border-radius:14px;
+      background:rgba(3,30,77,.72);border:1px solid rgba(120,169,237,.24)
+    }
     .auth-error{
-      display:none;margin-top:12px;padding:11px 13px;border-radius:12px;
-      background:#FFF0F0;color:#A62F2F;border:1px solid #F2BABA;
-      font-weight:700;font-size:13px;
+      display:none;margin-top:12px;padding:11px 13px;border-radius:12px;color:#FFE5E5;
+      background:rgba(155,22,22,.42);border:1px solid rgba(255,151,151,.40);font-weight:700;font-size:13px
     }
     .auth-error.show{display:block}
-    .advisor-login-screen{
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      padding:20px;
-      background:linear-gradient(145deg,#EAF2F8,#F8FAFC);
-    }
-
-    .advisor-login-card{
-      width:min(470px,100%);
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:24px;
-      padding:28px;
-      box-shadow:0 18px 55px rgba(18,58,99,.16);
-    }
-
-    .advisor-login-badge{
-      width:72px;
-      height:72px;
-      display:grid;
-      place-items:center;
-      border-radius:20px;
-      margin-bottom:18px;
-      background:var(--primary2);
-      color:#fff;
-      font-size:31px;
-    }
-
-    .advisor-login-card h1{
-      margin:0 0 8px;
-      color:var(--primary);
-    }
-
-    .advisor-login-card p{
-      color:var(--muted);
-      line-height:1.5;
-    }
-
-    .advisor-login-error{
-      display:none;
-      margin-top:12px;
-      padding:11px 13px;
-      border-radius:12px;
-      background:#FFF0F0;
-      color:#A62F2F;
-      border:1px solid #F2BABA;
-      font-weight:700;
-    }
-
-    .advisor-login-error.show{display:block}
-
-    .advisor-login-button{
-      width:100%;
-      margin-top:16px;
-    }
 
     .session-bar{
       display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -569,119 +554,35 @@
     .session-person strong{display:block;color:var(--primary)}
     .session-person span{font-size:12px;color:var(--muted)}
     .session-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .password-modal{
+      position:fixed;inset:0;display:none;place-items:center;padding:20px;
+      background:rgba(15,23,42,.72);z-index:9999;
+    }
+    .password-modal.show{display:grid}
+    .password-card{
+      width:min(460px,100%);background:#fff;border-radius:22px;padding:25px;
+      box-shadow:0 22px 70px rgba(0,0,0,.28);
+    }
+    .password-card h2{margin:0 0 8px;color:var(--primary)}
+    .password-card p{color:var(--muted);line-height:1.45}
     .firebase-saving{
       display:none;margin-top:12px;padding:12px;border-radius:12px;
       background:#EAF2F8;color:var(--primary);font-weight:800;
     }
     .firebase-saving.show{display:block}
 
-    .repeat-entry-notice{
-      display:none;
-      margin-top:14px;
-      padding:13px 15px;
-      border-radius:13px;
-      background:#EAF2F8;
-      border:1px solid #BFD4E7;
-      color:var(--primary);
-      font-weight:800;
-      line-height:1.4;
-    }
-
-    .repeat-entry-notice.show{display:block}
-
-    body.repeat-entry-mode .progress-step:nth-child(4){
-      display:none;
-    }
-
-    .employee-admin-modal{
-      position:fixed;
-      inset:0;
-      z-index:9999;
-      display:none;
-      place-items:center;
-      padding:18px;
-      background:rgba(15,23,42,.72);
-    }
-
-    .employee-admin-modal.show{display:grid}
-
-    .employee-admin-card{
-      width:min(920px,100%);
-      max-height:92vh;
-      overflow:auto;
-      border-radius:22px;
-      background:#fff;
-      padding:20px;
-      box-shadow:0 24px 70px rgba(0,0,0,.28);
-    }
-
-    .employee-admin-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      margin-bottom:16px;
-    }
-
-    .employee-admin-head h2{
-      margin:0;
-      color:var(--primary);
-    }
-
-    .employee-admin-grid{
-      display:grid;
-      grid-template-columns:1fr 2fr auto;
-      gap:10px;
-      align-items:end;
-    }
-
-    .employee-admin-list{
-      display:grid;
-      gap:9px;
-      margin-top:16px;
-    }
-
-    .employee-admin-row{
-      display:grid;
-      grid-template-columns:130px minmax(220px,1fr) auto;
-      gap:10px;
-      align-items:center;
-      padding:11px;
-      border:1px solid var(--line);
-      border-radius:13px;
-      background:#F8FAFC;
-    }
-
-    .employee-admin-row strong{color:var(--primary)}
-    .employee-admin-actions{display:flex;gap:7px;flex-wrap:wrap}
-    .employee-admin-note{font-size:12px;color:var(--muted);margin-top:8px}
-    .employee-admin-message{
-      display:none;
-      margin-top:12px;
-      padding:11px;
-      border-radius:11px;
-      font-weight:700;
-    }
-    .employee-admin-message.show{display:block}
-    .employee-admin-message.error{
-      background:#FFF0F0;
-      border:1px solid #F2BABA;
-      color:#A62F2F;
-    }
-    .employee-admin-message.success{
-      background:#E8F8F0;
-      border:1px solid #BDEAD6;
-      color:#087554;
-    }
-
-    @media(max-width:720px){
-      .employee-admin-grid,
-      .employee-admin-row{
-        grid-template-columns:1fr;
-      }
+    @media(max-width:860px){
+      .auth-screen{padding:14px}
+      .auth-shell{grid-template-columns:1fr}
+      .auth-brand-panel{min-height:310px;padding:28px;border-right:0;border-bottom:1px solid rgba(137,185,255,.28)}
+      .brand-copy h1{font-size:38px}
+      .auth-card{min-height:auto;padding:30px 22px}
     }
 
     @media(max-width:760px){
+      .brand-benefits{grid-template-columns:repeat(3,1fr)}
+      .brand-benefit{font-size:12px}
+      .auth-card h2{font-size:29px}
       .app{padding:10px}
       .hero{padding:20px 16px;border-radius:18px}
       .step{padding:17px;border-radius:16px}
@@ -705,57 +606,49 @@
 </head>
 <body>
 
-  <section id="advisorAuthScreen" class="advisor-login-screen">
-    <div class="advisor-login-card">
-      <div class="advisor-login-badge">AC</div>
-      <h1>Actividad Comercial</h1>
-      <p>
-        Ingresa tu número de empleado y tu PIN personal de cuatro dígitos.
-      </p>
-
-      <form id="advisorLoginForm">
-        <div class="field">
-          <label class="required" for="loginEmployeeNumber">
-            Usuario
-          </label>
-          <input id="loginEmployeeNumber" type="text"
-            inputmode="numeric" maxlength="10"
-            autocomplete="username"
-            placeholder="Número de empleado" required>
+  <section id="authScreen" class="auth-screen">
+    <div class="auth-shell">
+      <aside class="auth-brand-panel">
+        <div class="brand-logo">Pro<span>futuro</span></div>
+        <div class="brand-copy">
+          <h1>Actividad Comercial Diaria</h1>
+          <p>Sistema de registro y seguimiento comercial diseñado para simplificar la gestión de cada asesor.</p>
+          <div class="brand-benefits">
+            <div class="brand-benefit">⚡<strong>Ágil</strong><small>Captura rápida</small></div>
+            <div class="brand-benefit">🛡️<strong>Seguro</strong><small>Datos protegidos</small></div>
+            <div class="brand-benefit">📊<strong>Eficiente</strong><small>Mejor seguimiento</small></div>
+          </div>
         </div>
-
-        <div class="field" style="margin-top:13px">
-          <label class="required" for="loginPin">
-            PIN de acceso
-          </label>
-          <input id="loginPin" type="password"
-            inputmode="numeric" maxlength="4"
-            autocomplete="current-password"
-            pattern="[0-9]{4}" placeholder="••••" required>
+      </aside>
+      <div class="auth-card">
+        <h2>Bienvenido</h2>
+        <p class="auth-subtitle">Selecciona tu tipo de acceso y continúa.</p>
+        <div class="access-tabs" aria-label="Tipo de acceso">
+          <span class="access-tab active">👤 Empleado</span>
+          <a class="access-tab" href="dashboard.html">🔒 Gerente</a>
         </div>
-
-        <button id="advisorLoginButton"
-          class="btn-primary advisor-login-button"
-          type="submit">
-          Ingresar
-        </button>
-
-        <div id="advisorLoginError"
-          class="advisor-login-error"></div>
-      </form>
+        <div class="auth-user-icon" aria-hidden="true">◎</div>
+        <form id="loginForm">
+          <div class="field">
+            <label class="required" for="loginEmployee">Número de empleado</label>
+            <input id="loginEmployee" type="text" inputmode="numeric" autocomplete="username" maxlength="10" placeholder="Ingresa tu número de empleado" required>
+          </div>
+          <button id="loginButton" class="btn-primary btn-full" type="submit">Continuar</button>
+          <div id="loginError" class="auth-error"></div>
+        </form>
+        <div class="access-note">Los empleados ingresan únicamente con su número de empleado. El acceso gerencial requiere usuario y contraseña.</div>
+      </div>
     </div>
   </section>
-<main id="appRoot" class="app hidden">
+
+  <main id="appRoot" class="app hidden">
     <div class="session-bar no-print">
       <div class="session-person">
         <strong id="sessionName">Usuario</strong>
         <span id="sessionMeta"></span>
       </div>
       <div class="session-actions">
-        <button class="btn-danger" type="button"
-          onclick="window.logoutCommercialUser()">
-          Cambiar usuario
-        </button>
+        <button class="btn-danger" type="button" onclick="window.logoutCommercialUser()">Cerrar sesión</button>
       </div>
     </div>
 
@@ -792,22 +685,14 @@
             <label for="createdAt">Fecha y hora de elaboración</label>
             <input id="createdAt" type="text" readonly aria-readonly="true">
             <div class="locked-note">🔒 Se genera automáticamente y no puede modificarse.</div>
+          </div>          <div class="field">
+            <label class="required" for="advisorName">Nombre del asesor</label>
+            <input id="advisorName" type="text" readonly aria-readonly="true" required>
           </div>
           <div class="field">
             <label for="employeeNumber">Número de empleado</label>
-            <input id="employeeNumber" type="text"
-              readonly aria-readonly="true">
+            <input id="employeeNumber" type="text" readonly aria-readonly="true">
           </div>
-          <div class="field">
-            <label for="advisorName">Nombre del trabajador</label>
-            <input id="advisorName" type="text"
-              readonly aria-readonly="true">
-          </div>
-        </div>
-
-        <div id="repeatEntryNotice" class="repeat-entry-notice">
-          Registro adicional del día: este asesor ya realizó su primer reporte.
-          Completa los pasos 1, 2 y 3. El paso 4 no será requerido.
         </div>
 
         <div id="status1" class="status"></div>
@@ -847,16 +732,12 @@
             <input id="activitySchedule" type="text" placeholder="Ej. 10:00 a 13:00">
           </div>
           <div class="field">
-            <label class="required" for="peopleContacted">Contactos</label>
-            <input id="peopleContacted" type="number" min="0" max="99"
-              inputmode="numeric" placeholder="Ej. 12" required
-              oninput="if(this.value.length>2)this.value=this.value.slice(0,2);if(Number(this.value)>99)this.value='99'">
+            <label for="peopleContacted">Contactos</label>
+            <input id="peopleContacted" type="number" min="0" inputmode="numeric" placeholder="Ej. 12">
           </div>
           <div class="field">
-            <label class="required" for="appointmentsGenerated">Citas generadas</label>
-            <input id="appointmentsGenerated" type="number" min="0" max="99"
-              inputmode="numeric" placeholder="Ej. 2" required
-              oninput="if(this.value.length>2)this.value=this.value.slice(0,2);if(Number(this.value)>99)this.value='99'">
+            <label for="appointmentsGenerated">Citas generadas</label>
+            <input id="appointmentsGenerated" type="number" min="0" inputmode="numeric" placeholder="Ej. 2">
           </div>
           <div class="field full">
             <label class="required" for="activityDescription">Descripción real y detallada</label>
@@ -987,8 +868,6 @@
     let clientCount = 0;
     let evidenceData = [];
     let reportFinalized = false;
-    let repeatEntryMode = false;
-    let inheritedDailyReport = null;
 
     const $ = (id) => document.getElementById(id);
     const text = (id) => ($(id)?.value || "").trim();
@@ -1050,24 +929,11 @@
 
     function nextStep(step){
       if(reportFinalized) return;
-      if(!validateStep(step)) return;
-
-      if(repeatEntryMode && step === 3){
-        showStep(5);
-        return;
-      }
-
-      showStep(step+1);
+      if(validateStep(step)) showStep(step+1);
     }
 
     function prevStep(step){
       if(reportFinalized) return;
-
-      if(repeatEntryMode && step === 5){
-        showStep(3);
-        return;
-      }
-
       showStep(step-1);
     }
 
@@ -1083,37 +949,10 @@
 
       if(step === 2){
         const method = document.querySelector('input[name="prospecting"]:checked');
-        const contactsText = text("peopleContacted");
-        const appointmentsText = text("appointmentsGenerated");
-        const contacts = Number(contactsText);
-        const appointments = Number(appointmentsText);
-
-        if(
-          !method
-          || !text("activityPlace")
-          || !text("activityDescription")
-          || contactsText === ""
-          || appointmentsText === ""
-        ){
-          setStatus(
-            2,
-            "Selecciona el medio de prospección y completa lugar, contactos, citas y descripción."
-          );
+        if(!method || !text("activityPlace") || !text("activityDescription")){
+          setStatus(2,"Selecciona el medio de prospección y completa el lugar y la descripción.");
           return false;
         }
-
-        if(
-          !Number.isInteger(contacts)
-          || contacts < 0
-          || contacts > 99
-          || !Number.isInteger(appointments)
-          || appointments < 0
-          || appointments > 99
-        ){
-          setStatus(2,"Contactos y citas deben ser números de 0 a 99.");
-          return false;
-        }
-
         if(text("activityDescription").length < 30){
           setStatus(2,"La descripción debe explicar brevemente qué hiciste, cómo y dónde.");
           return false;
@@ -1134,9 +973,8 @@
           const phone = text(`clientPhone${idx}`);
           const company = text(`clientCompany${idx}`);
           const points = Number(text(`clientPoints${idx}`));
-          const result = text(`clientResult${idx}`);
           const notes = text(`clientNotes${idx}`);
-          if(!name || !nss || !phone || !company || !result || !notes){
+          if(!name || !nss || !phone || !company || !notes){
             setStatus(3,`Completa los campos obligatorios del Cliente ${idx}.`);
             return false;
           }
@@ -1151,7 +989,7 @@
         }
       }
 
-      if(step === 4 && !repeatEntryMode){
+      if(step === 4){
         const required = ["promiseDate","promisePlace","promiseMethod","contactGoal","appointmentGoal","promiseDescription"];
         if(required.some(id=>!text(id))){
           setStatus(4,"Completa todos los campos obligatorios del plan de trabajo.");
@@ -1295,14 +1133,11 @@
           </div>
           <div class="field">
             <label class="required" for="clientResult${idx}">Resultado del contacto</label>
-            <select id="clientResult${idx}" required>
+            <select id="clientResult${idx}">
               <option value="">Seleccionar...</option>
               <option ${data.result==="Posible cita"?"selected":""}>Posible cita</option>
               <option ${data.result==="Cita agendada"?"selected":""}>Cita agendada</option>
               <option ${(data.result==="Enviar información" || data.result==="Información pendiente")?"selected":""}>Enviar información</option>
-              <option ${data.result==="Regresar llamada"?"selected":""}>Regresar llamada</option>
-              <option ${data.result==="Inconsistencia de documentos"?"selected":""}>Inconsistencia de documentos</option>
-              <option ${data.result==="Inconsistencia de datos"?"selected":""}>Inconsistencia de datos</option>
               <option ${data.result==="Trámite realizado"?"selected":""}>Trámite realizado</option>
             </select>
           </div>
@@ -1378,12 +1213,7 @@
         contactGoal:text("contactGoal"),
         appointmentGoal:text("appointmentGoal"),
         promiseDescription:text("promiseDescription"),
-        clients:getClients(),
-        repeatEntry:repeatEntryMode,
-        inheritedFromReportId:
-          inheritedDailyReport?.reportId
-          || inheritedDailyReport?.id
-          || ""
+        clients:getClients()
       };
     }
 
@@ -1438,23 +1268,16 @@
             </table>
           </div>
 
-          ${d.repeatEntry ? `
-            <div class="summary-section">
-              <h3>4. Plan de trabajo</h3>
-              <p>No requerido en este registro adicional.</p>
-            </div>
-          ` : `
-            <div class="summary-section">
-              <h3>4. Plan de trabajo</h3>
-              <p><strong>Fecha:</strong> ${formatDate(d.promiseDate)}<br>
-              <strong>Lugar:</strong> ${esc(d.promisePlace)}<br>
-              <strong>Medio:</strong> ${esc(d.promiseMethod)}<br>
-              <strong>Horario:</strong> ${esc(d.promiseSchedule || "No indicado")}<br>
-              <strong>Meta de contactos:</strong> ${esc(d.contactGoal)}<br>
-              <strong>Meta de citas:</strong> ${esc(d.appointmentGoal)}</p>
-              <p>${esc(d.promiseDescription)}</p>
-            </div>
-          `}
+          <div class="summary-section">
+            <h3>4. Plan de trabajo</h3>
+            <p><strong>Fecha:</strong> ${formatDate(d.promiseDate)}<br>
+            <strong>Lugar:</strong> ${esc(d.promisePlace)}<br>
+            <strong>Medio:</strong> ${esc(d.promiseMethod)}<br>
+            <strong>Horario:</strong> ${esc(d.promiseSchedule || "No indicado")}<br>
+            <strong>Meta de contactos:</strong> ${esc(d.contactGoal)}<br>
+            <strong>Meta de citas:</strong> ${esc(d.appointmentGoal)}</p>
+            <p>${esc(d.promiseDescription)}</p>
+          </div>
         </div>
       `;
     }
@@ -1492,19 +1315,17 @@
         );
       });
 
-      if(!d.repeatEntry){
-        lines.push(
-          "",
-          "PLAN DE TRABAJO",
-          `Fecha: ${formatDate(d.promiseDate)}`,
-          `Lugar: ${d.promisePlace}`,
-          `Medio: ${d.promiseMethod}`,
-          `Horario: ${d.promiseSchedule || "No indicado"}`,
-          `Meta de contactos: ${d.contactGoal}`,
-          `Meta de citas: ${d.appointmentGoal}`,
-          d.promiseDescription
-        );
-      }
+      lines.push(
+        "",
+        "PLAN DE TRABAJO",
+        `Fecha: ${formatDate(d.promiseDate)}`,
+        `Lugar: ${d.promisePlace}`,
+        `Medio: ${d.promiseMethod}`,
+        `Horario: ${d.promiseSchedule || "No indicado"}`,
+        `Meta de contactos: ${d.contactGoal}`,
+        `Meta de citas: ${d.appointmentGoal}`,
+        d.promiseDescription
+      );
 
       return lines.join("\n");
     }
@@ -1726,10 +1547,8 @@
 
     function applyData(d){
       $("createdAt").value = d.createdAt || nowLocalTimestamp();
-      $("advisorName").value =
-        window.currentUserProfile?.name || "";
-      $("employeeNumber").value =
-        window.currentUserProfile?.employeeNumber || "";
+      $("advisorName").value = d.advisorName || "";
+      $("employeeNumber").value = d.employeeNumber || "";
       document.querySelectorAll('input[name="prospecting"]').forEach(r=>r.checked=r.value===d.prospecting);
       $("activityPlace").value = d.activityPlace || "";
       $("activitySchedule").value = d.activitySchedule || "";
@@ -1767,14 +1586,6 @@
       $("createdAt").value = nowLocalTimestamp();
       $("promiseDate").value = tomorrowISO();
       $("descriptionCount").textContent = "0";
-
-      if(window.currentUserProfile){
-        $("advisorName").value =
-          window.currentUserProfile.name || "";
-        $("employeeNumber").value =
-          window.currentUserProfile.employeeNumber || "";
-      }
-
       showStep(1);
     }
 
@@ -1833,60 +1644,12 @@
     }
 
 
-
-    window.setRepeatEntryMode = function(isRepeat, previousReport=null){
-      repeatEntryMode = Boolean(isRepeat);
-      inheritedDailyReport = repeatEntryMode ? previousReport : null;
-
-      document.body.classList.toggle(
-        "repeat-entry-mode",
-        repeatEntryMode
-      );
-
-      const notice = $("repeatEntryNotice");
-      if(notice){
-        notice.classList.toggle("show",repeatEntryMode);
-      }
-
-      document.querySelectorAll(
-        'input[name="prospecting"]'
-      ).forEach(input=>{
-        input.checked = false;
-      });
-
-      $("activityPlace").value = "";
-      $("activitySchedule").value = "";
-      $("peopleContacted").value = "";
-      $("appointmentsGenerated").value = "";
-      $("activityDescription").value = "";
-      $("descriptionCount").textContent = "0";
-
-      $("promiseDate").value = repeatEntryMode ? "" : tomorrowISO();
-      $("promisePlace").value = "";
-      $("promiseMethod").value = "";
-      $("promiseSchedule").value = "";
-      $("contactGoal").value = "";
-      $("appointmentGoal").value = "";
-      $("promiseDescription").value = "";
-
-      if(repeatEntryMode){
-        setStatus(
-          1,
-          "Este asesor ya tiene un reporte hoy. Completa los pasos 1, 2 y 3; el plan de trabajo no será requerido.",
-          "ok"
-        );
-      }else{
-        clearStatus(1);
-      }
-    };
-
     window.prepareAdvisorSession = function(profile){
       window.currentUserProfile = profile;
       $("advisorName").value = profile.name || "";
       $("employeeNumber").value = profile.employeeNumber || "";
       $("sessionName").textContent = profile.name || "Usuario";
-      $("sessionMeta").textContent =
-        `Empleado ${profile.employeeNumber || "N/D"} · PIN verificado`;
+      $("sessionMeta").textContent = `Empleado ${profile.employeeNumber || "N/D"} · ${profile.role === "manager" ? "Gerente" : "Asesor"}`;
       $("createdAt").value = nowLocalTimestamp();
       $("promiseDate").value = tomorrowISO();
     };
@@ -1920,18 +1683,12 @@
       $("createdAt").value = nowLocalTimestamp();
       $("promiseDate").value = tomorrowISO();
       if(window.currentUserProfile){
-        $("advisorName").value =
-          window.currentUserProfile.name || "";
-        $("employeeNumber").value =
-          window.currentUserProfile.employeeNumber || "";
+        $("advisorName").value = window.currentUserProfile.name || "";
+        $("employeeNumber").value = window.currentUserProfile.employeeNumber || "";
       }
       $("descriptionCount").textContent = "0";
       showStep(1);
       setFinalizedState(false);
-
-      if(repeatEntryMode && inheritedDailyReport){
-        window.setRepeatEntryMode(true,inheritedDailyReport);
-      }
     };
 
     function setFinalizedState(isFinalized){
@@ -1967,11 +1724,11 @@
       if(reportFinalized) return;
 
       if(!window.currentUserProfile){
-        setStatus(5,"Selecciona un asesor antes de finalizar el reporte.");
+        setStatus(5,"La sesión no está disponible. Vuelve a iniciar sesión.");
         return;
       }
 
-      if(!confirm("¿Desea enviar información?")){
+      if(!confirm("Al finalizar, el reporte se guardará en Firebase y quedará bloqueado. ¿Deseas continuar?")){
         return;
       }
 
@@ -1986,7 +1743,7 @@
         await window.saveFinalizedReportToFirebase(data);
         localStorage.removeItem(userStorageKey("actividadComercialDraft"));
         setFinalizedState(true);
-        setStatus(5,"Información enviada correctamente. Ya puedes compartirla o descargarla.","ok");
+        setStatus(5,"Reporte guardado en Firebase, finalizado y bloqueado. Ya puedes compartirlo o descargarlo.","ok");
       }catch(error){
         finalizeButton.disabled = false;
         setStatus(5,error?.message || "No fue posible guardar el reporte en Firebase.");
@@ -2004,8 +1761,6 @@
     addClient();
     setFinalizedState(false);
   </script>
-
-
-  <script type="module" src="app-firebase.js?v=20260725-09"></script>
+  <script type="module" src="app-firebase.js"></script>
 </body>
 </html>
