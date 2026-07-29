@@ -1770,7 +1770,15 @@
       const managerButton = document.getElementById("goManager");
       if(managerButton){
         managerButton.addEventListener("click", function(){
-          window.location.assign("./dashboard.html");
+          const password = window.prompt("Ingresa la contraseña gerencial:");
+          if(password === null) return;
+
+          if(password === "Saltillo20$$"){
+            sessionStorage.setItem("manager_dialog_access","granted");
+            window.location.assign("./dashboard.html");
+          }else{
+            window.alert("Contraseña gerencial incorrecta.");
+          }
         });
       }
     });

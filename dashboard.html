@@ -76,7 +76,11 @@
         <button id="goEmployee" type="button" style="min-height:54px;display:flex;align-items:center;justify-content:center;color:#D7E7FF;background:transparent;border:0;cursor:pointer;font-weight:800;width:100%">👤 Empleado</button>
         <button type="button" aria-current="page" style="min-height:54px;display:flex;align-items:center;justify-content:center;color:#071B42;font-weight:800;background:linear-gradient(135deg,#FFB71B,#FFD369);border:0;width:100%">🔒 Gerente</button>
       </div>
-      <form id="loginForm">
+      <div id="managerDialogStatus" style="text-align:center;padding:18px 0 6px">
+          <p style="font-size:18px;font-weight:800;margin:0 0 8px">Validando acceso gerencial…</p>
+          <p style="margin:0;color:#C8D7EE">El sistema solicitará la contraseña mediante un cuadro de diálogo.</p>
+        </div>
+        <form id="loginForm" style="display:none">
         <label for="employee">Usuario gerencial</label>
         <input id="employee" type="text" inputmode="numeric" autocomplete="username" maxlength="6" placeholder="Ingresa tu usuario" required>
         <label for="password" style="margin-top:13px">Contraseña</label>

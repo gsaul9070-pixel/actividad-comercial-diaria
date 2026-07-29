@@ -154,3 +154,9 @@ El gerente puede:
 - Consultar el total de asesores activos y retirados.
 
 Quitar acceso desactiva el perfil en Firestore. La cuenta técnica de Authentication se conserva para preservar la trazabilidad y permitir una futura reasignación.
+
+
+## Acceso gerencial con diálogo
+
+El botón Gerente ahora solicita la contraseña mediante un cuadro de diálogo, como en el HTML anterior.
+Los asesores conservan el acceso mediante número de empleado y PIN.

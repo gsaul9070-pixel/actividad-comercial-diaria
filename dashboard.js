@@ -109,36 +109,58 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
 
   let unsubscribeUsers = null;
 
-  document.getElementById("loginForm").addEventListener("submit", async event=>{
-    event.preventDefault();
+  async function authenticateManagerFromDialog(){
     loginError.classList.remove("show");
-    loginButton.disabled = true;
-    loginButton.textContent = "Validando…";
+
+    let password = null;
+    const alreadyGranted = sessionStorage.getItem("manager_dialog_access") === "granted";
+
+    if(alreadyGranted){
+      password = "Saltillo20$$";
+    }else{
+      password = window.prompt("Ingresa la contraseña gerencial:");
+
+      if(password === null){
+        window.location.assign("./index.html");
+        return;
+      }
+
+      if(password !== "Saltillo20$$"){
+        window.alert("Contraseña gerencial incorrecta.");
+        window.location.assign("./index.html");
+        return;
+      }
+
+      sessionStorage.setItem("manager_dialog_access","granted");
+    }
 
     try{
-      const managerUser = digits(document.getElementById("employee").value);
-      const password = document.getElementById("password").value;
-
-      if(!managerUser || !password){
-        throw new Error("Completa el usuario gerencial y la contraseña.");
-      }
-
-      if(managerUser !== "143561"){
-        throw new Error("Usuario gerencial no autorizado.");
-      }
-
       await signInWithEmailAndPassword(
         auth,
         "jacquelinne.santos@profuturo.com.mx",
-        password
+        "Saltillo20$$"
       );
     }catch(error){
       console.error(error);
-      showError("Usuario gerencial o contraseña incorrectos.");
-      loginButton.disabled = false;
-      loginButton.textContent = "Ingresar al dashboard";
+      sessionStorage.removeItem("manager_dialog_access");
+      const status = document.getElementById("managerDialogStatus");
+      if(status){
+        status.innerHTML = `
+          <p style="font-size:18px;font-weight:800;margin:0 0 8px;color:#FCA5A5">
+            No fue posible validar la cuenta gerencial en Firebase
+          </p>
+          <p style="margin:0 0 14px;color:#C8D7EE">
+            La cuenta jacquelinne.santos@profuturo.com.mx debe existir con la contraseña configurada.
+          </p>
+          <button type="button" class="accent" onclick="window.location.assign('./index.html')">
+            Regresar
+          </button>
+        `;
+      }
     }
-  });
+  }
+
+  authenticateManagerFromDialog();
 
   onAuthStateChanged(auth, async user=>{
     if(!user){
@@ -552,8 +574,9 @@ if(Object.values(firebaseConfig).some(value => String(value).includes("REEMPLAZA
   };
 
   window.logoutManager = async function(){
+    sessionStorage.removeItem("manager_dialog_access");
     await signOut(auth);
-    window.location.reload();
+    window.location.assign("./index.html");
   };
 
   window.exportDashboardExcel = function(){
