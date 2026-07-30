@@ -16,7 +16,12 @@ const LEGACY_NIPS = {
 
 const state = {
   reports:[], advisors:[],
-  calendarDate:new Date(), selectedDate:null, calendarAdvisor:"",
+  periodStart:"",
+  periodEnd:"",
+  periodName:"",
+  periodMode:"company",
+  selectedDate:null,
+  calendarAdvisor:"",
   manager:{uid:"manager-143561",name:"Jacquelinne",employeeNumber:"143561"}
 };
 
@@ -29,6 +34,239 @@ const localISO = date => {
   const d = date ? new Date(date) : new Date();
   return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 };
+
+const parseISODate = value => new Date(`${value}T12:00:00`);
+const addDays = (date, amount) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + amount);
+  return result;
+};
+const inclusiveDays = (start, end) =>
+  Math.floor((parseISODate(end) - parseISODate(start)) / 86400000) + 1;
+
+function lastFridayOfMonth(year, monthIndex){
+  const date = new Date(year, monthIndex + 1, 0, 12, 0, 0);
+  while(date.getDay() !== 5){
+    date.setDate(date.getDate() - 1);
+  }
+  return date;
+}
+
+function companyPeriodForReference(reference = new Date()){
+  const ref = new Date(reference);
+  ref.setHours(12,0,0,0);
+
+  let end = lastFridayOfMonth(ref.getFullYear(), ref.getMonth());
+  let start;
+
+  if(ref > end){
+    start = addDays(end, 1);
+    end = lastFridayOfMonth(ref.getFullYear(), ref.getMonth() + 1);
+  }else{
+    const previousEnd = lastFridayOfMonth(ref.getFullYear(), ref.getMonth() - 1);
+    start = addDays(previousEnd, 1);
+  }
+
+  const monthName = end.toLocaleDateString("es-MX", {
+    month:"long",
+    year:"numeric"
+  });
+
+  return {
+    start:localISO(start),
+    end:localISO(end),
+    name:`Mes empresa · ${monthName}`,
+    mode:"company"
+  };
+}
+
+function naturalPeriodForReference(reference = new Date()){
+  const ref = new Date(reference);
+  const start = new Date(ref.getFullYear(), ref.getMonth(), 1, 12);
+  const end = new Date(ref.getFullYear(), ref.getMonth() + 1, 0, 12);
+  const monthName = end.toLocaleDateString("es-MX", {
+    month:"long",
+    year:"numeric"
+  });
+
+  return {
+    start:localISO(start),
+    end:localISO(end),
+    name:`Mes natural · ${monthName}`,
+    mode:"natural"
+  };
+}
+
+function generatedPeriodName(start, end){
+  return `Periodo ${formatDate(start)} al ${formatDate(end)}`;
+}
+
+function saveCalendarPeriod(){
+  localStorage.setItem("commercial_calendar_period", JSON.stringify({
+    start:state.periodStart,
+    end:state.periodEnd,
+    name:state.periodName,
+    mode:state.periodMode
+  }));
+}
+
+function initializeCalendarPeriod(){
+  try{
+    const saved = JSON.parse(
+      localStorage.getItem("commercial_calendar_period") || "null"
+    );
+
+    if(saved?.start && saved?.end && saved.start <= saved.end){
+      state.periodStart = saved.start;
+      state.periodEnd = saved.end;
+      state.periodName = saved.name || generatedPeriodName(saved.start, saved.end);
+      state.periodMode = saved.mode || "custom";
+      state.selectedDate = saved.start;
+      return;
+    }
+  }catch(error){
+    console.warn("No se pudo recuperar el periodo guardado:", error);
+  }
+
+  const automatic = companyPeriodForReference(new Date());
+  state.periodStart = automatic.start;
+  state.periodEnd = automatic.end;
+  state.periodName = automatic.name;
+  state.periodMode = automatic.mode;
+  state.selectedDate = localISO();
+}
+
+function syncPeriodControls(){
+  if($("periodStart")) $("periodStart").value = state.periodStart;
+  if($("periodEnd")) $("periodEnd").value = state.periodEnd;
+  if($("periodName")) $("periodName").value = state.periodName;
+
+  if($("periodModeBadge")){
+    $("periodModeBadge").textContent =
+      state.periodMode === "company"
+        ? "Mes empresa"
+        : state.periodMode === "natural"
+          ? "Mes natural"
+          : "Rango personalizado";
+  }
+
+  if($("periodMessage")){
+    const duration = inclusiveDays(state.periodStart, state.periodEnd);
+    $("periodMessage").innerHTML =
+      `<strong>${esc(state.periodName)}</strong><br>` +
+      `Periodo activo: ${formatDate(state.periodStart)} al ${formatDate(state.periodEnd)} ` +
+      `(${duration} días). Todas las gráficas del calendario utilizan este rango.`;
+  }
+}
+
+function applyCalendarPeriod(period, persist = true){
+  if(!period?.start || !period?.end){
+    alert("Selecciona una fecha inicial y una fecha final.");
+    return false;
+  }
+
+  if(period.start > period.end){
+    alert("La fecha inicial no puede ser posterior a la fecha final.");
+    return false;
+  }
+
+  const duration = inclusiveDays(period.start, period.end);
+  if(duration > 62){
+    alert("El periodo no puede superar 62 días. Selecciona un rango más corto.");
+    return false;
+  }
+
+  state.periodStart = period.start;
+  state.periodEnd = period.end;
+  state.periodName =
+    String(period.name || "").trim() ||
+    generatedPeriodName(period.start, period.end);
+  state.periodMode = period.mode || "custom";
+
+  if(
+    !state.selectedDate ||
+    state.selectedDate < state.periodStart ||
+    state.selectedDate > state.periodEnd
+  ){
+    state.selectedDate = state.periodStart;
+  }
+
+  syncPeriodControls();
+  if(persist) saveCalendarPeriod();
+
+  renderMiniCalendar();
+  renderCalendar();
+  return true;
+}
+
+function shiftCalendarPeriod(direction){
+  if(state.periodMode === "company"){
+    const reference = direction < 0
+      ? addDays(parseISODate(state.periodStart), -1)
+      : addDays(parseISODate(state.periodEnd), 1);
+    applyCalendarPeriod(companyPeriodForReference(reference));
+    return;
+  }
+
+  if(state.periodMode === "natural"){
+    const reference = parseISODate(state.periodStart);
+    reference.setMonth(reference.getMonth() + direction);
+    applyCalendarPeriod(naturalPeriodForReference(reference));
+    return;
+  }
+
+  const duration = inclusiveDays(state.periodStart, state.periodEnd);
+  const start = addDays(parseISODate(state.periodStart), direction * duration);
+  const end = addDays(parseISODate(state.periodEnd), direction * duration);
+
+  applyCalendarPeriod({
+    start:localISO(start),
+    end:localISO(end),
+    name:generatedPeriodName(localISO(start), localISO(end)),
+    mode:"custom"
+  });
+}
+
+function calendarDisplayBounds(){
+  const start = parseISODate(state.periodStart);
+  const end = parseISODate(state.periodEnd);
+
+  const displayStart = addDays(start, -start.getDay());
+  const displayEnd = addDays(end, 6 - end.getDay());
+
+  return {displayStart, displayEnd};
+}
+
+function fullPeriodDaySeries(rows){
+  const map = new Map();
+
+  let current = parseISODate(state.periodStart);
+  const end = parseISODate(state.periodEnd);
+
+  while(current <= end){
+    const date = localISO(current);
+    map.set(date, {
+      date,
+      contacts:0,
+      appointments:0,
+      closures:0,
+      social:0
+    });
+    current = addDays(current, 1);
+  }
+
+  rows.forEach(report => {
+    const item = map.get(report.createdDate);
+    if(!item) return;
+
+    item.contacts += Number(report.contacts || 0);
+    item.appointments += Number(report.appointmentsGenerated || 0);
+    item.closures += closureCount(report);
+    item.social += socialPerformed(report) ? 1 : 0;
+  });
+
+  return [...map.values()];
+}
 const formatDate = value => {
   if(!value) return "—";
   const p=String(value).slice(0,10).split("-");
@@ -101,6 +339,7 @@ function openApp(){
   $("authScreen").classList.add("hidden");
   $("app").classList.remove("hidden");
   $("todayBadge").textContent=new Date().toLocaleDateString("es-MX",{day:"2-digit",month:"2-digit",year:"numeric"});
+  syncPeriodControls();
   subscribeData();
 }
 
@@ -220,7 +459,14 @@ function drawLineChart(canvas,rows,series){
   ctx.font="10px Segoe UI";ctx.strokeStyle="#174579";ctx.fillStyle="#AFC5E6";ctx.lineWidth=1;
   for(let i=0;i<=4;i++){const y=pad.t+ch-ch*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(width-pad.r,y);ctx.stroke();ctx.textAlign="right";ctx.fillText(String(Math.round(max*i/4)),pad.l-7,y+3);}
   const x=i=>rows.length===1?pad.l+cw/2:pad.l+cw*i/(rows.length-1),y=v=>pad.t+ch-ch*v/max;
-  rows.forEach((r,i)=>{ctx.textAlign="center";ctx.fillStyle="#AFC5E6";ctx.fillText(formatDate(r.date).slice(0,5),x(i),height-9);});
+  const labelEvery = Math.max(1, Math.ceil(rows.length / 8));
+  rows.forEach((r,i)=>{
+    if(i % labelEvery === 0 || i === rows.length - 1){
+      ctx.textAlign="center";
+      ctx.fillStyle="#AFC5E6";
+      ctx.fillText(formatDate(r.date).slice(0,5),x(i),height-9);
+    }
+  });
   series.forEach(s=>{
     ctx.strokeStyle=s.color;ctx.fillStyle=s.color;ctx.lineWidth=3;ctx.beginPath();
     rows.forEach((r,i)=>i?ctx.lineTo(x(i),y(r[s.key])):ctx.moveTo(x(i),y(r[s.key])));ctx.stroke();
@@ -354,43 +600,240 @@ $("reportNoteForm").addEventListener("submit", async event => {
 
 
 function calendarReports(){
-  return state.reports.filter(r=>{
-    if(r.status==="cancelled")return false;
-    if(state.calendarAdvisor && r.advisorUid!==state.calendarAdvisor)return false;
-    const d=new Date(`${r.createdDate||"1900-01-01"}T12:00:00`);
-    return d.getFullYear()===state.calendarDate.getFullYear()&&d.getMonth()===state.calendarDate.getMonth();
+  return state.reports.filter(report => {
+    if(report.status === "cancelled") return false;
+
+    if(
+      state.calendarAdvisor &&
+      report.advisorUid !== state.calendarAdvisor &&
+      String(report.advisorEmployeeNumber || "") !== state.calendarAdvisor
+    ){
+      return false;
+    }
+
+    const date = String(report.createdDate || "");
+    return date >= state.periodStart && date <= state.periodEnd;
   });
 }
+
+function renderPeriodSummary(rows){
+  const periodTotals = totals(rows);
+  $("periodDays").textContent = inclusiveDays(state.periodStart, state.periodEnd);
+  $("periodReports").textContent = rows.length;
+  $("periodContacts").textContent = periodTotals.contacts;
+  $("periodAppointments").textContent = periodTotals.appointments;
+  $("periodClosures").textContent = periodTotals.closures;
+  $("periodSocial").textContent = periodTotals.social;
+}
+
+function calendarCellHtml(date, reportsMap, compact = false){
+  const iso = localISO(date);
+  const list = reportsMap.get(iso) || [];
+  const values = totals(list);
+  const outside = iso < state.periodStart || iso > state.periodEnd;
+  const selected = state.selectedDate === iso;
+  const startClass = iso === state.periodStart ? "period-start" : "";
+  const endClass = iso === state.periodEnd ? "period-end" : "";
+
+  return `
+    <div
+      class="cal-day ${outside ? "out" : ""} ${selected ? "selected" : ""} ${startClass} ${endClass}"
+      data-date="${iso}"
+      ${outside ? 'aria-disabled="true"' : ""}
+    >
+      <div class="day-number">${date.getDate()}</div>
+      <div class="day-metrics">
+        ${list.length
+          ? compact
+            ? `<span class="color-blue">● ${list.length}</span>`
+            : `
+              <span class="color-blue">●${values.contacts}</span>
+              <span class="color-gold">●${values.appointments}</span>
+              <span class="color-green">●${values.closures}</span>
+              ${values.social ? `<span class="color-pink">●${values.social}</span>` : ""}
+            `
+          : ""}
+      </div>
+    </div>
+  `;
+}
+
 function renderMiniCalendar(){
-  const now=new Date(),first=new Date(now.getFullYear(),now.getMonth(),1),start=new Date(first);start.setDate(1-first.getDay());
-  const reports=selectedReports().filter(r=>r.status!=="cancelled"),map=new Map();reports.forEach(r=>map.set(r.createdDate,(map.get(r.createdDate)||0)+1));
-  let html=["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"].map(d=>`<div class="cal-head">${d}</div>`).join("");
-  for(let i=0;i<35;i++){const d=new Date(start);d.setDate(start.getDate()+i);const iso=localISO(d),out=d.getMonth()!==now.getMonth();html+=`<div class="cal-day ${out?"out":""}" onclick="window.openCalendarDate('${iso}')"><div class="day-number">${d.getDate()}</div><div class="day-metrics">${map.get(iso)?`<span class="color-blue">● ${map.get(iso)}</span>`:""}</div></div>`;}
-  $("miniCalendar").innerHTML=html;
+  const reports = selectedReports().filter(report =>
+    report.status !== "cancelled" &&
+    String(report.createdDate || "") >= state.periodStart &&
+    String(report.createdDate || "") <= state.periodEnd
+  );
+
+  const reportsMap = new Map();
+  reports.forEach(report => {
+    if(!reportsMap.has(report.createdDate)) reportsMap.set(report.createdDate, []);
+    reportsMap.get(report.createdDate).push(report);
+  });
+
+  const {displayStart, displayEnd} = calendarDisplayBounds();
+
+  let html = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]
+    .map(day => `<div class="cal-head">${day}</div>`)
+    .join("");
+
+  let current = new Date(displayStart);
+  while(current <= displayEnd){
+    html += calendarCellHtml(current, reportsMap, true);
+    current = addDays(current, 1);
+  }
+
+  $("miniCalendar").innerHTML = html;
+
+  $("miniCalendar").querySelectorAll(".cal-day:not(.out)").forEach(element => {
+    element.addEventListener("click", () => {
+      window.openCalendarDate(element.dataset.date);
+    });
+  });
 }
+
 function renderCalendar(){
-  const first=new Date(state.calendarDate.getFullYear(),state.calendarDate.getMonth(),1),start=new Date(first);start.setDate(1-first.getDay());
-  const rows=calendarReports(),map=new Map();rows.forEach(r=>{if(!map.has(r.createdDate))map.set(r.createdDate,[]);map.get(r.createdDate).push(r);});
-  $("calendarMonthLabel").textContent=state.calendarDate.toLocaleDateString("es-MX",{month:"long",year:"numeric"});
-  let html=["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"].map(d=>`<div class="cal-head">${d}</div>`).join("");
-  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const iso=localISO(d),list=map.get(iso)||[],t=totals(list),out=d.getMonth()!==state.calendarDate.getMonth();html+=`<div class="cal-day ${out?"out":""} ${state.selectedDate===iso?"selected":""}" data-date="${iso}"><div class="day-number">${d.getDate()}</div><div class="day-metrics">${list.length?`<span class="color-blue">●${t.contacts}</span><span class="color-gold">●${t.appointments}</span><span class="color-green">●${t.closures}</span>${t.social?`<span class="color-pink">●${t.social}</span>`:""}`:""}</div></div>`;}
-  $("calendarGrid").innerHTML=html;
-  $("calendarGrid").querySelectorAll(".cal-day").forEach(el=>el.addEventListener("click",()=>{state.selectedDate=el.dataset.date;renderCalendar();renderCalendarDay();}));
-  renderCalendarDay();drawCalendarBars(rows);drawCalendarAdvisors(rows);
+  syncPeriodControls();
+
+  const rows = calendarReports();
+  const reportsMap = new Map();
+
+  rows.forEach(report => {
+    if(!reportsMap.has(report.createdDate)) reportsMap.set(report.createdDate, []);
+    reportsMap.get(report.createdDate).push(report);
+  });
+
+  $("calendarPeriodLabel").textContent =
+    `${state.periodName} · ${formatDate(state.periodStart)} al ${formatDate(state.periodEnd)}`;
+
+  const {displayStart, displayEnd} = calendarDisplayBounds();
+
+  let html = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]
+    .map(day => `<div class="cal-head">${day}</div>`)
+    .join("");
+
+  let current = new Date(displayStart);
+  while(current <= displayEnd){
+    html += calendarCellHtml(current, reportsMap, false);
+    current = addDays(current, 1);
+  }
+
+  $("calendarGrid").innerHTML = html;
+
+  $("calendarGrid").querySelectorAll(".cal-day:not(.out)").forEach(element => {
+    element.addEventListener("click", () => {
+      state.selectedDate = element.dataset.date;
+      renderCalendar();
+    });
+  });
+
+  renderPeriodSummary(rows);
+  renderCalendarDay();
+  drawCalendarBars(rows);
+  drawCalendarAdvisors(rows);
 }
+
 function renderCalendarDay(){
-  const date=state.selectedDate,rows=calendarReports().filter(r=>r.createdDate===date);$("selectedDateBadge").textContent=date?formatDate(date):"Selecciona un día";
-  $("calendarDayDetail").innerHTML=date?(rows.length?rows.map(r=>`<div class="activity-item"><div class="item-icon">▤</div><div class="item-copy"><strong>${esc(r.advisorName)}</strong><span>${Number(r.contacts||0)} contactos · ${Number(r.appointmentsGenerated||0)} citas · ${closureCount(r)} cierres${socialPerformed(r)?" · Servicio social":""}</span></div><button class="soft" onclick="window.openReportDetail('${r.id}')">Ver</button></div>`).join(""):'<div class="empty">No se entregaron actividades este día.</div>'):'<div class="empty">Selecciona un día del calendario.</div>';
+  const date = state.selectedDate;
+  const rows = calendarReports().filter(report => report.createdDate === date);
+
+  $("selectedDateBadge").textContent =
+    date ? formatDate(date) : "Selecciona un día";
+
+  $("calendarDayDetail").innerHTML = date
+    ? rows.length
+      ? rows.map(report => `
+          <div class="activity-item">
+            <div class="item-icon">▤</div>
+            <div class="item-copy">
+              <strong>${esc(report.advisorName)}</strong>
+              <span>
+                ${Number(report.contacts || 0)} contactos ·
+                ${Number(report.appointmentsGenerated || 0)} citas ·
+                ${closureCount(report)} cierres
+                ${socialPerformed(report) ? " · Servicio social" : ""}
+              </span>
+            </div>
+            <button class="soft" onclick="window.openReportDetail('${report.id}')">Ver</button>
+          </div>
+        `).join("")
+      : '<div class="empty">No se entregaron actividades este día.</div>'
+    : '<div class="empty">Selecciona un día del calendario.</div>';
 }
-function drawCalendarBars(rows){drawLineChart($("calendarBarsCanvas"),daySeries(rows,31),[{key:"contacts",color:"#2E8BFF"},{key:"appointments",color:"#FFB71B"},{key:"closures",color:"#20CA88"}]);}
+
+function drawCalendarBars(rows){
+  drawLineChart(
+    $("calendarBarsCanvas"),
+    fullPeriodDaySeries(rows),
+    [
+      {key:"contacts",color:"#2E8BFF"},
+      {key:"appointments",color:"#FFB71B"},
+      {key:"closures",color:"#20CA88"}
+    ]
+  );
+}
+
 function drawCalendarAdvisors(rows){
-  const canvas=$("calendarAdvisorCanvas");if(!canvas)return;const {ctx,width,height}=canvasSetup(canvas),map=new Map();
-  rows.forEach(r=>map.set(r.advisorName||"Asesor",(map.get(r.advisorName||"Asesor")||0)+1));
-  const data=[...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10),max=Math.max(1,...data.map(x=>x[1]));
-  ctx.font="11px Segoe UI";data.forEach(([name,val],i)=>{const y=20+i*Math.min(27,(height-30)/Math.max(1,data.length)),barW=(width-190)*val/max;ctx.fillStyle="#AFC5E6";ctx.fillText(name.slice(0,22),8,y+8);ctx.fillStyle="#173F77";ctx.fillRect(165,y,Math.max(1,width-185),13);ctx.fillStyle="#2E8BFF";ctx.fillRect(165,y,barW,13);ctx.fillStyle="#fff";ctx.fillText(String(val),170+barW,y+8);});
-  if(!data.length){ctx.fillStyle="#AFC5E6";ctx.textAlign="center";ctx.fillText("Sin datos",width/2,height/2);}
+  const canvas = $("calendarAdvisorCanvas");
+  if(!canvas) return;
+
+  const {ctx,width,height} = canvasSetup(canvas);
+  const map = new Map();
+
+  rows.forEach(report => {
+    const name = report.advisorName || "Asesor";
+    map.set(name, (map.get(name) || 0) + 1);
+  });
+
+  const data = [...map.entries()]
+    .sort((a,b) => b[1] - a[1])
+    .slice(0,10);
+
+  const max = Math.max(1, ...data.map(item => item[1]));
+  ctx.font = "11px Segoe UI";
+
+  data.forEach(([name,value],index) => {
+    const y = 20 + index * Math.min(
+      27,
+      (height - 30) / Math.max(1,data.length)
+    );
+    const availableWidth = Math.max(40, width - 190);
+    const barWidth = availableWidth * value / max;
+
+    ctx.fillStyle = "#AFC5E6";
+    ctx.fillText(name.slice(0,22),8,y+8);
+
+    ctx.fillStyle = "#173F77";
+    ctx.fillRect(165,y,availableWidth,13);
+
+    ctx.fillStyle = "#2E8BFF";
+    ctx.fillRect(165,y,barWidth,13);
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText(String(value),170+barWidth,y+8);
+  });
+
+  if(!data.length){
+    ctx.fillStyle = "#AFC5E6";
+    ctx.textAlign = "center";
+    ctx.fillText("Sin datos",width/2,height/2);
+  }
 }
-window.openCalendarDate=iso=>{state.calendarDate=new Date(`${iso}T12:00:00`);state.selectedDate=iso;window.openPanel("calendarPanel");renderCalendar();};
+
+window.openCalendarDate = iso => {
+  if(iso < state.periodStart || iso > state.periodEnd){
+    applyCalendarPeriod({
+      start:iso,
+      end:iso,
+      name:generatedPeriodName(iso, iso),
+      mode:"custom"
+    });
+  }
+
+  state.selectedDate = iso;
+  window.openPanel("calendarPanel");
+  renderCalendar();
+};
 
 function renderSocial(){
   const rows=state.reports.filter(r=>r.status!=="cancelled"&&socialPerformed(r)),people=rows.reduce((s,r)=>s+socialPeople(r),0),advisors=new Set(rows.map(r=>r.advisorUid)).size;
@@ -425,9 +868,30 @@ $("exportNav").addEventListener("click",()=>window.exportDashboardExcel());
 $("logoutButton").addEventListener("click",()=>{sessionStorage.removeItem("manager_dialog_access");window.location.assign("./index.html");});
 $("globalAdvisorFilter").addEventListener("change",renderAll);
 ["dateFrom","dateTo","advisorFilter","statusFilter","searchFilter"].forEach(id=>$(id).addEventListener(id==="searchFilter"?"input":"change",renderReports));
-$("prevMonth").addEventListener("click",()=>{state.calendarDate.setMonth(state.calendarDate.getMonth()-1);renderCalendar();});
-$("nextMonth").addEventListener("click",()=>{state.calendarDate.setMonth(state.calendarDate.getMonth()+1);renderCalendar();});
-$("todayMonth").addEventListener("click",()=>{state.calendarDate=new Date();state.selectedDate=localISO();renderCalendar();});
-$("calendarAdvisorFilter").addEventListener("change",e=>{state.calendarAdvisor=e.target.value;renderCalendar();});
+$("applyPeriod").addEventListener("click",()=>{
+  applyCalendarPeriod({
+    start:$("periodStart").value,
+    end:$("periodEnd").value,
+    name:$("periodName").value,
+    mode:"custom"
+  });
+});
+
+$("companyPeriodButton").addEventListener("click",()=>{
+  applyCalendarPeriod(companyPeriodForReference(new Date()));
+});
+
+$("naturalPeriodButton").addEventListener("click",()=>{
+  applyCalendarPeriod(naturalPeriodForReference(new Date()));
+});
+
+$("prevPeriod").addEventListener("click",()=>shiftCalendarPeriod(-1));
+$("nextPeriod").addEventListener("click",()=>shiftCalendarPeriod(1));
+
+$("calendarAdvisorFilter").addEventListener("change",event=>{
+  state.calendarAdvisor=event.target.value;
+  renderCalendar();
+});
 window.addEventListener("resize",()=>{if(!$("app").classList.contains("hidden")){renderTrend();renderActivityTypes();if($("calendarPanel").classList.contains("active"))renderCalendar();}});
+initializeCalendarPeriod();
 authorize();

@@ -35,3 +35,18 @@ También se deben publicar las reglas de `firestore.rules` en Firebase Console.
 - Las notas gerenciales se guardan dentro del mismo documento del reporte en `managerNotes`.
 - Se eliminó el apartado independiente **Notas** del menú y del dashboard.
 - La nota capturada por el asesor continúa visible dentro del reporte.
+
+
+## Periodo comercial personalizado
+
+El calendario ya no depende exclusivamente del mes natural.
+
+Funciones agregadas:
+
+- **Mes empresa automático:** comienza el sábado posterior al último viernes del periodo anterior y termina el último viernes del periodo actual.
+- **Rango personalizado:** la gerente puede colocar cualquier fecha inicial y final autorizada por la empresa.
+- **Mes natural:** disponible como referencia.
+- **Periodo anterior y siguiente:** desplaza el rango conservando el tipo de periodo.
+- El rango seleccionado se recuerda en el navegador.
+- El calendario, la tendencia diaria, las entregas por asesor y los indicadores utilizan exactamente el rango seleccionado.
+- Se permite un periodo máximo de 62 días para mantener las gráficas legibles.

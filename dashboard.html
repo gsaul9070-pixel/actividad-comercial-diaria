@@ -133,6 +133,153 @@
       .funnel-step:nth-child(3){width:84%}
     }
 
+
+    .period-config{
+      margin-bottom:13px;
+      background:
+        radial-gradient(circle at 92% 12%,rgba(46,139,255,.14),transparent 28%),
+        linear-gradient(145deg,rgba(7,31,78,.98),rgba(4,22,56,.98));
+    }
+    .period-grid{
+      display:grid;
+      grid-template-columns:minmax(180px,1.15fr) minmax(150px,.75fr)
+                            minmax(150px,.75fr) auto;
+      gap:10px;
+      align-items:end;
+    }
+    .period-grid label{
+      display:block;
+      margin-bottom:6px;
+      color:#AFC5E6;
+      font-size:10px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.4px;
+    }
+    .period-date-shell{
+      width:100%;
+      min-width:0;
+      padding:10px 11px;
+      border:1px solid #29558E;
+      border-radius:11px;
+      background:#071F4E;
+    }
+    .period-date-shell input{
+      width:100%;
+      min-width:0;
+      padding:0;
+      border:0;
+      background:transparent;
+      box-shadow:none;
+    }
+    .period-presets{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .period-presets button{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+    }
+    .period-message{
+      margin-top:12px;
+      padding:10px 12px;
+      border-radius:12px;
+      color:#DCE9FB;
+      background:rgba(19,69,127,.48);
+      border:1px solid #285A91;
+      font-size:11px;
+      line-height:1.45;
+    }
+    .period-summary{
+      display:grid;
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      gap:10px;
+      margin-bottom:13px;
+    }
+    .period-metric{
+      padding:13px;
+      border-radius:15px;
+      background:linear-gradient(145deg,#08275A,#0A3474);
+      border:1px solid #285A91;
+      box-shadow:0 10px 24px rgba(0,0,0,.14);
+    }
+    .period-metric span{
+      display:block;
+      color:#AFC5E6;
+      font-size:9px;
+      text-transform:uppercase;
+      font-weight:900;
+      letter-spacing:.35px;
+    }
+    .period-metric strong{
+      display:block;
+      margin-top:5px;
+      font-size:24px;
+      color:#FFFFFF;
+    }
+    .period-metric small{
+      display:block;
+      margin-top:3px;
+      color:#83A8D4;
+      font-size:9px;
+    }
+    .period-mode-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      padding:8px 11px;
+      border-radius:999px;
+      background:#FFF0BF;
+      color:#825300;
+      font-size:10px;
+      font-weight:900;
+    }
+    .cal-day.period-start{
+      box-shadow:inset 4px 0 0 #2E8BFF;
+    }
+    .cal-day.period-end{
+      box-shadow:inset -4px 0 0 #FFB71B;
+    }
+    .cal-day.out{
+      opacity:.24;
+      cursor:default;
+    }
+    .calendar-range-label{
+      display:inline-flex;
+      align-items:center;
+      min-height:43px;
+      padding:10px 13px;
+      border-radius:12px;
+      background:#071F4E;
+      border:1px solid #285A91;
+      color:#FFFFFF;
+      font-size:11px;
+      font-weight:900;
+    }
+    @media(max-width:1250px){
+      .period-summary{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .period-grid{grid-template-columns:1fr 1fr}
+      .period-grid .apply-period-wrap{grid-column:1/-1}
+      .period-grid .apply-period-wrap button{width:100%}
+    }
+    @media(max-width:720px){
+      .period-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .period-grid{grid-template-columns:1fr}
+      .period-grid .apply-period-wrap{grid-column:auto}
+      .period-presets{display:grid;grid-template-columns:1fr 1fr}
+      .period-presets button{width:100%}
+      .calendar-controls{align-items:stretch}
+      .calendar-controls>div{width:100%;flex-wrap:wrap}
+      .calendar-controls select,.calendar-range-label{width:100%}
+    }
+    @media(max-width:430px){
+      .period-presets{grid-template-columns:1fr}
+      .period-summary{grid-template-columns:1fr 1fr}
+    }
+
   </style>
 </head>
 <body>
@@ -216,14 +363,122 @@
       </section>
 
       <section id="calendarPanel" class="panel">
-        <div class="page-title"><div><h2>Calendario inteligente</h2><p>Visualiza las actividades entregadas por empleado y analiza el desempeño.</p></div></div>
-        <div class="card">
-          <div class="calendar-controls"><div><button id="prevMonth" class="soft">‹</button><button id="todayMonth" class="soft">Hoy</button><button id="nextMonth" class="soft">›</button></div><div><select id="calendarAdvisorFilter"><option value="">Todos los asesores</option></select><span id="calendarMonthLabel" class="tool"></span></div></div>
-          <div id="calendarGrid" class="calendar-grid"></div>
-          <div class="legend"><span><i class="dot" style="background:#2E8BFF"></i>Contactos</span><span><i class="dot" style="background:#FFB71B"></i>Citas</span><span><i class="dot" style="background:#20CA88"></i>Cierres</span><span><i class="dot" style="background:#F05B93"></i>Servicio Social</span></div>
+        <div class="page-title">
+          <div>
+            <h2>Calendario por periodo comercial</h2>
+            <p>Define el rango real utilizado por la empresa y actualiza automáticamente el calendario y las gráficas.</p>
+          </div>
+          <span id="periodModeBadge" class="period-mode-badge">Mes empresa</span>
         </div>
-        <div class="grid two"><div class="card"><div class="card-head"><h2>Detalle del día seleccionado</h2><span id="selectedDateBadge" class="badge">Selecciona un día</span></div><div id="calendarDayDetail" class="day-detail"></div></div><div class="card"><div class="card-head"><h2>Actividad del mes</h2><small>Comparativo diario.</small></div><div class="canvas"><canvas id="calendarBarsCanvas"></canvas></div></div></div>
-        <div class="card" style="margin-top:13px"><div class="card-head"><h2>Entregas por asesor</h2><small>Reportes entregados en el mes seleccionado.</small></div><div class="canvas"><canvas id="calendarAdvisorCanvas"></canvas></div></div>
+
+        <div class="card period-config">
+          <div class="card-head">
+            <div>
+              <h2>Configuración del periodo</h2>
+              <small>El periodo automático termina el último viernes. También puedes capturar cualquier rango autorizado por la empresa.</small>
+            </div>
+          </div>
+
+          <div class="period-grid">
+            <div>
+              <label for="periodName">Nombre del periodo</label>
+              <input id="periodName" type="text" maxlength="70"
+                placeholder="Ej. Julio Comercial 2026">
+            </div>
+
+            <div>
+              <label for="periodStart">Fecha inicial</label>
+              <div class="period-date-shell">
+                <input id="periodStart" type="date">
+              </div>
+            </div>
+
+            <div>
+              <label for="periodEnd">Fecha final</label>
+              <div class="period-date-shell">
+                <input id="periodEnd" type="date">
+              </div>
+            </div>
+
+            <div class="apply-period-wrap">
+              <button id="applyPeriod" class="primary" type="button">✓ Aplicar rango</button>
+            </div>
+          </div>
+
+          <div class="period-presets">
+            <button id="companyPeriodButton" class="success" type="button">▦ Mes empresa automático</button>
+            <button id="naturalPeriodButton" class="soft" type="button">Calendario natural</button>
+            <button id="prevPeriod" class="soft" type="button">← Periodo anterior</button>
+            <button id="nextPeriod" class="soft" type="button">Periodo siguiente →</button>
+          </div>
+
+          <div id="periodMessage" class="period-message">
+            El rango seleccionado se recordará en este navegador y será utilizado por todas las gráficas del calendario.
+          </div>
+        </div>
+
+        <div class="period-summary">
+          <div class="period-metric"><span>Días del periodo</span><strong id="periodDays">0</strong><small>Rango inclusivo</small></div>
+          <div class="period-metric"><span>Reportes entregados</span><strong id="periodReports">0</strong><small>Según asesor seleccionado</small></div>
+          <div class="period-metric"><span>Contactos</span><strong id="periodContacts">0</strong><small>Total del periodo</small></div>
+          <div class="period-metric"><span>Citas</span><strong id="periodAppointments">0</strong><small>Total del periodo</small></div>
+          <div class="period-metric"><span>Cierres</span><strong id="periodClosures">0</strong><small>Total del periodo</small></div>
+          <div class="period-metric"><span>Servicio social</span><strong id="periodSocial">0</strong><small>Actividades realizadas</small></div>
+        </div>
+
+        <div class="card">
+          <div class="calendar-controls">
+            <div>
+              <select id="calendarAdvisorFilter">
+                <option value="">Todos los asesores</option>
+              </select>
+            </div>
+            <div>
+              <span id="calendarPeriodLabel" class="calendar-range-label"></span>
+            </div>
+          </div>
+
+          <div id="calendarGrid" class="calendar-grid"></div>
+
+          <div class="legend">
+            <span><i class="dot" style="background:#2E8BFF"></i>Contactos</span>
+            <span><i class="dot" style="background:#FFB71B"></i>Citas</span>
+            <span><i class="dot" style="background:#20CA88"></i>Cierres</span>
+            <span><i class="dot" style="background:#F05B93"></i>Servicio Social</span>
+            <span><i class="dot" style="background:#2E8BFF"></i>Inicio del periodo</span>
+            <span><i class="dot" style="background:#FFB71B"></i>Fin del periodo</span>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="card">
+            <div class="card-head">
+              <h2>Detalle del día seleccionado</h2>
+              <span id="selectedDateBadge" class="badge">Selecciona un día</span>
+            </div>
+            <div id="calendarDayDetail" class="day-detail"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2>Tendencia del periodo</h2>
+                <small>Comparativo diario dentro del rango seleccionado.</small>
+              </div>
+            </div>
+            <div class="canvas"><canvas id="calendarBarsCanvas"></canvas></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:13px">
+          <div class="card-head">
+            <div>
+              <h2>Entregas por asesor</h2>
+              <small>Reportes entregados dentro del periodo comercial seleccionado.</small>
+            </div>
+          </div>
+          <div class="canvas"><canvas id="calendarAdvisorCanvas"></canvas></div>
+        </div>
       </section>
 
       <section id="socialPanel" class="panel">
