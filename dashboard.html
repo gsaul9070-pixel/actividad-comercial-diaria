@@ -3,771 +3,213 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Dashboard Actividad Comercial</title>
+  <title>Dashboard Gerencial · Actividad Comercial</title>
   <style>
     :root{
-      --primary:#123A63;--primary2:#1C5D99;--accent:#0E9F6E;
-      --danger:#D64545;--warning:#F59E0B;--bg:#F3F6FA;
-      --card:#fff;--text:#1F2937;--muted:#6B7280;--line:#DCE3EC;
-      --shadow:0 10px 28px rgba(18,58,99,.10)
+      --bg:#03132F;--panel:#071F4E;--panel2:#0A2B62;--line:#194579;
+      --text:#F8FBFF;--muted:#AFC5E6;--blue:#1670EA;--gold:#FFB71B;
+      --green:#13B57A;--pink:#E94C86;--purple:#7D50E7;--cyan:#19BED2;
+      --danger:#F04D4D;--shadow:0 18px 46px rgba(0,0,0,.25);
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 82% 5%,rgba(25,92,220,.24),transparent 26%),var(--bg);color:var(--text)}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:linear-gradient(145deg,#020E25,#06255A);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+    button,a,input,select,textarea{font:inherit}
+    button,a{transition:.2s ease}
+    button{border:0;cursor:pointer}
     .hidden{display:none!important}
-    button,.button{border:0;border-radius:11px;padding:10px 13px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
-    button:disabled{opacity:.5;cursor:not-allowed}
-    .primary{background:var(--primary);color:#fff}.soft{background:#EAF2F8;color:var(--primary)}
-    .accent{background:var(--accent);color:#fff}.danger{background:#FDECEC;color:var(--danger)}
-    .auth{min-height:100vh;display:grid;place-items:center;padding:28px;background:linear-gradient(105deg,rgba(1,17,50,.93),rgba(1,28,79,.76)),url("profuturo-acceso.png") center/cover no-repeat}
-    .auth-card{width:min(560px,100%);color:#fff;border:1px solid rgba(133,181,248,.38);border-radius:28px;padding:38px;background:linear-gradient(145deg,rgba(3,34,91,.94),rgba(1,17,53,.96));box-shadow:0 30px 90px rgba(0,0,0,.42);backdrop-filter:blur(16px)}
-    .auth-card h1{margin:0 0 8px;color:#fff;text-align:center;font-size:34px}.auth-card p{color:#C7D9F5;line-height:1.45;text-align:center}.auth-card label{color:#F4F8FF}.auth-card input{min-height:56px;color:#fff;background:rgba(2,20,59,.82);border-color:rgba(114,166,239,.68)}.auth-card input::placeholder{color:#AFC5E6}.auth-card .primary{min-height:58px;color:#071B42;font-size:17px;background:linear-gradient(135deg,#FFB71B,#FFD56E);box-shadow:0 14px 32px rgba(255,183,27,.22)}
-    label{font-size:13px;font-weight:800;display:block;margin-bottom:6px}
-    input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:11px;font:inherit;outline:none;background:#fff}
-    input:focus,select:focus,textarea:focus{border-color:var(--primary2);box-shadow:0 0 0 3px rgba(28,93,153,.12)}
-    .error{display:none;margin-top:12px;padding:11px;border-radius:11px;background:#FFF0F0;border:1px solid #F2BABA;color:#A62F2F;font-weight:700}.error.show{display:block}
-    .app{max-width:1500px;margin:auto;padding:18px}
-    .top{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-radius:22px;padding:22px;display:flex;justify-content:space-between;gap:16px;align-items:center;box-shadow:var(--shadow)}
-    .top h1{margin:0 0 5px}.top p{margin:0;opacity:.88}
-    .top-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .tabs{display:flex;gap:8px;margin:14px 0}.tab.active{background:var(--primary);color:#fff}.tab{background:#fff;color:var(--primary);border:1px solid var(--line)}
-    .panel{display:none}.panel.active{display:block}
-    .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:14px 0}
-    .kpi{background:linear-gradient(145deg,#0C285D,#091E49);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
-    .kpi span{color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase}.kpi strong{display:block;color:var(--primary);font-size:30px;margin-top:7px}
-    .filters{background:linear-gradient(145deg,#0C285D,#091E49);border:1px solid var(--line);border-radius:16px;padding:15px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;box-shadow:var(--shadow)}
-    .card{background:linear-gradient(145deg,#0C285D,#091E49);border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:14px;box-shadow:var(--shadow)}
-    .card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.card h2{margin:0;color:var(--primary);font-size:20px}
-    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px}
-    table{width:100%;border-collapse:collapse;font-size:13px;min-width:1050px}
-    th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-    th{background:#EDF3F8;color:#233B55;position:sticky;top:0;z-index:1}
-    tr.cancelled{opacity:.55;text-decoration:line-through}
-    .badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}
-    .pending{background:#FFF4D8;color:#865B00}.reviewed{background:#E8F8F0;color:#087554}.cancelled-badge{background:#FDECEC;color:#A62F2F}
+    .auth{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(115deg,rgba(1,15,45,.94),rgba(4,39,94,.74)),url("profuturo-acceso.png") center/cover}
+    .auth-card{width:min(520px,100%);padding:34px;border-radius:26px;background:rgba(3,23,64,.9);border:1px solid rgba(112,168,242,.38);box-shadow:var(--shadow);text-align:center;backdrop-filter:blur(16px)}
+    .auth-card img{width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #fff}
+    .auth-card h1{margin:18px 0 7px}.auth-card p{color:var(--muted)}
+    .app{min-height:100vh;display:grid;grid-template-columns:250px minmax(0,1fr)}
+    .sidebar{position:sticky;top:0;height:100vh;padding:22px 17px;display:flex;flex-direction:column;background:linear-gradient(180deg,#061C47,#031536);border-right:1px solid rgba(116,167,235,.18);overflow:auto}
+    .brand{display:flex;align-items:center;gap:11px;padding:3px 5px 20px;border-bottom:1px solid rgba(255,255,255,.12)}
+    .brand img{width:55px;height:55px;border-radius:50%;object-fit:cover}
+    .brand strong{display:block;font-size:21px}.brand small{color:var(--muted)}
+    .nav{display:flex;flex-direction:column;gap:7px;margin-top:20px}
+    .nav button,.side-action{width:100%;min-height:46px;padding:11px 12px;border-radius:12px;background:transparent;color:#C9DCF5;display:flex;align-items:center;gap:11px;font-weight:800;text-decoration:none}
+    .nav button:hover,.side-action:hover{background:rgba(255,255,255,.08);color:#fff;transform:translateX(3px)}
+    .nav button.active{background:linear-gradient(135deg,#1266D7,#2884F6);color:#fff;box-shadow:0 10px 25px rgba(18,102,215,.3)}
+    .ico{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:rgba(255,255,255,.09);flex:none}
+    .side-bottom{margin-top:auto;display:flex;flex-direction:column;gap:9px}
+    .capture-button{background:linear-gradient(135deg,#1266D7,#6B4DF6);color:#fff;box-shadow:0 12px 30px rgba(65,76,237,.35)}
+    .capture-button:hover{transform:translateY(-3px);filter:brightness(1.08)}
+    .manager-card{padding:12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11)}
+    .manager-card strong{display:block;font-size:12px}.manager-card span{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+    .main{min-width:0;padding:20px 22px 34px;background:radial-gradient(circle at 90% 5%,rgba(34,113,235,.2),transparent 25%),linear-gradient(180deg,#061C47,#041630)}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:17px}
+    .topbar h1{margin:0;font-size:clamp(25px,3vw,38px)}.topbar p{margin:5px 0 0;color:var(--muted)}
+    .top-tools{display:flex;gap:10px;flex-wrap:wrap}
+    .tool{min-height:43px;padding:10px 13px;border-radius:12px;background:rgba(7,31,78,.78);border:1px solid #25518A;color:#fff}
+    .panel{display:none;animation:fade .25s ease}.panel.active{display:block}
+    @keyframes fade{from{opacity:.2;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+    .kpi{position:relative;overflow:hidden;min-height:130px;padding:16px;border-radius:17px;border:1px solid var(--line);box-shadow:0 12px 30px rgba(0,0,0,.16);transition:.22s}
+    .kpi:hover{transform:translateY(-5px);filter:brightness(1.05)}
+    .kpi .icon{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:21px;background:rgba(255,255,255,.13)}
+    .kpi strong{display:block;font-size:29px;margin-top:9px}.kpi span{display:block;font-size:11px;color:#D9E8FF}
+    .kpi.blue{background:linear-gradient(145deg,#08377C,#0756B4)}.kpi.gold{background:linear-gradient(145deg,#55390B,#9D6506)}
+    .kpi.green{background:linear-gradient(145deg,#064C3C,#07785B)}.kpi.purple{background:linear-gradient(145deg,#392076,#5833A9)}
+    .kpi.pink{background:linear-gradient(145deg,#6D1E48,#9E2C68)}.kpi.cyan{background:linear-gradient(145deg,#07566A,#087E91)}
+    .grid{display:grid;gap:13px;margin-top:13px}.grid.two{grid-template-columns:minmax(0,1.35fr) minmax(330px,.65fr)}.grid.three{grid-template-columns:1.1fr .7fr 1.2fr}
+    .card{background:linear-gradient(145deg,rgba(7,31,78,.96),rgba(4,22,56,.98));border:1px solid var(--line);border-radius:18px;padding:17px;box-shadow:0 12px 30px rgba(0,0,0,.15);min-width:0}
+    .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:13px}.card h2{margin:0;font-size:17px}.card p,.card small{color:var(--muted)}
+    .badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:999px;font-size:10px;font-weight:900;background:#DDEBFA;color:#08377C}
+    .canvas{height:280px;position:relative}.canvas canvas{width:100%;height:100%;display:block}
+    .legend{display:flex;gap:13px;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:11px;font-weight:800}.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}
+    .funnel{display:flex;flex-direction:column;align-items:center;gap:8px;padding:9px 0}.funnel-step{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;color:#fff;font-weight:900;clip-path:polygon(8% 0,92% 0,83% 100%,17% 100%)}.funnel-step:nth-child(1){width:94%;background:#1266D7}.funnel-step:nth-child(2){width:75%;background:#F59E0B}.funnel-step:nth-child(3){width:57%;background:#0E9F6E}
+    .calendar-controls{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}.calendar-controls>div{display:flex;gap:7px}
+    .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+    .cal-head{padding:9px;text-align:center;background:#0A2B62;font-size:11px;font-weight:900}
+    .cal-day{min-height:88px;padding:8px;border-top:1px solid var(--line);border-right:1px solid var(--line);background:rgba(4,24,62,.72);cursor:pointer;transition:.2s}
+    .cal-day:hover{background:#0B3979}.cal-day.out{opacity:.35}.cal-day.selected{outline:2px solid #2A8BFF;outline-offset:-2px;background:#0A3D83}
+    .day-number{font-weight:900;font-size:11px}.day-metrics{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:9px}.day-metrics span{white-space:nowrap}
+    .color-blue{color:#4D9BFF}.color-gold{color:#FFB71B}.color-green{color:#21CF90}.color-pink{color:#FF70A5}
+    .rank-list,.activity-feed,.note-list,.social-list{display:flex;flex-direction:column;gap:9px}
+    .rank-row{display:grid;grid-template-columns:25px minmax(0,1fr) auto;gap:8px;align-items:center}.rank-bar{height:6px;background:#193E72;border-radius:999px;overflow:hidden;margin-top:6px}.rank-bar i{display:block;height:100%;background:linear-gradient(90deg,#17C887,#6DE5A9)}
+    .activity-item,.note-item,.social-item{display:grid;grid-template-columns:39px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px;border-radius:13px;background:rgba(7,39,91,.7);border:1px solid #174579}
+    .activity-item:hover,.note-item:hover,.social-item:hover{background:#0A397A;transform:translateX(2px)}
+    .item-icon{width:39px;height:39px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(145deg,#1266D7,#4C9BFF)}
+    .item-copy strong{display:block;font-size:12px}.item-copy span{display:block;color:var(--muted);font-size:10px;margin-top:3px}.item-time{font-size:9px;color:var(--muted);text-align:right}
+    .bottom-metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;margin-top:13px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}.bottom-metrics>div{padding:15px;background:#061C47}.bottom-metrics span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;font-weight:900}.bottom-metrics strong{font-size:26px;display:block;margin-top:5px}
+    .page-title{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:13px}.page-title h2{font-size:26px;margin:0}.page-title p{margin:5px 0 0;color:var(--muted)}
+    .filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-bottom:12px}.filters label{display:block;font-size:10px;color:var(--muted);font-weight:900;margin-bottom:5px}
+    input,select,textarea{width:100%;padding:11px;border-radius:11px;border:1px solid #29558E;background:#071F4E;color:#fff;outline:none}input:focus,select:focus,textarea:focus{border-color:#45A0FF;box-shadow:0 0 0 3px rgba(69,160,255,.13)}
+    .primary,.success,.danger,.soft{padding:10px 13px;border-radius:11px;color:#fff;font-weight:900}.primary{background:linear-gradient(135deg,#1266D7,#2D8BFF)}.success{background:#0E9F6E}.danger{background:#D93E4A}.soft{background:#153B6C}
+    .primary:hover,.success:hover,.danger:hover,.soft:hover{transform:translateY(-2px);filter:brightness(1.08)}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:1050px}th{padding:11px;background:#0A2B62;text-align:left;font-size:10px}td{padding:11px;border-top:1px solid #194579;font-size:11px;vertical-align:top}tbody tr:hover{background:rgba(23,75,148,.25)}
+    .status{display:inline-flex;padding:6px 9px;border-radius:999px;font-size:9px;font-weight:900}.pending{background:#FFF0BF;color:#8B5A00}.reviewed{background:#DDF9EE;color:#006F4B}.cancelled{background:#FFE4E4;color:#B0242E}
     .actions{display:flex;gap:6px;flex-wrap:wrap}
-    .empty{text-align:center;padding:32px;color:var(--muted)}
-    .missing{display:flex;gap:8px;flex-wrap:wrap}.missing span{background:#FFF4D8;color:#7A5410;padding:7px 9px;border-radius:999px;font-size:12px;font-weight:700}
-    .modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;place-items:center;padding:18px;z-index:9999}.modal.show{display:grid}
-    .modal-card{width:min(1080px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:20px;padding:20px}
-    .modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.detail-box{background:#091D45;border:1px solid var(--line);border-radius:12px;padding:11px}.detail-box strong{display:block;color:var(--primary);font-size:12px;margin-bottom:4px}
-    .client-table{min-width:900px}
-
-    .staff-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-    .staff-summary{display:flex;gap:8px;flex-wrap:wrap}
-    .staff-chip{padding:8px 11px;border-radius:999px;background:#EAF2F8;color:#123A63;font-size:12px;font-weight:800}
-    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-    .form-grid .full{grid-column:1/-1}
-    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;flex-wrap:wrap}
-    .help-text{margin-top:6px;color:#6B7280;font-size:12px;line-height:1.4}
-    .pin-box{font-family:Consolas,monospace;letter-spacing:3px;font-weight:900}
-
-    /* Mejoras de legibilidad */
-    .kpi span{color:#D7E7FF}
-    .kpi strong{color:#FFFFFF}
-    .filters label{color:#FFFFFF}
-    .filters input,.filters select{background:#FFFFFF;color:#102A4C}
-    .card{background:#FFFFFF;color:#17233A}
-    .card h2,.card-head h2{color:#123A63}
-    .card-head span{color:#374151;font-weight:800}
-    .table-wrap{background:#FFFFFF}
-    tbody tr{background:#FFFFFF}
-    tbody tr:nth-child(even){background:#F7FAFD}
-    tbody td{color:#17233A}
-    tbody td small{color:#52657A}
-    .detail-box{color:#FFFFFF}
-    .detail-box strong{color:#A9CCFF}
-    .nip-cell{min-width:135px}
-    .nip-wrap{display:flex;align-items:center;gap:7px}
-    .nip-value{
-      min-width:58px;
-      font-family:Consolas,monospace;
-      letter-spacing:2px;
-      font-weight:900;
-      color:#123A63;
-    }
-    .icon-button{
-      width:34px;height:34px;padding:0;border-radius:9px;
-      background:#EAF2F8;color:#123A63;font-size:16px
-    }
-    .icon-button:hover{background:#D8E8F5}
-    .staff-name{color:#12233F}
-    .staff-subtext{color:#52657A}
-
-
-    .analytics-grid{
-      display:grid;
-      grid-template-columns:minmax(0,1.45fr) minmax(320px,.85fr);
-      gap:14px;
-      margin-top:14px;
-    }
-    .chart-card{
-      background:#FFFFFF;
-      color:#17233A;
-      border:1px solid #DCE3EC;
-      border-radius:18px;
-      padding:18px;
-      box-shadow:0 12px 30px rgba(18,58,99,.09);
-      min-width:0;
-    }
-    .chart-card.wide{grid-column:1/-1}
-    .chart-title{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-      margin-bottom:15px;
-    }
-    .chart-title h2{margin:0;color:#123A63;font-size:18px}
-    .chart-title p{margin:5px 0 0;color:#64748B;font-size:12px;line-height:1.4}
-    .chart-badge{
-      display:inline-flex;
-      align-items:center;
-      padding:7px 10px;
-      border-radius:999px;
-      background:#EAF2F8;
-      color:#123A63;
-      font-size:11px;
-      font-weight:900;
-      white-space:nowrap;
-    }
-    .chart-canvas-wrap{position:relative;height:300px}
-    #trendCanvas{width:100%;height:100%;display:block}
-    .legend{
-      display:flex;
-      gap:14px;
-      flex-wrap:wrap;
-      margin-top:12px;
-      color:#52657A;
-      font-size:12px;
-      font-weight:700;
-    }
-    .legend-item{display:flex;align-items:center;gap:6px}
-    .legend-dot{width:10px;height:10px;border-radius:50%}
-    .top-list{display:flex;flex-direction:column;gap:13px}
-    .top-row{display:grid;grid-template-columns:minmax(120px,1fr) 2fr auto;gap:10px;align-items:center}
-    .top-name{font-size:12px;font-weight:800;color:#17233A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .top-meta{display:block;color:#64748B;font-size:10px;font-weight:600;margin-top:3px}
-    .bar-track{height:12px;border-radius:999px;background:#E8EEF5;overflow:hidden}
-    .bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#1C5D99,#0E9F6E)}
-    .top-value{min-width:36px;text-align:right;color:#123A63;font-size:13px;font-weight:900}
-    .conversion-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-    .conversion-item{
-      background:linear-gradient(145deg,#F8FBFF,#EEF5FB);
-      border:1px solid #DCE7F1;
-      border-radius:15px;
-      padding:14px;
-    }
-    .conversion-item span{display:block;color:#64748B;font-size:11px;font-weight:800;text-transform:uppercase}
-    .conversion-item strong{display:block;color:#123A63;font-size:24px;margin-top:6px}
-    .conversion-item small{display:block;color:#52657A;margin-top:4px;font-size:11px}
-    .progress-line{height:8px;border-radius:999px;background:#DEE8F1;margin-top:11px;overflow:hidden}
-    .progress-line i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#FFB71B,#0E9F6E)}
-    .activity-summary{
-      display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:10px;
-      margin-top:14px;
-    }
-    .mini-metric{
-      background:#071F4E;
-      border-radius:14px;
-      padding:13px;
-      color:#FFFFFF;
-    }
-    .mini-metric span{display:block;color:#BFD2ED;font-size:10px;font-weight:800;text-transform:uppercase}
-    .mini-metric strong{display:block;font-size:22px;margin-top:5px}
-    @media(max-width:1050px){
-      .analytics-grid{grid-template-columns:1fr}
-      .chart-card.wide{grid-column:auto}
-    }
-    @media(max-width:720px){
-      .conversion-grid,.activity-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .chart-canvas-wrap{height:250px}
-      .top-row{grid-template-columns:minmax(100px,1fr) 1.4fr auto}
-    }
-
-    @media(max-width:650px){.form-grid{grid-template-columns:1fr}}
-    @media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:650px){.app{padding:9px}.top{align-items:flex-start;flex-direction:column}.kpis{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
-  
-    body{
-      background:#061B43;
-      min-height:100vh;
-    }
-    .app{
-      max-width:none;
-      margin:0;
-      padding:0;
-      min-height:100vh;
-      display:grid;
-      grid-template-columns:250px minmax(0,1fr);
-      background:#F4F7FB;
-    }
-    .sidebar{
-      min-height:100vh;
-      background:linear-gradient(180deg,#06265B 0%,#031A42 100%);
-      color:#FFFFFF;
-      padding:24px 18px;
-      display:flex;
-      flex-direction:column;
-      position:sticky;
-      top:0;
-      height:100vh;
-      box-shadow:12px 0 34px rgba(2,18,51,.18);
-      z-index:20;
-    }
-    .side-brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      padding:5px 8px 24px;
-      border-bottom:1px solid rgba(255,255,255,.12);
-    }
-    .brand-mark{
-      width:45px;height:45px;border-radius:15px;
-      display:grid;place-items:center;
-      background:linear-gradient(145deg,#FFB71B,#FFD56B);
-      color:#071B42;font-size:23px;
-      box-shadow:0 8px 22px rgba(255,183,27,.22);
-    }
-    .brand-copy strong{display:block;font-size:21px;line-height:1}
-    .brand-copy small{display:block;color:#BFD2ED;margin-top:6px;font-size:11px}
-    .side-nav{display:flex;flex-direction:column;gap:8px;margin-top:24px}
-    .side-nav .tab,.side-nav button,.side-nav a{
-      width:100%;
-      min-height:48px;
-      padding:12px 13px;
-      border-radius:12px;
-      display:flex;
-      align-items:center;
-      justify-content:flex-start;
-      gap:12px;
-      background:transparent;
-      color:#CADAF0;
-      border:1px solid transparent;
-      font-size:14px;
-      font-weight:800;
-      text-decoration:none;
-      cursor:pointer;
-      transition:.2s ease;
-    }
-    .side-nav .tab:hover,.side-nav button:hover,.side-nav a:hover{
-      background:rgba(255,255,255,.08);
-      color:#FFFFFF;
-      transform:none;
-    }
-    .side-nav .tab.active{
-      background:linear-gradient(135deg,#1266D7,#1D7BF2);
-      color:#FFFFFF;
-      border-color:rgba(255,255,255,.14);
-      box-shadow:0 10px 24px rgba(18,102,215,.28);
-    }
-    .nav-icon{
-      width:25px;height:25px;border-radius:8px;
-      display:grid;place-items:center;
-      background:rgba(255,255,255,.09);
-      font-size:13px;flex:none;
-    }
-    .side-footer{margin-top:auto;display:flex;flex-direction:column;gap:8px}
-    .side-footer button{color:#FFD6D6}
-    .side-user{
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.06);
-      border-radius:14px;
-      padding:12px;
-      margin-bottom:8px;
-    }
-    .side-user strong{display:block;font-size:12px;color:#FFFFFF}
-    .side-user span{display:block;font-size:10px;color:#BFD2ED;margin-top:5px;line-height:1.35}
-    .dashboard-main{
-      min-width:0;
-      padding:22px 24px 34px;
-      background:linear-gradient(180deg,#F5F8FC 0%,#EDF3F9 100%);
-    }
-    .top{
-      margin:0 0 16px;
-      background:linear-gradient(135deg,#08285D,#0A397A);
-      color:#FFFFFF;
-      border-radius:20px;
-      padding:22px 24px;
-      box-shadow:0 16px 36px rgba(8,40,93,.18);
-      align-items:center;
-    }
-    .top h1{color:#FFFFFF;font-size:clamp(24px,3vw,35px);letter-spacing:-.8px}
-    .top p{color:#C6D8EF;margin-top:7px}
-    .top-actions{gap:8px}
-    .top-actions .button,.top-actions button{
-      border-radius:11px;
-      min-height:42px;
-      padding:10px 14px;
-    }
-    .welcome-row{
-      display:flex;justify-content:space-between;align-items:center;
-      gap:16px;flex-wrap:wrap;
-    }
-    .today-badge{
-      padding:10px 13px;border-radius:12px;
-      background:rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.16);
-      color:#FFFFFF;font-size:12px;font-weight:800;
-      white-space:nowrap;
-    }
-    .tabs{display:none}
-    .kpis{
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:14px;
-      margin:14px 0;
-    }
-    .kpi{
-      position:relative;
-      overflow:hidden;
-      min-height:116px;
-      border-radius:17px;
-      padding:17px 18px;
-      border:1px solid #DDE7F1;
-      background:#FFFFFF;
-      box-shadow:0 10px 26px rgba(18,58,99,.08);
-    }
-    .kpi:after{
-      content:"";position:absolute;width:70px;height:70px;border-radius:50%;
-      right:-22px;bottom:-25px;background:currentColor;opacity:.08;
-    }
-    .kpi span{color:#60738B;font-size:11px;letter-spacing:.25px}
-    .kpi strong{color:#08285D;font-size:31px;margin-top:8px}
-    .kpi:nth-child(1){border-top:4px solid #1266D7;color:#1266D7}
-    .kpi:nth-child(2){border-top:4px solid #0E9F6E;color:#0E9F6E}
-    .kpi:nth-child(3){border-top:4px solid #7C3AED;color:#7C3AED}
-    .kpi:nth-child(4){border-top:4px solid #F59E0B;color:#F59E0B}
-    .kpi:nth-child(5){border-top:4px solid #0891B2;color:#0891B2}
-    .kpi:nth-child(6){border-top:4px solid #DC2626;color:#DC2626}
-    .filters{
-      background:#FFFFFF;
-      border:1px solid #DCE6F0;
-      box-shadow:0 9px 24px rgba(18,58,99,.07);
-      border-radius:17px;
-      padding:15px;
-      grid-template-columns:repeat(5,minmax(0,1fr));
-      margin-bottom:14px;
-    }
-    .filters label{color:#40546D}
-    .filters input,.filters select{background:#F8FAFD}
-    .analytics-grid{gap:14px}
-    .chart-card{
-      border-radius:18px;
-      border-color:#DCE6F0;
-      box-shadow:0 10px 26px rgba(18,58,99,.07);
-    }
-    .chart-title h2{font-size:17px}
-    .card{
-      border-radius:18px;
-      border:1px solid #DCE6F0;
-      box-shadow:0 10px 26px rgba(18,58,99,.07);
-    }
-    .card-head{
-      padding-bottom:14px;
-      border-bottom:1px solid #E5ECF3;
-      margin-bottom:12px;
-    }
-    .panel{animation:panelIn .22s ease}
-    @keyframes panelIn{from{opacity:.3;transform:translateY(5px)}to{opacity:1;transform:none}}
-    .table-wrap{border:1px solid #DEE7F0;border-radius:15px}
-    thead th{background:#EEF4FA;color:#102C56}
-    tbody tr:hover{background:#EDF5FD}
-    .section-label{
-      display:flex;align-items:center;gap:9px;
-      margin:19px 0 10px;
-      color:#123A63;font-weight:900;font-size:14px;
-    }
-    .section-label i{
-      width:31px;height:31px;border-radius:10px;
-      display:grid;place-items:center;background:#DDEBFA;color:#1266D7;font-style:normal;
-    }
-    @media(max-width:1150px){
-      .app{grid-template-columns:210px minmax(0,1fr)}
-      .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
-      .filters{grid-template-columns:repeat(3,minmax(0,1fr))}
-    }
-    @media(max-width:820px){
-      .app{display:block}
-      .sidebar{
-        position:relative;height:auto;min-height:0;
-        padding:13px 14px;
-      }
-      .side-brand{padding:2px 5px 13px}
-      .brand-copy small{display:none}
-      .side-nav{margin-top:13px;display:grid;grid-template-columns:repeat(2,1fr)}
-      .side-nav .tab,.side-nav button,.side-nav a{min-height:42px;padding:9px}
-      .side-footer{display:none}
-      .dashboard-main{padding:12px}
-      .top{padding:18px}
-      .top-actions{width:100%}
-      .top-actions>*{flex:1}
-      .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .filters{grid-template-columns:repeat(2,minmax(0,1fr))}
-    }
-    @media(max-width:520px){
-      .side-nav{grid-template-columns:1fr 1fr}
-      .kpis,.filters{grid-template-columns:1fr}
-      .dashboard-main{padding:8px}
-    }
-
-  
-    .sidebar:before{content:"";position:absolute;width:180px;height:180px;border-radius:50%;left:-90px;top:110px;background:radial-gradient(circle,rgba(45,132,255,.28),transparent 68%);pointer-events:none}
-    .side-brand,.side-nav,.side-footer{position:relative;z-index:1}
-    .nav-icon{transition:transform .22s ease,background .22s ease}
-    .side-nav .tab:hover .nav-icon,.side-nav button:hover .nav-icon,.side-nav a:hover .nav-icon{transform:scale(1.1) rotate(-4deg)}
-    .dashboard-main{position:relative;overflow:hidden}
-    .dashboard-main:before{content:"";position:absolute;right:-190px;top:-190px;width:470px;height:470px;border-radius:50%;background:radial-gradient(circle,rgba(18,102,215,.13),transparent 70%);pointer-events:none}
-    .dashboard-main>*{position:relative;z-index:1}
-    .top{background:radial-gradient(circle at 88% 20%,rgba(83,151,255,.3),transparent 25%),linear-gradient(125deg,#061E4A,#0A397A 65%,#0A4A98)}
-    .kpi,.chart-card,.executive-card{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
-    .kpi:hover,.chart-card:hover,.executive-card:hover{transform:translateY(-4px);box-shadow:0 18px 38px rgba(18,58,99,.13);border-color:#BDD4EA}
-    .executive-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:14px;margin-top:14px}
-    .executive-card{background:#fff;border:1px solid #DCE6F0;border-radius:18px;padding:18px;box-shadow:0 10px 26px rgba(18,58,99,.07)}
-    .performance-card{background:linear-gradient(145deg,#FFFFFF,#F0F7FF)}
-    .executive-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:15px}
-    .executive-head h2,.page-heading h1{margin:3px 0 0;color:#08285D;letter-spacing:-.35px}
-    .executive-head h2{font-size:18px}
-    .eyebrow{display:block;color:#1266D7;text-transform:uppercase;letter-spacing:.8px;font-size:10px;font-weight:900}
-    .text-link{padding:6px 8px;background:transparent;color:#1266D7;font-size:12px}
-    .counter-pill,.page-badge{display:inline-flex;align-items:center;justify-content:center;min-width:38px;padding:7px 10px;border-radius:999px;background:#E7F1FF;color:#0957B8;font-size:11px;font-weight:900}
-    .counter-pill.warning{background:#FFF1CE;color:#9A6400}
-    .activity-feed{display:flex;flex-direction:column;gap:10px}
-    .activity-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;padding:12px;border:1px solid #E0E9F2;border-radius:14px;background:linear-gradient(145deg,#FBFDFF,#F5F9FE);transition:.2s ease}
-    .activity-item:hover{border-color:#BBD4EC;transform:translateX(3px)}
-    .activity-feed.compact .activity-item:nth-child(n+5){display:none}
-    .activity-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:#fff;font-size:17px;background:linear-gradient(145deg,#1266D7,#4D9BFF);box-shadow:0 8px 18px rgba(18,102,215,.24)}
-    .activity-copy strong{display:block;color:#102A4C;font-size:13px}.activity-copy span{display:block;color:#60738B;font-size:11px;margin-top:4px}
-    .activity-time{color:#60738B;font-size:10px;font-weight:800;white-space:nowrap}
-    .pending-preview{display:flex;flex-wrap:wrap;gap:8px;min-height:74px}
-    .pending-person{padding:9px 11px;border-radius:12px;background:#FFF7E2;border:1px solid #F7D995;color:#765000;font-size:11px;font-weight:800}
-    .wide-action{width:100%;margin-top:14px;padding:11px;border-radius:12px;background:linear-gradient(135deg,#08285D,#1266D7);color:#fff;font-size:12px}
-    .page-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:6px 0 18px;padding:20px 22px;border-radius:18px;background:#fff;border:1px solid #DCE6F0;box-shadow:0 10px 26px rgba(18,58,99,.07)}
-    .page-heading h1{font-size:26px}.page-heading p{margin:6px 0 0;color:#60738B;font-size:13px}
-    .activity-page-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);gap:14px}
-    .dynamic-missing{display:flex;flex-direction:column;gap:9px}.reports-card{margin-top:14px}.reports-card .card-head small{display:block;color:#60738B;margin-top:5px}
-    .panel:not(.active){display:none!important}.panel.active{display:block!important}
-    @media(max-width:1100px){.executive-grid,.activity-page-grid{grid-template-columns:1fr}}
-    @media(max-width:620px){.page-heading{padding:16px}.page-heading h1{font-size:22px}.activity-item{grid-template-columns:38px minmax(0,1fr)}.activity-time{grid-column:2}}
-
+    .day-detail{margin-top:12px;max-height:300px;overflow:auto}
+    .note-toolbar{display:flex;gap:8px;flex-wrap:wrap}.note-priority{font-size:9px;font-weight:900}.priority-Alta,.priority-Urgente{color:#FF8E8E}.priority-Normal{color:#77B7FF}
+    .staff-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.staff-chip{padding:7px 10px;border-radius:999px;background:#DDEBFA;color:#08377C;font-size:10px;font-weight:900}
+    .modal{position:fixed;inset:0;display:none;place-items:center;padding:18px;background:rgba(0,0,0,.72);z-index:100}.modal.show{display:grid}.modal-card{width:min(780px,100%);max-height:90vh;overflow:auto;padding:20px;border-radius:20px;background:#071F4E;border:1px solid #2B5B97;box-shadow:var(--shadow)}.modal-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.full{grid-column:1/-1}
+    .empty{padding:24px;text-align:center;color:var(--muted)}
+    @media(max-width:1250px){.kpis{grid-template-columns:repeat(3,1fr)}.grid.three,.grid.two{grid-template-columns:1fr}.filters{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:820px){.app{display:block}.sidebar{position:relative;height:auto}.nav{display:grid;grid-template-columns:repeat(2,1fr)}.side-bottom{display:none}.main{padding:12px}.kpis{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr 1fr}.bottom-metrics{grid-template-columns:1fr 1fr}.calendar-grid{font-size:10px}.cal-day{min-height:72px}}
+    @media(max-width:520px){.kpis,.filters,.form-grid{grid-template-columns:1fr}.nav{grid-template-columns:1fr 1fr}.main{padding:8px}.topbar h1{font-size:24px}}
   </style>
 </head>
 <body>
   <section id="authScreen" class="auth">
     <div class="auth-card">
-      <div style="text-align:center;font-size:37px;font-weight:900;margin-bottom:16px">Pro<span style="color:#FFB71B">futuro</span></div>
+      <img src="logo-profuturo.png" alt="Profuturo">
       <h1>Acceso Gerencial</h1>
-      <p>Ingresa tus credenciales para consultar el seguimiento comercial.</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;overflow:hidden;margin:22px 0 26px;border-radius:14px;border:1px solid rgba(121,173,245,.36);background:rgba(1,17,54,.66)">
-        <button id="goEmployee" type="button" style="min-height:54px;display:flex;align-items:center;justify-content:center;color:#D7E7FF;background:transparent;border:0;cursor:pointer;font-weight:800;width:100%">👤 Empleado</button>
-        <button type="button" aria-current="page" style="min-height:54px;display:flex;align-items:center;justify-content:center;color:#071B42;font-weight:800;background:linear-gradient(135deg,#FFB71B,#FFD369);border:0;width:100%">🔒 Gerente</button>
-      </div>
-      <div id="managerDialogStatus" style="text-align:center;padding:18px 0 6px">
-          <p style="font-size:18px;font-weight:800;margin:0 0 8px">Validando acceso gerencial…</p>
-          <p style="margin:0;color:#C8D7EE">El sistema solicitará la contraseña mediante un cuadro de diálogo.</p>
-        </div>
-        <form id="loginForm" style="display:none">
-        <label for="employee">Usuario gerencial</label>
-        <input id="employee" type="text" inputmode="numeric" autocomplete="username" maxlength="6" placeholder="Ingresa tu usuario" required>
-        <label for="password" style="margin-top:13px">Contraseña</label>
-        <input id="password" type="password" autocomplete="current-password" placeholder="Ingresa tu contraseña" required>
-        <button id="loginButton" class="primary" style="width:100%;margin-top:18px" type="submit">Ingresar al dashboard →</button>
-        <div id="loginError" class="error"></div>
-      </form>
+      <p id="authMessage">Validando acceso al dashboard…</p>
     </div>
   </section>
 
   <main id="app" class="app hidden">
     <aside class="sidebar">
-      <div class="side-brand">
-        <div class="brand-mark">◒</div>
-        <div class="brand-copy">
-          <strong>Profuturo</strong>
-          <small>Actividad Comercial Diaria</small>
-        </div>
-      </div>
-
-      <nav class="side-nav">
-        <button class="tab active" data-panel="summaryPanel">
-          <span class="nav-icon">▦</span> Resumen
-        </button>
-        <button class="tab" data-panel="activitiesPanel">
-          <span class="nav-icon">▤</span> Actividades
-        </button>
-        <button class="tab" data-panel="staffPanel">
-          <span class="nav-icon">♙</span> Asesores
-        </button>
-        <button class="tab" data-panel="reportsPanel">
-          <span class="nav-icon">▧</span> Reportes
-        </button>
-        <button type="button" onclick="window.exportDashboardExcel()">
-          <span class="nav-icon">⇩</span> Exportar
-        </button>
+      <div class="brand"><img src="logo-profuturo.png" alt="Profuturo"><div><strong>Profuturo</strong><small>Actividad Comercial Diaria</small></div></div>
+      <nav class="nav">
+        <button class="active" data-panel="summaryPanel"><span class="ico">⌂</span>Resumen</button>
+        <button data-panel="activitiesPanel"><span class="ico">▤</span>Actividades</button>
+        <button data-panel="reportsPanel"><span class="ico">▧</span>Reportes</button>
+        <button data-panel="calendarPanel"><span class="ico">▦</span>Calendario</button>
+        <button data-panel="socialPanel"><span class="ico">❤</span>Servicio Social</button>
+        <button data-panel="notesPanel"><span class="ico">✎</span>Notas</button>
+        <button data-panel="staffPanel"><span class="ico">♙</span>Asesores</button>
+        <button id="exportNav"><span class="ico">⇩</span>Exportar</button>
       </nav>
-
-      <div class="side-footer">
-        <div class="side-user">
-          <strong>Acceso gerencial</strong>
-          <span id="sideManagerName">Administradora del sistema</span>
-        </div>
-        <a href="index.html"><span class="nav-icon">＋</span> Abrir captura</a>
-        <button type="button" onclick="window.logoutManager()">
-          <span class="nav-icon">↪</span> Cerrar sesión
-        </button>
+      <div class="side-bottom">
+        <a class="side-action capture-button" href="index.html"><span class="ico">＋</span>Abrir captura</a>
+        <div class="manager-card"><strong>Gerente</strong><span>Jacquelinne · Supervisión comercial</span></div>
+        <button class="side-action" id="logoutButton"><span class="ico">↪</span>Cerrar sesión</button>
       </div>
     </aside>
 
-    <div class="dashboard-main">
-      <header class="top">
-        <div class="welcome-row" style="width:100%">
-          <div>
-            <h1>¡Bienvenida, Jacquelinne!</h1>
-            <p id="managerName">Resumen general de la actividad comercial</p>
-          </div>
-          <div class="today-badge" id="dashboardToday">Fecha actual</div>
-        </div>
+    <div class="main">
+      <header class="topbar">
+        <div><h1>¡Bienvenida, Jacquelinne! 👋</h1><p>Resumen general de la actividad comercial.</p></div>
+        <div class="top-tools"><span id="todayBadge" class="tool"></span><select id="globalAdvisorFilter" class="tool"><option value="">Todos los asesores</option></select></div>
       </header>
 
-    <section id="summaryPanel" class="panel active">
-      <div class="section-label"><i>▦</i> Indicadores generales</div>
-      <div class="kpis">
-        <div class="kpi"><span>Reportes</span><strong id="kpiReports">0</strong></div>
-        <div class="kpi"><span>Asesores activos</span><strong id="kpiActive">0</strong></div>
-        <div class="kpi"><span>Reportaron hoy</span><strong id="kpiReported">0</strong></div>
-        <div class="kpi"><span>Contactos</span><strong id="kpiContacts">0</strong></div>
-        <div class="kpi"><span>Citas</span><strong id="kpiAppointments">0</strong></div>
-        <div class="kpi"><span>Trámites</span><strong id="kpiProcedures">0</strong></div>
-      </div>
-
-      <div class="section-label"><i>◔</i> Análisis gráfico</div>
-      <div class="analytics-grid">
-        <div class="chart-card">
-          <div class="chart-title">
-            <div>
-              <h2>Tendencia de actividad comercial</h2>
-              <p>Contactos, citas y trámites de acuerdo con los filtros seleccionados.</p>
-            </div>
-            <span id="trendRangeBadge" class="chart-badge">Últimos registros</span>
-          </div>
-          <div class="chart-canvas-wrap">
-            <canvas id="trendCanvas"></canvas>
-          </div>
-          <div class="legend">
-            <span class="legend-item"><i class="legend-dot" style="background:#1C5D99"></i>Contactos</span>
-            <span class="legend-item"><i class="legend-dot" style="background:#FFB71B"></i>Citas</span>
-            <span class="legend-item"><i class="legend-dot" style="background:#0E9F6E"></i>Trámites</span>
-          </div>
+      <section id="summaryPanel" class="panel active">
+        <div class="kpis">
+          <div class="kpi blue"><div class="icon">👥</div><strong id="kpiContacts">0</strong><span>Contactos</span></div>
+          <div class="kpi gold"><div class="icon">▣</div><strong id="kpiAppointments">0</strong><span>Citas agendadas</span></div>
+          <div class="kpi green"><div class="icon">✓</div><strong id="kpiClosures">0</strong><span>Cierres realizados</span></div>
+          <div class="kpi purple"><div class="icon">◇</div><strong id="kpiProspects">0</strong><span>Prospectos registrados</span></div>
+          <div class="kpi pink"><div class="icon">❤</div><strong id="kpiSocial">0</strong><span>Servicio social</span></div>
+          <div class="kpi cyan"><div class="icon">●</div><strong id="kpiActive">0</strong><span>Asesores activos</span></div>
         </div>
 
-        <div class="chart-card">
-          <div class="chart-title">
-            <div>
-              <h2>Top de asesores</h2>
-              <p>Clasificación por número de trámites realizados.</p>
-            </div>
-            <span class="chart-badge">Top 7</span>
-          </div>
-          <div id="topAdvisorsChart" class="top-list"></div>
+        <div class="grid three">
+          <div class="card"><div class="card-head"><div><h2>Tendencia de actividad comercial</h2><small>Contactos, citas y cierres de los últimos días.</small></div><span class="badge">Últimos 7 días</span></div><div class="canvas"><canvas id="trendCanvas"></canvas></div><div class="legend"><span><i class="dot" style="background:#2E8BFF"></i>Contactos</span><span><i class="dot" style="background:#FFB71B"></i>Citas</span><span><i class="dot" style="background:#20CA88"></i>Cierres</span></div></div>
+          <div class="card"><div class="card-head"><div><h2>Embudo de conversión</h2><small>Relación entre contactos, citas y cierres.</small></div></div><div class="funnel"><div class="funnel-step"><span>Contactos</span><strong id="funnelContacts">0</strong></div><div class="funnel-step"><span>Citas</span><strong id="funnelAppointments">0</strong></div><div class="funnel-step"><span>Cierres</span><strong id="funnelClosures">0</strong></div></div><div class="badge" id="conversionBadge">0% conversión</div></div>
+          <div class="card"><div class="card-head"><div><h2>Calendario de actividades</h2><small>Actividades entregadas por día.</small></div><button class="soft" onclick="window.openPanel('calendarPanel')">Ver calendario</button></div><div id="miniCalendar" class="calendar-grid"></div></div>
         </div>
 
-        <div class="chart-card wide">
-          <div class="chart-title">
-            <div>
-              <h2>Embudo de conversión</h2>
-              <p>Relación entre contactos, citas generadas y trámites realizados.</p>
-            </div>
-            <span id="conversionBadge" class="chart-badge">0% conversión</span>
-          </div>
-          <div class="conversion-grid">
-            <div class="conversion-item">
-              <span>Contactos</span>
-              <strong id="chartContacts">0</strong>
-              <small>Base total de prospectos</small>
-              <div class="progress-line"><i id="contactsProgress" style="width:100%"></i></div>
-            </div>
-            <div class="conversion-item">
-              <span>Citas</span>
-              <strong id="chartAppointments">0</strong>
-              <small id="appointmentRate">0% de los contactos</small>
-              <div class="progress-line"><i id="appointmentsProgress" style="width:0%"></i></div>
-            </div>
-            <div class="conversion-item">
-              <span>Trámites</span>
-              <strong id="chartProcedures">0</strong>
-              <small id="procedureRate">0% de los contactos</small>
-              <div class="progress-line"><i id="proceduresProgress" style="width:0%"></i></div>
-            </div>
-          </div>
-          <div class="activity-summary">
-            <div class="mini-metric"><span>Promedio contactos/reporte</span><strong id="avgContacts">0</strong></div>
-            <div class="mini-metric"><span>Promedio citas/reporte</span><strong id="avgAppointments">0</strong></div>
-            <div class="mini-metric"><span>Promedio trámites/reporte</span><strong id="avgProcedures">0</strong></div>
-            <div class="mini-metric"><span>Reportes revisados</span><strong id="reviewedRate">0%</strong></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="executive-grid">
-        <div class="executive-card">
-          <div class="executive-head">
-            <div><span class="eyebrow">Pulso de la operación</span><h2>Actividad reciente</h2></div>
-            <button class="text-link tab-jump" data-target="activitiesPanel">Ver todas →</button>
-          </div>
-          <div id="summaryRecentActivity" class="activity-feed compact"></div>
-        </div>
-        <div class="executive-card performance-card">
-          <div class="executive-head">
-            <div><span class="eyebrow">Seguimiento diario</span><h2>Asesores pendientes</h2></div>
-            <span id="summaryMissingCount" class="counter-pill">0</span>
-          </div>
-          <div id="summaryMissingAdvisors" class="pending-preview"></div>
-          <button class="wide-action tab-jump" data-target="activitiesPanel">Abrir seguimiento completo</button>
-        </div>
-      </div>
-    </section>
-
-    <section id="activitiesPanel" class="panel">
-      <div class="page-heading">
-        <div><span class="eyebrow">Seguimiento operativo</span><h1>Actividades comerciales</h1><p>Movimientos recientes y asesores pendientes de reportar.</p></div>
-        <span class="page-badge">En tiempo real</span>
-      </div>
-      <div class="activity-page-grid">
-        <div class="executive-card">
-          <div class="executive-head">
-            <div><span class="eyebrow">Últimos movimientos</span><h2>Actividad reciente</h2></div>
-            <span id="recentActivityCount" class="counter-pill">0</span>
-          </div>
-          <div id="recentActivityFeed" class="activity-feed"></div>
-        </div>
-        <div class="executive-card">
-          <div class="executive-head">
-            <div><span class="eyebrow">Control diario</span><h2>Pendientes de reportar hoy</h2></div>
-            <span id="missingCount" class="counter-pill warning">0</span>
-          </div>
-          <div id="missingAdvisors" class="missing dynamic-missing"></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="reportsPanel" class="panel">
-      <div class="page-heading">
-        <div><span class="eyebrow">Consulta y auditoría</span><h1>Reportes registrados</h1><p>Filtra, consulta, revisa y exporta toda la actividad comercial.</p></div>
-        <button class="accent export-main" onclick="window.exportDashboardExcel()">⇩ Exportar Excel</button>
-      </div>
-      <div class="section-label"><i>⌕</i> Filtros de consulta</div>
-      <div class="filters">
-        <div><label>Desde</label><input id="dateFrom" type="date"></div>
-        <div><label>Hasta</label><input id="dateTo" type="date"></div>
-        <div><label>Asesor</label><select id="advisorFilter"><option value="">Todos</option></select></div>
-        <div><label>Estado</label><select id="statusFilter"><option value="">Todos</option><option value="pending">Pendiente de revisión</option><option value="reviewed">Revisado</option><option value="cancelled">Anulado</option></select></div>
-        <div><label>Buscar</label><input id="searchFilter" placeholder="Nombre, empresa, NSS o teléfono"></div>
-      </div>
-
-
-      <div class="card reports-card">
-        <div class="card-head">
-          <div><h2>Historial de reportes</h2><small>Resultados de acuerdo con los filtros seleccionados.</small></div>
-          <span id="visibleCount" class="counter-pill">0</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Fecha</th><th>Asesor</th><th>Medio / lugar</th><th>Contactos</th><th>Citas</th><th>Clientes</th><th>Trámites</th><th>Revisión</th><th>Acciones</th></tr></thead>
-            <tbody id="reportsBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <section id="staffPanel" class="panel">
-      <div class="card">
-        <div class="staff-toolbar">
-          <div>
-            <h2 style="margin:0;color:var(--primary)">Administración de empleados</h2>
-            <p style="margin:5px 0 0;color:var(--muted)">Asigna nuevos asesores, activa o retira accesos.</p>
-          </div>
-          <button class="accent" onclick="window.openEmployeeModal()">＋ Asignar empleado</button>
+        <div class="grid three">
+          <div class="card"><div class="card-head"><div><h2>Top asesores por cierres</h2><small>Clasificación comercial.</small></div></div><div id="topAdvisors" class="rank-list"></div></div>
+          <div class="card"><div class="card-head"><div><h2>Actividades por tipo</h2><small>Distribución de prospección.</small></div></div><div class="canvas"><canvas id="activityTypeCanvas"></canvas></div></div>
+          <div class="card"><div class="card-head"><div><h2>Notas recientes</h2><small>Seguimiento gerencial.</small></div><button class="primary" onclick="window.openNoteModal()">Nueva nota</button></div><div id="recentNotes" class="note-list"></div></div>
         </div>
 
-        <div class="staff-summary">
-          <span id="staffCount" class="staff-chip">0 usuarios</span>
-          <span id="staffActiveCount" class="staff-chip">0 activos</span>
-          <span id="staffInactiveCount" class="staff-chip">0 inactivos</span>
+        <div class="bottom-metrics">
+          <div><span>Promedio contactos / reporte</span><strong id="avgContacts">0</strong></div>
+          <div><span>Promedio citas / reporte</span><strong id="avgAppointments">0</strong></div>
+          <div><span>Promedio cierres / reporte</span><strong id="avgClosures">0</strong></div>
+          <div><span>Promedio servicio social / reporte</span><strong id="avgSocial">0</strong></div>
+          <div><span>Reportes revisados</span><strong id="reviewedRate">0%</strong></div>
         </div>
+      </section>
 
-        <div class="table-wrap" style="margin-top:14px">
-          <table>
-            <thead><tr><th>No. empleado</th><th>Nombre</th><th>NIP</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Administración</th></tr></thead>
-            <tbody id="staffBody"></tbody>
-          </table>
+      <section id="activitiesPanel" class="panel">
+        <div class="page-title"><div><h2>Actividades comerciales</h2><p>Movimientos recientes y asesores pendientes de reportar.</p></div></div>
+        <div class="grid two"><div class="card"><div class="card-head"><h2>Actividad reciente</h2><span id="activityCount" class="badge">0</span></div><div id="activityFeed" class="activity-feed"></div></div><div class="card"><div class="card-head"><h2>Pendientes de reportar hoy</h2><span id="missingCount" class="badge">0</span></div><div id="missingAdvisors" class="activity-feed"></div></div></div>
+      </section>
+
+      <section id="reportsPanel" class="panel">
+        <div class="page-title"><div><h2>Reportes registrados</h2><p>Consulta, revisa, anula y exporta la actividad.</p></div><button class="primary" onclick="window.exportDashboardExcel()">⇩ Exportar Excel</button></div>
+        <div class="filters">
+          <div><label>Desde</label><input id="dateFrom" type="date"></div><div><label>Hasta</label><input id="dateTo" type="date"></div>
+          <div><label>Asesor</label><select id="advisorFilter"><option value="">Todos</option></select></div>
+          <div><label>Estado</label><select id="statusFilter"><option value="">Todos</option><option value="pending">Pendiente</option><option value="reviewed">Revisado</option><option value="cancelled">Anulado</option></select></div>
+          <div><label>Buscar</label><input id="searchFilter" placeholder="Cliente, NSS, empresa…"></div>
         </div>
-      </div>
-    </section>
+        <div class="card"><div class="card-head"><h2>Historial de reportes</h2><span id="visibleCount" class="badge">0</span></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Asesor</th><th>Medio / lugar</th><th>Contactos</th><th>Citas</th><th>Clientes</th><th>Cierres</th><th>Servicio social</th><th>Revisión</th><th>Acciones</th></tr></thead><tbody id="reportsBody"></tbody></table></div></div>
+      </section>
+
+      <section id="calendarPanel" class="panel">
+        <div class="page-title"><div><h2>Calendario inteligente</h2><p>Visualiza las actividades entregadas por empleado y analiza el desempeño.</p></div></div>
+        <div class="card">
+          <div class="calendar-controls"><div><button id="prevMonth" class="soft">‹</button><button id="todayMonth" class="soft">Hoy</button><button id="nextMonth" class="soft">›</button></div><div><select id="calendarAdvisorFilter"><option value="">Todos los asesores</option></select><span id="calendarMonthLabel" class="tool"></span></div></div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+          <div class="legend"><span><i class="dot" style="background:#2E8BFF"></i>Contactos</span><span><i class="dot" style="background:#FFB71B"></i>Citas</span><span><i class="dot" style="background:#20CA88"></i>Cierres</span><span><i class="dot" style="background:#F05B93"></i>Servicio Social</span></div>
+        </div>
+        <div class="grid two"><div class="card"><div class="card-head"><h2>Detalle del día seleccionado</h2><span id="selectedDateBadge" class="badge">Selecciona un día</span></div><div id="calendarDayDetail" class="day-detail"></div></div><div class="card"><div class="card-head"><h2>Actividad del mes</h2><small>Comparativo diario.</small></div><div class="canvas"><canvas id="calendarBarsCanvas"></canvas></div></div></div>
+        <div class="card" style="margin-top:13px"><div class="card-head"><h2>Entregas por asesor</h2><small>Reportes entregados en el mes seleccionado.</small></div><div class="canvas"><canvas id="calendarAdvisorCanvas"></canvas></div></div>
+      </section>
+
+      <section id="socialPanel" class="panel">
+        <div class="page-title"><div><h2>Servicio Social</h2><p>Seguimiento de actividades sociales incluidas en el reporte diario.</p></div></div>
+        <div class="kpis" style="grid-template-columns:repeat(3,1fr)"><div class="kpi pink"><div class="icon">❤</div><strong id="socialActivities">0</strong><span>Actividades realizadas</span></div><div class="kpi purple"><div class="icon">👥</div><strong id="socialPeople">0</strong><span>Personas atendidas</span></div><div class="kpi green"><div class="icon">●</div><strong id="socialAdvisors">0</strong><span>Asesores participantes</span></div></div>
+        <div class="grid two"><div class="card"><div class="card-head"><h2>Servicio social por tipo</h2></div><div id="socialTypeBars" class="rank-list"></div></div><div class="card"><div class="card-head"><h2>Registros recientes</h2></div><div id="socialList" class="social-list"></div></div></div>
+      </section>
+
+      <section id="notesPanel" class="panel">
+        <div class="page-title"><div><h2>Notas gerenciales</h2><p>Crea recordatorios, acuerdos y seguimientos.</p></div><button class="primary" onclick="window.openNoteModal()">＋ Nueva nota</button></div>
+        <div id="notesList" class="note-list"></div>
+      </section>
+
+      <section id="staffPanel" class="panel">
+        <div class="page-title"><div><h2>Administración de asesores</h2><p>Asigna empleados, administra NIP y activa o retira accesos.</p></div><button class="primary" onclick="window.openEmployeeModal()">＋ Asignar empleado</button></div>
+        <div class="staff-summary"><span id="staffCount" class="staff-chip">0 asesores</span><span id="staffActiveCount" class="staff-chip">0 activos</span><span id="staffInactiveCount" class="staff-chip">0 retirados</span></div>
+        <div class="card"><div class="table-wrap"><table><thead><tr><th>No. empleado</th><th>Nombre</th><th>NIP</th><th>Estado</th><th>Último acceso</th><th>Administración</th></tr></thead><tbody id="staffBody"></tbody></table></div></div>
+      </section>
     </div>
   </main>
 
+  <div id="detailModal" class="modal"><div class="modal-card"><div class="modal-head"><h2 id="detailTitle">Detalle</h2><button class="danger" onclick="document.getElementById('detailModal').classList.remove('show')">Cerrar</button></div><div id="detailContent"></div></div></div>
 
-  <div id="employeeModal" class="modal">
-    <div class="modal-card" style="width:min(680px,100%)">
-      <div class="modal-head">
-        <div>
-          <h2 style="margin:0">Asignar nuevo empleado</h2>
-          <p style="margin:5px 0 0;color:#6B7280">El asesor ingresará con su número de empleado y NIP.</p>
-        </div>
-        <button class="danger" type="button" onclick="window.closeEmployeeModal()">Cerrar</button>
-      </div>
+  <div id="employeeModal" class="modal"><div class="modal-card"><div class="modal-head"><h2>Asignar empleado</h2><button class="danger" onclick="window.closeEmployeeModal()">Cerrar</button></div><form id="employeeForm"><div class="form-grid"><div><label>Número de empleado</label><input id="newEmployeeNumber" inputmode="numeric" required></div><div><label>NIP de 4 dígitos</label><input id="newEmployeePin" type="password" inputmode="numeric" maxlength="4" required></div><div class="full"><label>Nombre completo</label><input id="newEmployeeName" required></div></div><div id="employeeFormError" style="color:#FF9C9C;margin-top:10px"></div><div class="actions" style="justify-content:flex-end;margin-top:14px"><button class="soft" type="button" onclick="window.closeEmployeeModal()">Cancelar</button><button class="primary" type="submit">Asignar</button></div></form></div></div>
 
-      <form id="employeeForm" style="margin-top:18px">
-        <div class="form-grid">
-          <div>
-            <label for="newEmployeeNumber">Número de empleado</label>
-            <input id="newEmployeeNumber" inputmode="numeric" maxlength="10" placeholder="Ej. 175000" required>
-          </div>
-          <div>
-            <label for="newEmployeePin">NIP de 4 dígitos</label>
-            <input id="newEmployeePin" class="pin-box" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="NIP" required>
-            <div class="help-text">El NIP será la clave personal de acceso del asesor.</div>
-          </div>
-          <div class="full">
-            <label for="newEmployeeName">Nombre completo</label>
-            <input id="newEmployeeName" maxlength="120" placeholder="Nombre completo del asesor" required>
-          </div>
-        </div>
-
-        <div id="employeeFormError" class="error"></div>
-
-        <div class="modal-actions">
-          <button class="soft" type="button" onclick="window.closeEmployeeModal()">Cancelar</button>
-          <button id="saveEmployeeButton" class="accent" type="submit">Asignar empleado</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div id="detailModal" class="modal">
-    <div class="modal-card">
-      <div class="modal-head"><h2 id="detailTitle">Detalle</h2><button class="danger" onclick="document.getElementById('detailModal').classList.remove('show')">Cerrar</button></div>
-      <div id="detailContent"></div>
-    </div>
-  </div>
+  <div id="noteModal" class="modal"><div class="modal-card"><div class="modal-head"><h2 id="noteModalTitle">Nueva nota</h2><button class="danger" onclick="window.closeNoteModal()">Cerrar</button></div><form id="noteForm"><input id="noteId" type="hidden"><div class="form-grid"><div class="full"><label>Título</label><input id="noteTitle" maxlength="120" required></div><div><label>Prioridad</label><select id="notePriority"><option>Normal</option><option>Alta</option><option>Urgente</option></select></div><div><label>Fecha de seguimiento</label><input id="noteDueDate" type="date"></div><div class="full"><label>Nota</label><textarea id="noteBody" rows="5" maxlength="900" required></textarea></div></div><div class="actions" style="justify-content:flex-end;margin-top:14px"><button class="soft" type="button" onclick="window.closeNoteModal()">Cancelar</button><button class="primary" type="submit">Guardar nota</button></div></form></div></div>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", function(){
-      const dateElement = document.getElementById("dashboardToday");
-      if(dateElement){
-        dateElement.textContent = new Date().toLocaleDateString("es-MX",{
-          day:"2-digit",month:"2-digit",year:"numeric"
-        });
-      }
-      const employeeButton = document.getElementById("goEmployee");
-      if(employeeButton){
-        employeeButton.addEventListener("click", function(){
-          window.location.assign("./index.html");
-        });
-      }
-    });
-  </script>
   <script type="module" src="dashboard.js"></script>
 </body>
 </html>

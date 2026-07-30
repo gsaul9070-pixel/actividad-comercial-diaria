@@ -12,6 +12,10 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /commercial_notes/{noteId} {
+      allow read, create, update, delete: if true;
+    }
+
     match /commercial_settings/{settingId} {
       allow read: if true;
       allow write: if false;

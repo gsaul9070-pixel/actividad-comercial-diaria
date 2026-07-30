@@ -11,3 +11,4 @@ export const firebaseConfig = {
 export const ADVISORS_COLLECTION = "commercial_advisors";
 export const REPORTS_COLLECTION = "commercial_activity_reports";
 export const SETTINGS_COLLECTION = "commercial_settings";
+export const NOTES_COLLECTION = "commercial_notes";

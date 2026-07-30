@@ -596,12 +596,85 @@
 
     @media print{
       body{background:white}
-      .hero,.toolbar,.step:not(#step5),.nav,.no-print{display:none!important}
-      #step5{display:block!important;box-shadow:none;padding:0;margin:0}
+      .hero,.toolbar,.step:not(#step7),.nav,.no-print{display:none!important}
+      #step7{display:block!important;box-shadow:none;padding:0;margin:0}
       .app{max-width:none;padding:0}
       .summary{border:0}
       .summary-head{border-radius:0}
     }
+
+    body.report-app-open{
+      min-height:100vh;
+      background:
+        linear-gradient(115deg,rgba(2,18,53,.92),rgba(5,47,110,.72)),
+        url("profuturo-acceso.png") center/cover fixed no-repeat;
+    }
+    body.report-app-open::before{
+      content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+      background:
+        radial-gradient(circle at 85% 12%,rgba(38,121,255,.28),transparent 28%),
+        radial-gradient(circle at 10% 90%,rgba(255,183,27,.13),transparent 28%);
+    }
+    body.report-app-open #appRoot{max-width:1120px}
+    body.report-app-open .session-bar,
+    body.report-app-open .step{
+      background:rgba(255,255,255,.95);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      border:1px solid rgba(211,229,249,.9);
+    }
+    .hero-brand{display:flex;align-items:center;gap:14px;position:relative;z-index:2}
+    .hero-logo{
+      width:62px;height:62px;border-radius:50%;object-fit:cover;
+      border:3px solid rgba(255,255,255,.9);
+      box-shadow:0 12px 28px rgba(0,0,0,.22);flex:none;
+    }
+    .hero-copy h1{margin:0 0 5px}
+    .service-card{
+      padding:18px;border-radius:17px;border:1px solid #D7E5F2;
+      background:linear-gradient(145deg,#F8FBFF,#EDF5FC);
+    }
+    .service-toggle{
+      display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;
+    }
+    .service-toggle label{position:relative}
+    .service-toggle input{position:absolute;opacity:0}
+    .service-toggle span{
+      min-height:50px;display:flex;align-items:center;justify-content:center;
+      border:1px solid #CADBEA;border-radius:13px;background:#fff;
+      color:#123A63;font-weight:900;cursor:pointer;transition:.2s ease;
+    }
+    .service-toggle input:checked + span{
+      color:#fff;border-color:#0E9F6E;
+      background:linear-gradient(135deg,#0E9F6E,#12B981);
+      box-shadow:0 10px 24px rgba(14,159,110,.18);
+    }
+    .service-fields.disabled{opacity:.48;pointer-events:none}
+    .notes-panel{
+      padding:18px;border-radius:17px;
+      background:linear-gradient(145deg,#FFFDF6,#FFF6D9);
+      border:1px solid #F0D889;
+    }
+    .step-icon{
+      width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+      color:#fff;background:linear-gradient(145deg,#1266D7,#5DA5FF);
+      box-shadow:0 8px 18px rgba(18,102,215,.18);
+    }
+    .summary-social{
+      display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;
+      margin:12px 0;
+    }
+    .summary-social div{
+      padding:12px;border-radius:13px;background:#EEF6FD;border:1px solid #D7E5F2;
+    }
+    .summary-social span{display:block;color:#64748B;font-size:11px;font-weight:800}
+    .summary-social strong{display:block;color:#123A63;margin-top:5px}
+    @media(max-width:680px){
+      .hero-brand{align-items:flex-start}
+      .hero-logo{width:50px;height:50px}
+      .summary-social{grid-template-columns:1fr 1fr}
+    }
+
   </style>
 </head>
 <body>
@@ -634,13 +707,13 @@
             <input id="loginEmployee" type="text" inputmode="numeric" autocomplete="username" maxlength="10" placeholder="Ingresa tu número de empleado" required>
           </div>
           <div class="field" style="margin-top:14px">
-            <label class="required" for="loginPin">PIN de acceso</label>
-            <input id="loginPin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="4" pattern="[0-9]{4}" placeholder="Ingresa tu PIN de 4 dígitos" required>
+            <label class="required" for="loginPin">NIP de acceso</label>
+            <input id="loginPin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="4" pattern="[0-9]{4}" placeholder="Ingresa tu NIP de 4 dígitos" required>
           </div>
           <button id="loginButton" class="btn-primary btn-full" type="submit">Continuar</button>
           <div id="loginError" class="auth-error"></div>
         </form>
-        <div class="access-note">Los empleados ingresan con su número de empleado y PIN personal. El acceso gerencial requiere usuario y contraseña.</div>
+        <div class="access-note">Los empleados ingresan con su número de empleado y NIP personal. El acceso gerencial requiere usuario y contraseña.</div>
       </div>
     </div>
   </section>
@@ -657,10 +730,17 @@
     </div>
 
     <header class="hero">
-      <h1>Actividad Comercial Diaria</h1>
-      <p>Captura rápida desde celular. Registra la actividad del día, clientes y el plan de trabajo del siguiente día.</p>
+      <div class="hero-brand">
+        <img class="hero-logo" src="logo-profuturo.png" alt="Logo Profuturo">
+        <div class="hero-copy">
+          <h1>Actividad Comercial Diaria</h1>
+          <p>Registra contactos, citas, cierres, servicio social, notas y tu plan de trabajo.</p>
+        </div>
+      </div>
       <div class="progress-wrap" aria-label="Progreso">
         <div class="progress-step active"></div>
+        <div class="progress-step"></div>
+        <div class="progress-step"></div>
         <div class="progress-step"></div>
         <div class="progress-step"></div>
         <div class="progress-step"></div>
@@ -779,7 +859,94 @@
 
       <section class="step" id="step4">
         <div class="step-title">
-          <div class="step-number">4</div>
+          <div class="step-icon">❤</div>
+          <div>
+            <h2>Servicio social</h2>
+            <p>Registra la actividad social realizada como parte del mismo reporte.</p>
+          </div>
+        </div>
+
+        <div class="service-card">
+          <label class="required">¿Realizaste servicio social hoy?</label>
+          <div class="service-toggle" style="margin-top:9px">
+            <label><input type="radio" name="socialPerformed" value="yes"><span>✓ Sí realicé</span></label>
+            <label><input type="radio" name="socialPerformed" value="no" checked><span>— No realicé</span></label>
+          </div>
+
+          <div id="socialServiceFields" class="service-fields disabled">
+            <div class="grid">
+              <div class="field">
+                <label for="socialType">Tipo de actividad</label>
+                <select id="socialType">
+                  <option value="">Seleccionar...</option>
+                  <option>Educación financiera</option>
+                  <option>Feria o brigada</option>
+                  <option>Escuela</option>
+                  <option>Empresa</option>
+                  <option>Comunidad</option>
+                  <option>Apoyo social</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="socialPlace">Lugar</label>
+                <input id="socialPlace" type="text" placeholder="Ej. Escuela, empresa o comunidad">
+              </div>
+              <div class="field">
+                <label for="socialPeople">Personas atendidas</label>
+                <input id="socialPeople" type="number" min="0" inputmode="numeric" placeholder="Ej. 25">
+              </div>
+              <div class="field full">
+                <label for="socialDescription">Descripción del servicio social</label>
+                <textarea id="socialDescription" maxlength="500" placeholder="Describe la actividad, el objetivo y el resultado obtenido."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="status4" class="status"></div>
+        <div class="nav">
+          <button class="btn-soft" type="button" onclick="prevStep(4)">← Regresar</button>
+          <button class="btn-primary" type="button" onclick="nextStep(4)">Continuar →</button>
+        </div>
+      </section>
+
+      <section class="step" id="step5">
+        <div class="step-title">
+          <div class="step-icon">✎</div>
+          <div>
+            <h2>Notas y comentarios</h2>
+            <p>Agrega información relevante para el seguimiento gerencial.</p>
+          </div>
+        </div>
+
+        <div class="notes-panel">
+          <div class="grid">
+            <div class="field">
+              <label for="notePriority">Prioridad</label>
+              <select id="notePriority">
+                <option>Normal</option>
+                <option>Alta</option>
+                <option>Urgente</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="generalNotes">Notas adicionales</label>
+              <textarea id="generalNotes" maxlength="700" placeholder="Ej. Seguimiento pendiente, apoyo requerido, acuerdos o información importante."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div id="status5" class="status"></div>
+        <div class="nav">
+          <button class="btn-soft" type="button" onclick="prevStep(5)">← Regresar</button>
+          <button class="btn-primary" type="button" onclick="nextStep(5)">Continuar →</button>
+        </div>
+      </section>
+
+      <section class="step" id="step6">
+        <div class="step-title">
+          <div class="step-number">6</div>
           <div>
             <h2>Plan de trabajo</h2>
             <p>Define de manera clara dónde trabajarás, cómo prospectarás y qué metas tendrás.</p>
@@ -824,16 +991,16 @@
           </div>
         </div>
 
-        <div id="status4" class="status"></div>
+        <div id="status6" class="status"></div>
         <div class="nav">
-          <button class="btn-soft" type="button" onclick="prevStep(4)">← Regresar</button>
-          <button class="btn-primary" type="button" onclick="nextStep(4)">Revisar reporte →</button>
+          <button class="btn-soft" type="button" onclick="prevStep(6)">← Regresar</button>
+          <button class="btn-primary" type="button" onclick="nextStep(6)">Revisar reporte →</button>
         </div>
       </section>
 
-      <section class="step" id="step5">
+      <section class="step" id="step7">
         <div class="step-title no-print">
-          <div class="step-number">5</div>
+          <div class="step-number">7</div>
           <div>
             <h2>Revisión y envío</h2>
             <p>Verifica la información antes de compartirla.</p>
@@ -857,9 +1024,9 @@
         </div>
 
         <div id="firebaseSaving" class="firebase-saving">Guardando el reporte de forma segura en Firebase…</div>
-        <div id="status5" class="status"></div>
+        <div id="status7" class="status"></div>
         <div class="nav no-print">
-          <button class="btn-soft edit-only" type="button" onclick="prevStep(5)">← Corregir información</button>
+          <button class="btn-soft edit-only" type="button" onclick="prevStep(7)">← Corregir información</button>
           <button id="finalizeButton" class="btn-accent" type="button" onclick="finalizeReport()">✓ Marcar como finalizado</button>
         </div>
       </section>
@@ -928,7 +1095,7 @@
         el.classList.toggle("active", i <= step-1);
       });
       window.scrollTo({top:0,behavior:"smooth"});
-      if(step === 5) buildPreview();
+      if(step === 7) buildPreview();
     }
 
     function nextStep(step){
@@ -994,9 +1161,20 @@
       }
 
       if(step === 4){
+        const performed = document.querySelector('input[name="socialPerformed"]:checked')?.value === "yes";
+        if(performed){
+          const required = ["socialType","socialPlace","socialPeople","socialDescription"];
+          if(required.some(id=>!text(id))){
+            setStatus(4,"Completa los datos del servicio social realizado.");
+            return false;
+          }
+        }
+      }
+
+      if(step === 6){
         const required = ["promiseDate","promisePlace","promiseMethod","contactGoal","appointmentGoal","promiseDescription"];
         if(required.some(id=>!text(id))){
-          setStatus(4,"Completa todos los campos obligatorios del plan de trabajo.");
+          setStatus(6,"Completa todos los campos obligatorios del plan de trabajo.");
           return false;
         }
       }
@@ -1142,7 +1320,7 @@
               <option ${data.result==="Posible cita"?"selected":""}>Posible cita</option>
               <option ${data.result==="Cita agendada"?"selected":""}>Cita agendada</option>
               <option ${(data.result==="Enviar información" || data.result==="Información pendiente")?"selected":""}>Enviar información</option>
-              <option ${data.result==="Trámite realizado"?"selected":""}>Trámite realizado</option>
+              <option ${["Cierre","Trámite realizado"].includes(data.result)?"selected":""}>Cierre</option>
             </select>
           </div>
           <div class="field">
@@ -1210,6 +1388,15 @@
         peopleContacted:text("peopleContacted"),
         appointmentsGenerated:text("appointmentsGenerated"),
         activityDescription:text("activityDescription"),
+        socialService:{
+          performed:document.querySelector('input[name="socialPerformed"]:checked')?.value === "yes",
+          type:text("socialType"),
+          place:text("socialPlace"),
+          peopleReached:text("socialPeople"),
+          description:text("socialDescription")
+        },
+        generalNotes:text("generalNotes"),
+        notePriority:text("notePriority") || "Normal",
         promiseDate:text("promiseDate"),
         promisePlace:text("promisePlace"),
         promiseMethod:text("promiseMethod"),
@@ -1273,7 +1460,24 @@
           </div>
 
           <div class="summary-section">
-            <h3>4. Plan de trabajo</h3>
+            <h3>4. Servicio social</h3>
+            <div class="summary-social">
+              <div><span>Realizado</span><strong>${d.socialService.performed ? "Sí" : "No"}</strong></div>
+              <div><span>Tipo</span><strong>${esc(d.socialService.type || "No aplica")}</strong></div>
+              <div><span>Lugar</span><strong>${esc(d.socialService.place || "No aplica")}</strong></div>
+              <div><span>Personas atendidas</span><strong>${esc(d.socialService.peopleReached || "0")}</strong></div>
+            </div>
+            ${d.socialService.description ? `<p>${esc(d.socialService.description)}</p>` : ""}
+          </div>
+
+          <div class="summary-section">
+            <h3>5. Notas y comentarios</h3>
+            <p><strong>Prioridad:</strong> ${esc(d.notePriority)}<br>
+            ${esc(d.generalNotes || "Sin notas adicionales.")}</p>
+          </div>
+
+          <div class="summary-section">
+            <h3>6. Plan de trabajo</h3>
             <p><strong>Fecha:</strong> ${formatDate(d.promiseDate)}<br>
             <strong>Lugar:</strong> ${esc(d.promisePlace)}<br>
             <strong>Medio:</strong> ${esc(d.promiseMethod)}<br>
@@ -1321,6 +1525,17 @@
 
       lines.push(
         "",
+        "SERVICIO SOCIAL",
+        `Realizado: ${d.socialService.performed ? "Sí" : "No"}`,
+        `Tipo: ${d.socialService.type || "No aplica"}`,
+        `Lugar: ${d.socialService.place || "No aplica"}`,
+        `Personas atendidas: ${d.socialService.peopleReached || "0"}`,
+        d.socialService.description || "Sin servicio social registrado.",
+        "",
+        "NOTAS Y COMENTARIOS",
+        `Prioridad: ${d.notePriority}`,
+        d.generalNotes || "Sin notas adicionales.",
+        "",
         "PLAN DE TRABAJO",
         `Fecha: ${formatDate(d.promiseDate)}`,
         `Lugar: ${d.promisePlace}`,
@@ -1336,7 +1551,7 @@
 
     function shareWhatsApp(){
       if(!reportFinalized){
-        setStatus(5,"Primero debes marcar el reporte como finalizado.");
+        setStatus(7,"Primero debes marcar el reporte como finalizado.");
         return;
       }
       const message = encodeURIComponent(makePlainSummary());
@@ -1345,7 +1560,7 @@
 
     function printReport(){
       if(!reportFinalized){
-        setStatus(5,"Primero debes marcar el reporte como finalizado.");
+        setStatus(7,"Primero debes marcar el reporte como finalizado.");
         return;
       }
       window.print();
@@ -1353,7 +1568,7 @@
 
     function sendEmail(){
       if(!reportFinalized){
-        setStatus(5,"Primero debes marcar el reporte como finalizado.");
+        setStatus(7,"Primero debes marcar el reporte como finalizado.");
         return;
       }
       const d = collectData();
@@ -1384,6 +1599,13 @@
         "Contactos": Number(d.peopleContacted || 0),
         "Citas generadas": Number(d.appointmentsGenerated || 0),
         "Descripción de actividad": d.activityDescription,
+        "Servicio social realizado": d.socialService.performed ? "Sí" : "No",
+        "Tipo de servicio social": d.socialService.type,
+        "Lugar de servicio social": d.socialService.place,
+        "Personas atendidas en servicio social": Number(d.socialService.peopleReached || 0),
+        "Descripción de servicio social": d.socialService.description,
+        "Prioridad de nota": d.notePriority,
+        "Notas generales": d.generalNotes,
         "Número de cliente": c.number,
         "Nombre completo": c.name,
         "CURP": c.curp,
@@ -1408,7 +1630,7 @@
 
     function downloadExcel(){
       if(!reportFinalized){
-        setStatus(5,"Primero debes marcar el reporte como finalizado.");
+        setStatus(7,"Primero debes marcar el reporte como finalizado.");
         return;
       }
       const d = collectData();
@@ -1430,6 +1652,17 @@
           ["Contactos",Number(d.peopleContacted || 0)],
           ["Citas generadas",Number(d.appointmentsGenerated || 0)],
           ["Descripción de actividad",d.activityDescription],
+          ["",""],
+          ["SERVICIO SOCIAL",""],
+          ["Realizado",d.socialService.performed ? "Sí" : "No"],
+          ["Tipo",d.socialService.type],
+          ["Lugar",d.socialService.place],
+          ["Personas atendidas",Number(d.socialService.peopleReached || 0)],
+          ["Descripción",d.socialService.description],
+          ["",""],
+          ["NOTAS Y COMENTARIOS",""],
+          ["Prioridad",d.notePriority],
+          ["Notas generales",d.generalNotes],
           ["",""],
           ["PLAN DE TRABAJO",""],
           ["Fecha del plan de trabajo",d.promiseDate],
@@ -1455,7 +1688,7 @@
         XLSX.utils.book_append_sheet(workbook, summarySheet, "Resumen");
         XLSX.utils.book_append_sheet(workbook, databaseSheet, "Base consolidada");
         XLSX.writeFile(workbook, `${filenameBase}.xlsx`, {compression:true});
-        setStatus(5,"Archivo Excel descargado correctamente.","ok");
+        setStatus(7,"Archivo Excel descargado correctamente.","ok");
         return;
       }
 
@@ -1504,19 +1737,19 @@
       link.click();
       link.remove();
       setTimeout(()=>URL.revokeObjectURL(link.href),1000);
-      setStatus(5,"Excel descargado en formato compatible. Para generar .xlsx, abre el HTML con conexión a internet.","ok");
+      setStatus(7,"Excel descargado en formato compatible. Para generar .xlsx, abre el HTML con conexión a internet.","ok");
     }
 
     async function copySummary(){
       if(!reportFinalized){
-        setStatus(5,"Primero debes marcar el reporte como finalizado.");
+        setStatus(7,"Primero debes marcar el reporte como finalizado.");
         return;
       }
       try{
         await navigator.clipboard.writeText(makePlainSummary());
-        setStatus(5,"Resumen copiado al portapapeles.","ok");
+        setStatus(7,"Resumen copiado al portapapeles.","ok");
       }catch{
-        setStatus(5,"No fue posible copiar automáticamente. Selecciona el texto del reporte.");
+        setStatus(7,"No fue posible copiar automáticamente. Selecciona el texto del reporte.");
       }
     }
 
@@ -1527,7 +1760,7 @@
 
     function saveDraft(){
       if(reportFinalized){
-        setStatus(5,"El reporte está finalizado y no puede modificarse.");
+        setStatus(7,"El reporte está finalizado y no puede modificarse.");
         return;
       }
       const data = collectData();
@@ -1537,7 +1770,7 @@
 
     function loadDraft(){
       if(reportFinalized){
-        setStatus(5,"El reporte está finalizado y no puede modificarse.");
+        setStatus(7,"El reporte está finalizado y no puede modificarse.");
         return;
       }
       const raw = localStorage.getItem(userStorageKey("actividadComercialDraft"));
@@ -1560,6 +1793,16 @@
       $("appointmentsGenerated").value = d.appointmentsGenerated || "";
       $("activityDescription").value = d.activityDescription || "";
       $("descriptionCount").textContent = $("activityDescription").value.length;
+      const socialPerformed = d.socialService?.performed === true;
+      const socialRadio = document.querySelector(`input[name="socialPerformed"][value="${socialPerformed ? "yes" : "no"}"]`);
+      if(socialRadio) socialRadio.checked = true;
+      $("socialType").value = d.socialService?.type || "";
+      $("socialPlace").value = d.socialService?.place || "";
+      $("socialPeople").value = d.socialService?.peopleReached || "";
+      $("socialDescription").value = d.socialService?.description || "";
+      $("generalNotes").value = d.generalNotes || "";
+      $("notePriority").value = d.notePriority || "Normal";
+      updateSocialFields();
       $("promiseDate").value = d.promiseDate || tomorrowISO();
       $("promisePlace").value = d.promisePlace || "";
       $("promiseMethod").value = d.promiseMethod || "";
@@ -1590,12 +1833,15 @@
       $("createdAt").value = nowLocalTimestamp();
       $("promiseDate").value = tomorrowISO();
       $("descriptionCount").textContent = "0";
+      const socialNo = document.querySelector('input[name="socialPerformed"][value="no"]');
+      if(socialNo) socialNo.checked = true;
+      updateSocialFields();
       showStep(1);
     }
 
     function loadExample(){
       if(reportFinalized){
-        setStatus(5,"El reporte está finalizado y no puede modificarse.");
+        setStatus(7,"El reporte está finalizado y no puede modificarse.");
         return;
       }
       applyData({
@@ -1664,6 +1910,12 @@
         createdAt: saved.createdAtLocal || saved.createdAt || nowLocalTimestamp(),
         peopleContacted: saved.contacts,
         appointmentsGenerated: saved.appointmentsGenerated,
+        socialService: saved.socialService || {
+          performed: Boolean(saved.socialServiceCount),
+          peopleReached: saved.peopleReached || 0
+        },
+        generalNotes: saved.generalNotes || "",
+        notePriority: saved.notePriority || "Normal",
         promiseDate: saved.plan?.date,
         promisePlace: saved.plan?.place,
         promiseMethod: saved.plan?.method,
@@ -1672,9 +1924,9 @@
         appointmentGoal: saved.plan?.appointmentGoal,
         promiseDescription: saved.plan?.description
       });
-      showStep(5);
+      showStep(7);
       setFinalizedState(true);
-      setStatus(5,"El reporte de hoy ya fue enviado y está bloqueado.","ok");
+      setStatus(7,"El reporte de hoy ya fue enviado y está bloqueado.","ok");
     };
 
     window.resetCommercialFormForSession = function(){
@@ -1691,6 +1943,9 @@
         $("employeeNumber").value = window.currentUserProfile.employeeNumber || "";
       }
       $("descriptionCount").textContent = "0";
+      const socialNo = document.querySelector('input[name="socialPerformed"][value="no"]');
+      if(socialNo) socialNo.checked = true;
+      updateSocialFields();
       showStep(1);
       setFinalizedState(false);
     };
@@ -1728,7 +1983,7 @@
       if(reportFinalized) return;
 
       if(!window.currentUserProfile){
-        setStatus(5,"La sesión no está disponible. Vuelve a iniciar sesión.");
+        setStatus(7,"La sesión no está disponible. Vuelve a iniciar sesión.");
         return;
       }
 
@@ -1747,14 +2002,29 @@
         await window.saveFinalizedReportToFirebase(data);
         localStorage.removeItem(userStorageKey("actividadComercialDraft"));
         setFinalizedState(true);
-        setStatus(5,"Reporte guardado en Firebase, finalizado y bloqueado. Ya puedes compartirlo o descargarlo.","ok");
+        setStatus(7,"Reporte guardado en Firebase, finalizado y bloqueado. Ya puedes compartirlo o descargarlo.","ok");
       }catch(error){
         finalizeButton.disabled = false;
-        setStatus(5,error?.message || "No fue posible guardar el reporte en Firebase.");
+        setStatus(7,error?.message || "No fue posible guardar el reporte en Firebase.");
       }finally{
         $("firebaseSaving").classList.remove("show");
       }
     }
+
+
+    function updateSocialFields(){
+      const performed = document.querySelector('input[name="socialPerformed"]:checked')?.value === "yes";
+      const container = $("socialServiceFields");
+      if(container) container.classList.toggle("disabled", !performed);
+      ["socialType","socialPlace","socialPeople","socialDescription"].forEach(id=>{
+        const field = $(id);
+        if(field) field.disabled = !performed || reportFinalized;
+      });
+    }
+
+    document.querySelectorAll('input[name="socialPerformed"]').forEach(input=>{
+      input.addEventListener("change", updateSocialFields);
+    });
 
     $("activityDescription").addEventListener("input",e=>{
       $("descriptionCount").textContent = e.target.value.length;
@@ -1764,6 +2034,7 @@
     $("promiseDate").value = tomorrowISO();
     addClient();
     setFinalizedState(false);
+    updateSocialFields();
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", function(){
