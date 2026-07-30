@@ -52,13 +52,25 @@
     .kpi.blue{background:linear-gradient(145deg,#08377C,#0756B4)}.kpi.gold{background:linear-gradient(145deg,#55390B,#9D6506)}
     .kpi.green{background:linear-gradient(145deg,#064C3C,#07785B)}.kpi.purple{background:linear-gradient(145deg,#392076,#5833A9)}
     .kpi.pink{background:linear-gradient(145deg,#6D1E48,#9E2C68)}.kpi.cyan{background:linear-gradient(145deg,#07566A,#087E91)}
-    .grid{display:grid;gap:13px;margin-top:13px}.grid.two{grid-template-columns:minmax(0,1.35fr) minmax(330px,.65fr)}.grid.three{grid-template-columns:1.1fr .7fr 1.2fr}
+    .grid{display:grid;gap:13px;margin-top:13px}.grid.two{grid-template-columns:minmax(0,1.35fr) minmax(330px,.65fr)}.grid.three{grid-template-columns:minmax(0,1.18fr) minmax(270px,.72fr) minmax(380px,1.1fr)}
     .card{background:linear-gradient(145deg,rgba(7,31,78,.96),rgba(4,22,56,.98));border:1px solid var(--line);border-radius:18px;padding:17px;box-shadow:0 12px 30px rgba(0,0,0,.15);min-width:0}
     .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:13px}.card h2{margin:0;font-size:17px}.card p,.card small{color:var(--muted)}
     .badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:999px;font-size:10px;font-weight:900;background:#DDEBFA;color:#08377C}
     .canvas{height:280px;position:relative}.canvas canvas{width:100%;height:100%;display:block}
     .legend{display:flex;gap:13px;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:11px;font-weight:800}.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}
-    .funnel{display:flex;flex-direction:column;align-items:center;gap:8px;padding:9px 0}.funnel-step{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;color:#fff;font-weight:900;clip-path:polygon(8% 0,92% 0,83% 100%,17% 100%)}.funnel-step:nth-child(1){width:94%;background:#1266D7}.funnel-step:nth-child(2){width:75%;background:#F59E0B}.funnel-step:nth-child(3){width:57%;background:#0E9F6E}
+    .funnel{display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0 6px;width:100%}
+    .funnel-step{
+      min-height:58px;display:flex;justify-content:space-between;align-items:center;
+      gap:12px;padding:12px 18px;color:#fff;font-weight:900;border-radius:14px;
+      box-shadow:0 12px 24px rgba(0,0,0,.17);overflow:hidden;white-space:nowrap
+    }
+    .funnel-step span{font-size:13px;overflow:hidden;text-overflow:ellipsis}
+    .funnel-step strong{font-size:24px;flex:none}
+    .funnel-step:nth-child(1){width:100%;background:linear-gradient(135deg,#1266D7,#2E8BFF)}
+    .funnel-step:nth-child(2){width:84%;background:linear-gradient(135deg,#D98900,#FFB71B)}
+    .funnel-step:nth-child(3){width:68%;background:linear-gradient(135deg,#07845D,#13B57A)}
+    .funnel-card{min-width:0}
+    .funnel-conversion{display:flex;justify-content:center;margin-top:10px}
     .calendar-controls{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}.calendar-controls>div{display:flex;gap:7px}
     .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:14px;overflow:hidden}
     .cal-head{padding:9px;text-align:center;background:#0A2B62;font-size:11px;font-weight:900}
@@ -89,6 +101,38 @@
     @media(max-width:1250px){.kpis{grid-template-columns:repeat(3,1fr)}.grid.three,.grid.two{grid-template-columns:1fr}.filters{grid-template-columns:repeat(3,1fr)}}
     @media(max-width:820px){.app{display:block}.sidebar{position:relative;height:auto}.nav{display:grid;grid-template-columns:repeat(2,1fr)}.side-bottom{display:none}.main{padding:12px}.kpis{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr 1fr}.bottom-metrics{grid-template-columns:1fr 1fr}.calendar-grid{font-size:10px}.cal-day{min-height:72px}}
     @media(max-width:520px){.kpis,.filters,.form-grid{grid-template-columns:1fr}.nav{grid-template-columns:1fr 1fr}.main{padding:8px}.topbar h1{font-size:24px}}
+
+    .actions{align-items:center}
+    .report-note-button{
+      background:linear-gradient(135deg,#7447D8,#9769F0);
+      color:#fff;padding:10px 12px;border-radius:11px;font-weight:900
+    }
+    .report-note-button:hover{transform:translateY(-2px);filter:brightness(1.08)}
+    .report-notes-list{display:flex;flex-direction:column;gap:9px;margin:12px 0 16px}
+    .report-note-entry{
+      padding:12px;border-radius:13px;background:#0A2B62;border:1px solid #285690
+    }
+    .report-note-entry strong{display:block;font-size:11px;color:#DCE9FB}
+    .report-note-entry span{display:block;margin-top:5px;color:#fff;line-height:1.45}
+    .report-note-entry small{display:block;margin-top:6px;color:#AFC5E6}
+    .advisor-note-box{
+      padding:12px;border-radius:13px;background:#46350B;border:1px solid #9B7418;
+      color:#FFF2C7;margin-bottom:13px
+    }
+    @media(max-width:1250px){
+      .grid.three{grid-template-columns:1fr}
+      .funnel-step:nth-child(1){width:100%}
+      .funnel-step:nth-child(2){width:88%}
+      .funnel-step:nth-child(3){width:76%}
+    }
+    @media(max-width:520px){
+      .funnel-step{min-height:54px;padding:10px 13px}
+      .funnel-step span{font-size:12px}
+      .funnel-step strong{font-size:21px}
+      .funnel-step:nth-child(2){width:92%}
+      .funnel-step:nth-child(3){width:84%}
+    }
+
   </style>
 </head>
 <body>
@@ -109,7 +153,6 @@
         <button data-panel="reportsPanel"><span class="ico">▧</span>Reportes</button>
         <button data-panel="calendarPanel"><span class="ico">▦</span>Calendario</button>
         <button data-panel="socialPanel"><span class="ico">❤</span>Servicio Social</button>
-        <button data-panel="notesPanel"><span class="ico">✎</span>Notas</button>
         <button data-panel="staffPanel"><span class="ico">♙</span>Asesores</button>
         <button id="exportNav"><span class="ico">⇩</span>Exportar</button>
       </nav>
@@ -138,14 +181,13 @@
 
         <div class="grid three">
           <div class="card"><div class="card-head"><div><h2>Tendencia de actividad comercial</h2><small>Contactos, citas y cierres de los últimos días.</small></div><span class="badge">Últimos 7 días</span></div><div class="canvas"><canvas id="trendCanvas"></canvas></div><div class="legend"><span><i class="dot" style="background:#2E8BFF"></i>Contactos</span><span><i class="dot" style="background:#FFB71B"></i>Citas</span><span><i class="dot" style="background:#20CA88"></i>Cierres</span></div></div>
-          <div class="card"><div class="card-head"><div><h2>Embudo de conversión</h2><small>Relación entre contactos, citas y cierres.</small></div></div><div class="funnel"><div class="funnel-step"><span>Contactos</span><strong id="funnelContacts">0</strong></div><div class="funnel-step"><span>Citas</span><strong id="funnelAppointments">0</strong></div><div class="funnel-step"><span>Cierres</span><strong id="funnelClosures">0</strong></div></div><div class="badge" id="conversionBadge">0% conversión</div></div>
+          <div class="card funnel-card"><div class="card-head"><div><h2>Embudo de conversión</h2><small>Relación entre contactos, citas y cierres.</small></div></div><div class="funnel"><div class="funnel-step"><span>Contactos</span><strong id="funnelContacts">0</strong></div><div class="funnel-step"><span>Citas</span><strong id="funnelAppointments">0</strong></div><div class="funnel-step"><span>Cierres</span><strong id="funnelClosures">0</strong></div></div><div class="funnel-conversion"><span class="badge" id="conversionBadge">0% conversión</span></div></div>
           <div class="card"><div class="card-head"><div><h2>Calendario de actividades</h2><small>Actividades entregadas por día.</small></div><button class="soft" onclick="window.openPanel('calendarPanel')">Ver calendario</button></div><div id="miniCalendar" class="calendar-grid"></div></div>
         </div>
 
-        <div class="grid three">
+        <div class="grid two">
           <div class="card"><div class="card-head"><div><h2>Top asesores por cierres</h2><small>Clasificación comercial.</small></div></div><div id="topAdvisors" class="rank-list"></div></div>
           <div class="card"><div class="card-head"><div><h2>Actividades por tipo</h2><small>Distribución de prospección.</small></div></div><div class="canvas"><canvas id="activityTypeCanvas"></canvas></div></div>
-          <div class="card"><div class="card-head"><div><h2>Notas recientes</h2><small>Seguimiento gerencial.</small></div><button class="primary" onclick="window.openNoteModal()">Nueva nota</button></div><div id="recentNotes" class="note-list"></div></div>
         </div>
 
         <div class="bottom-metrics">
@@ -190,11 +232,6 @@
         <div class="grid two"><div class="card"><div class="card-head"><h2>Servicio social por tipo</h2></div><div id="socialTypeBars" class="rank-list"></div></div><div class="card"><div class="card-head"><h2>Registros recientes</h2></div><div id="socialList" class="social-list"></div></div></div>
       </section>
 
-      <section id="notesPanel" class="panel">
-        <div class="page-title"><div><h2>Notas gerenciales</h2><p>Crea recordatorios, acuerdos y seguimientos.</p></div><button class="primary" onclick="window.openNoteModal()">＋ Nueva nota</button></div>
-        <div id="notesList" class="note-list"></div>
-      </section>
-
       <section id="staffPanel" class="panel">
         <div class="page-title"><div><h2>Administración de asesores</h2><p>Asigna empleados, administra NIP y activa o retira accesos.</p></div><button class="primary" onclick="window.openEmployeeModal()">＋ Asignar empleado</button></div>
         <div class="staff-summary"><span id="staffCount" class="staff-chip">0 asesores</span><span id="staffActiveCount" class="staff-chip">0 activos</span><span id="staffInactiveCount" class="staff-chip">0 retirados</span></div>
@@ -207,7 +244,32 @@
 
   <div id="employeeModal" class="modal"><div class="modal-card"><div class="modal-head"><h2>Asignar empleado</h2><button class="danger" onclick="window.closeEmployeeModal()">Cerrar</button></div><form id="employeeForm"><div class="form-grid"><div><label>Número de empleado</label><input id="newEmployeeNumber" inputmode="numeric" required></div><div><label>NIP de 4 dígitos</label><input id="newEmployeePin" type="password" inputmode="numeric" maxlength="4" required></div><div class="full"><label>Nombre completo</label><input id="newEmployeeName" required></div></div><div id="employeeFormError" style="color:#FF9C9C;margin-top:10px"></div><div class="actions" style="justify-content:flex-end;margin-top:14px"><button class="soft" type="button" onclick="window.closeEmployeeModal()">Cancelar</button><button class="primary" type="submit">Asignar</button></div></form></div></div>
 
-  <div id="noteModal" class="modal"><div class="modal-card"><div class="modal-head"><h2 id="noteModalTitle">Nueva nota</h2><button class="danger" onclick="window.closeNoteModal()">Cerrar</button></div><form id="noteForm"><input id="noteId" type="hidden"><div class="form-grid"><div class="full"><label>Título</label><input id="noteTitle" maxlength="120" required></div><div><label>Prioridad</label><select id="notePriority"><option>Normal</option><option>Alta</option><option>Urgente</option></select></div><div><label>Fecha de seguimiento</label><input id="noteDueDate" type="date"></div><div class="full"><label>Nota</label><textarea id="noteBody" rows="5" maxlength="900" required></textarea></div></div><div class="actions" style="justify-content:flex-end;margin-top:14px"><button class="soft" type="button" onclick="window.closeNoteModal()">Cancelar</button><button class="primary" type="submit">Guardar nota</button></div></form></div></div>
+  <div id="reportNotesModal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h2 id="reportNotesTitle">Notas del reporte</h2>
+          <small id="reportNotesMeta"></small>
+        </div>
+        <button class="danger" type="button" onclick="window.closeReportNotes()">Cerrar</button>
+      </div>
+
+      <div id="advisorOriginalNote" class="advisor-note-box hidden"></div>
+      <div id="reportNotesList" class="report-notes-list"></div>
+
+      <form id="reportNoteForm">
+        <input id="reportNoteId" type="hidden">
+        <label for="reportNoteText">Agregar nota gerencial</label>
+        <textarea id="reportNoteText" rows="4" maxlength="700"
+          placeholder="Escribe una observación, acuerdo o seguimiento para este reporte."
+          required></textarea>
+        <div class="actions" style="justify-content:flex-end;margin-top:12px">
+          <button class="soft" type="button" onclick="window.closeReportNotes()">Cancelar</button>
+          <button class="report-note-button" type="submit">Guardar nota</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script type="module" src="dashboard.js"></script>

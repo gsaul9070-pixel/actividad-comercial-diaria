@@ -168,12 +168,20 @@ if (hasPlaceholder) {
       ["Cierre", "Trámite realizado"].includes(client.result)
     ).length;
 
+    const socialFromClients = clients.some(
+      client => client.result === "Servicio social"
+    );
+
     const socialService = {
-      performed: data.socialService?.performed === true,
-      type: data.socialService?.type || "",
+      performed: data.socialService?.performed === true || socialFromClients,
+      type: data.socialService?.type ||
+        (socialFromClients ? "Atención a prospecto o cliente" : ""),
       place: data.socialService?.place || "",
       peopleReached: Number(data.socialService?.peopleReached || 0),
-      description: data.socialService?.description || ""
+      description: data.socialService?.description ||
+        (socialFromClients
+          ? "Actividad identificada como Servicio social en el resultado del contacto."
+          : "")
     };
 
     await setDoc(reportRef, {

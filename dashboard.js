@@ -1,10 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import {
-  getFirestore, collection, doc, setDoc, updateDoc, deleteDoc,
+  getFirestore, collection, doc, setDoc, updateDoc, arrayUnion,
   onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import {
-  firebaseConfig, ADVISORS_COLLECTION, REPORTS_COLLECTION, NOTES_COLLECTION
+  firebaseConfig, ADVISORS_COLLECTION, REPORTS_COLLECTION
 } from "./firebase-config.js";
 
 const LEGACY_NIPS = {
@@ -15,7 +15,7 @@ const LEGACY_NIPS = {
 };
 
 const state = {
-  reports:[], advisors:[], notes:[],
+  reports:[], advisors:[],
   calendarDate:new Date(), selectedDate:null, calendarAdvisor:"",
   manager:{uid:"manager-143561",name:"Jacquelinne",employeeNumber:"143561"}
 };
@@ -54,7 +54,9 @@ const closureCount = report => Number(
   (report.clients || []).filter(c=>["Cierre","Trámite realizado"].includes(c.result)).length
 );
 const socialPerformed = report =>
-  report.socialService?.performed === true || Number(report.socialServiceCount || 0) > 0;
+  report.socialService?.performed === true ||
+  Number(report.socialServiceCount || 0) > 0 ||
+  (report.clients || []).some(client => client.result === "Servicio social");
 const socialPeople = report => Number(
   report.socialService?.peopleReached ?? report.peopleReached ?? 0
 );
@@ -114,16 +116,6 @@ function subscribeData(){
     fillAdvisorSelectors();
     renderAll();
   },error=>console.error("Asesores:",error));
-
-  onSnapshot(collection(db,NOTES_COLLECTION),snapshot=>{
-    state.notes=snapshot.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>{
-      const at=a.createdAt?.toDate?a.createdAt.toDate().getTime():0;
-      const bt=b.createdAt?.toDate?b.createdAt.toDate().getTime():0;
-      return bt-at;
-    });
-    renderNotes();
-    renderRecentNotes();
-  },error=>console.warn("Notas:",error));
 }
 
 async function loadLegacyNips(){
@@ -175,7 +167,7 @@ function fillAdvisorSelectors(){
 function renderAll(){
   renderKPIs();renderTrend();renderFunnel();renderTopAdvisors();renderActivityTypes();
   renderMiniCalendar();renderActivities();renderMissing();renderReports();renderCalendar();
-  renderSocial();renderStaff();renderNotes();renderRecentNotes();
+  renderSocial();renderStaff();
 }
 
 function totals(reports){
@@ -280,7 +272,7 @@ function renderMissing(){
 function reviewBadge(r){if(r.status==="cancelled")return'<span class="status cancelled">Anulado</span>';if(r.reviewStatus==="reviewed")return'<span class="status reviewed">Revisado</span>';return'<span class="status pending">Pendiente</span>';}
 function renderReports(){
   const rows=filteredReports();$("visibleCount").textContent=`${rows.length} registro(s)`;
-  $("reportsBody").innerHTML=rows.length?rows.map(r=>`<tr><td>${formatDate(r.createdDate)}<br><small>${esc(r.createdAtLocal||"")}</small></td><td><strong>${esc(r.advisorName||"")}</strong><br>${esc(r.advisorEmployeeNumber||"")}</td><td>${esc(r.prospecting||"")}<br><small>${esc(r.activityPlace||"")}</small></td><td>${Number(r.contacts||0)}</td><td>${Number(r.appointmentsGenerated||0)}</td><td>${Number(r.clientCount??(r.clients||[]).length)}</td><td>${closureCount(r)}</td><td>${socialPerformed(r)?`Sí · ${socialPeople(r)} pers.`:"No"}</td><td>${reviewBadge(r)}</td><td><div class="actions"><button class="soft" onclick="window.openReportDetail('${r.id}')">Ver</button>${r.status!=="cancelled"&&r.reviewStatus!=="reviewed"?`<button class="success" onclick="window.reviewReport('${r.id}')">Revisar</button>`:""}${r.status!=="cancelled"?`<button class="danger" onclick="window.cancelReport('${r.id}')">Anular</button>`:""}</div></td></tr>`).join(""):'<tr><td colspan="10" class="empty">Sin reportes.</td></tr>';
+  $("reportsBody").innerHTML=rows.length?rows.map(r=>`<tr><td>${formatDate(r.createdDate)}<br><small>${esc(r.createdAtLocal||"")}</small></td><td><strong>${esc(r.advisorName||"")}</strong><br>${esc(r.advisorEmployeeNumber||"")}</td><td>${esc(r.prospecting||"")}<br><small>${esc(r.activityPlace||"")}</small></td><td>${Number(r.contacts||0)}</td><td>${Number(r.appointmentsGenerated||0)}</td><td>${Number(r.clientCount??(r.clients||[]).length)}</td><td>${closureCount(r)}</td><td>${socialPerformed(r)?`Sí · ${socialPeople(r)} pers.`:"No"}</td><td>${reviewBadge(r)}</td><td><div class="actions"><button class="soft" onclick="window.openReportDetail('${r.id}')">Ver</button>${r.status!=="cancelled"&&r.reviewStatus!=="reviewed"?`<button class="success" onclick="window.reviewReport('${r.id}')">Revisar</button>`:""}${r.status!=="cancelled"?`<button class="danger" onclick="window.cancelReport('${r.id}')">Anular</button>`:""}<button class="report-note-button" onclick="window.openReportNotes('${r.id}')">Notas${Array.isArray(r.managerNotes)&&r.managerNotes.length?` (${r.managerNotes.length})`:""}</button></div></td></tr>`).join(""):'<tr><td colspan="10" class="empty">Sin reportes.</td></tr>';
 }
 
 window.openReportDetail=id=>{
@@ -291,6 +283,75 @@ window.openReportDetail=id=>{
 };
 window.reviewReport=async id=>{if(confirm("¿Marcar este reporte como revisado?"))await updateDoc(doc(db,REPORTS_COLLECTION,id),{reviewStatus:"reviewed",reviewedAt:serverTimestamp(),reviewedBy:"manager-143561",updatedAt:serverTimestamp()});};
 window.cancelReport=async id=>{const reason=prompt("Motivo de anulación:");if(!reason)return;await updateDoc(doc(db,REPORTS_COLLECTION,id),{status:"cancelled",cancelReason:reason,cancelledAt:serverTimestamp(),updatedAt:serverTimestamp()});};
+
+function reportNotes(report){
+  return Array.isArray(report?.managerNotes) ? report.managerNotes : [];
+}
+
+function renderReportNotesModal(report){
+  const notes = reportNotes(report);
+  $("reportNotesList").innerHTML = notes.length
+    ? notes.slice().reverse().map(note => `
+        <div class="report-note-entry">
+          <strong>Nota gerencial</strong>
+          <span>${esc(note.text || "")}</span>
+          <small>${note.createdAt
+            ? new Date(note.createdAt).toLocaleString("es-MX")
+            : "Fecha no disponible"}</small>
+        </div>
+      `).join("")
+    : '<div class="empty">Todavía no hay notas gerenciales para este reporte.</div>';
+
+  const advisorNote = $("advisorOriginalNote");
+  if(report.generalNotes){
+    advisorNote.classList.remove("hidden");
+    advisorNote.innerHTML = `<strong>Nota enviada por el asesor:</strong><br>${esc(report.generalNotes)}`;
+  }else{
+    advisorNote.classList.add("hidden");
+    advisorNote.innerHTML = "";
+  }
+}
+
+window.openReportNotes = id => {
+  const report = state.reports.find(item => item.id === id);
+  if(!report) return;
+
+  $("reportNoteId").value = id;
+  $("reportNoteText").value = "";
+  $("reportNotesTitle").textContent = `Notas · ${report.advisorName || "Reporte"}`;
+  $("reportNotesMeta").textContent =
+    `${formatDate(report.createdDate)} · Empleado ${report.advisorEmployeeNumber || "N/D"}`;
+
+  renderReportNotesModal(report);
+  $("reportNotesModal").classList.add("show");
+};
+
+window.closeReportNotes = () => {
+  $("reportNotesModal").classList.remove("show");
+  $("reportNoteForm").reset();
+  $("reportNoteId").value = "";
+};
+
+$("reportNoteForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const reportId = $("reportNoteId").value;
+  const noteText = $("reportNoteText").value.trim();
+
+  if(!reportId || !noteText) return;
+
+  await updateDoc(doc(db, REPORTS_COLLECTION, reportId), {
+    managerNotes: arrayUnion({
+      text: noteText,
+      createdAt: new Date().toISOString(),
+      createdBy: "manager-143561"
+    }),
+    updatedAt: serverTimestamp()
+  });
+
+  window.closeReportNotes();
+});
+
 
 function calendarReports(){
   return state.reports.filter(r=>{
@@ -339,19 +400,6 @@ function renderSocial(){
   $("socialList").innerHTML=rows.slice(0,12).map(r=>`<div class="social-item"><div class="item-icon" style="background:linear-gradient(145deg,#C52F6B,#F06A9E)">❤</div><div class="item-copy"><strong>${esc(r.advisorName)}</strong><span>${esc(r.socialService?.type||"Servicio social")} · ${socialPeople(r)} personas · ${esc(r.socialService?.place||"")}</span></div><div class="item-time">${formatDate(r.createdDate)}</div></div>`).join("")||'<div class="empty">Sin registros.</div>';
 }
 
-function renderRecentNotes(){
-  $("recentNotes").innerHTML=state.notes.slice(0,5).map(n=>noteRow(n)).join("")||'<div class="empty">Sin notas.</div>';
-}
-function noteRow(n){
-  return `<div class="note-item"><div class="item-icon" style="background:linear-gradient(145deg,#7D50E7,#A77BFF)">✎</div><div class="item-copy"><strong class="${n.status==="done"?"done":""}">${esc(n.title)}</strong><span><i class="note-priority priority-${esc(n.priority||"Normal")}">${esc(n.priority||"Normal")}</i> · ${esc(n.body||"")}</span></div><div class="actions"><button class="soft" onclick="window.editNote('${n.id}')">Editar</button><button class="success" onclick="window.toggleNote('${n.id}')">${n.status==="done"?"Reabrir":"Listo"}</button><button class="danger" onclick="window.deleteNote('${n.id}')">×</button></div></div>`;
-}
-function renderNotes(){$("notesList").innerHTML=state.notes.map(n=>noteRow(n)).join("")||'<div class="empty">No hay notas.</div>';}
-window.openNoteModal=()=>{$("noteForm").reset();$("noteId").value="";$("noteModalTitle").textContent="Nueva nota";$("noteModal").classList.add("show");};
-window.closeNoteModal=()=>$("noteModal").classList.remove("show");
-window.editNote=id=>{const n=state.notes.find(x=>x.id===id);if(!n)return;$("noteId").value=id;$("noteTitle").value=n.title||"";$("notePriority").value=n.priority||"Normal";$("noteDueDate").value=n.dueDate||"";$("noteBody").value=n.body||"";$("noteModalTitle").textContent="Editar nota";$("noteModal").classList.add("show");};
-window.toggleNote=async id=>{const n=state.notes.find(x=>x.id===id);if(n)await updateDoc(doc(db,NOTES_COLLECTION,id),{status:n.status==="done"?"open":"done",updatedAt:serverTimestamp()});};
-window.deleteNote=async id=>{if(confirm("¿Eliminar esta nota?"))await deleteDoc(doc(db,NOTES_COLLECTION,id));};
-$("noteForm").addEventListener("submit",async e=>{e.preventDefault();const id=$("noteId").value||`note_${Date.now()}`;await setDoc(doc(db,NOTES_COLLECTION,id),{title:$("noteTitle").value.trim(),body:$("noteBody").value.trim(),priority:$("notePriority").value,dueDate:$("noteDueDate").value,status:state.notes.find(n=>n.id===id)?.status||"open",createdAt:state.notes.find(n=>n.id===id)?.createdAt||serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});window.closeNoteModal();});
 
 function renderStaff(){
   const active=state.advisors.filter(a=>a.active).length;$("staffCount").textContent=`${state.advisors.length} asesores`;$("staffActiveCount").textContent=`${active} activos`;$("staffInactiveCount").textContent=`${state.advisors.length-active} retirados`;

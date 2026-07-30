@@ -25,3 +25,13 @@ Esta actualización incluye:
 - logo-profuturo.png
 
 También se deben publicar las reglas de `firestore.rules` en Firebase Console.
+
+
+## Corrección de interfaz y notas por reporte
+
+- Se agregó **Servicio social** en “Resultado del contacto”.
+- El embudo de conversión ahora utiliza barras adaptables y texto completamente visible.
+- Cada reporte tiene un botón **Notas** junto a **Anular**.
+- Las notas gerenciales se guardan dentro del mismo documento del reporte en `managerNotes`.
+- Se eliminó el apartado independiente **Notas** del menú y del dashboard.
+- La nota capturada por el asesor continúa visible dentro del reporte.
