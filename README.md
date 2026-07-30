@@ -50,3 +50,15 @@ Funciones agregadas:
 - El rango seleccionado se recuerda en el navegador.
 - El calendario, la tendencia diaria, las entregas por asesor y los indicadores utilizan exactamente el rango seleccionado.
 - Se permite un periodo máximo de 62 días para mantener las gráficas legibles.
+
+
+## Enlaces oficiales de Firebase Hosting
+
+- Acceso de asesores: `https://actividad-comercial-diaria.web.app/`
+- Dashboard gerencial: `https://actividad-comercial-diaria.web.app/dashboard.html`
+
+Los botones internos de `index.html`, `dashboard.html` y `dashboard.js`
+ya apuntan a estas direcciones.
+
+Para que las direcciones funcionen, este paquete debe publicarse mediante
+Firebase Hosting en el proyecto `actividad-comercial-diaria`.

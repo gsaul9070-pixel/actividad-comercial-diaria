@@ -1,5 +1,16 @@
 {
-  "firestore": {
-    "rules": "firestore.rules"
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "firestore.rules",
+      "README.md",
+      "ENLACES_PUBLICOS.txt",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "cleanUrls": false,
+    "trailingSlash": false
   }
 }

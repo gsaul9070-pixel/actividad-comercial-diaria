@@ -326,10 +326,10 @@ function authorize(){
     openApp(); return;
   }
   const password=window.prompt("Ingresa la contraseña gerencial:");
-  if(password===null){window.location.assign("./index.html");return;}
+  if(password===null){window.location.assign("https://actividad-comercial-diaria.web.app/");return;}
   if(password!=="Saltillo20$$"){
     alert("Contraseña gerencial incorrecta.");
-    window.location.assign("./index.html");return;
+    window.location.assign("https://actividad-comercial-diaria.web.app/");return;
   }
   sessionStorage.setItem("manager_dialog_access","granted");
   openApp();
@@ -865,7 +865,7 @@ function openPanel(id){document.querySelectorAll(".panel").forEach(p=>p.classLis
 window.openPanel=openPanel;
 document.querySelectorAll(".nav button[data-panel]").forEach(b=>b.addEventListener("click",()=>openPanel(b.dataset.panel)));
 $("exportNav").addEventListener("click",()=>window.exportDashboardExcel());
-$("logoutButton").addEventListener("click",()=>{sessionStorage.removeItem("manager_dialog_access");window.location.assign("./index.html");});
+$("logoutButton").addEventListener("click",()=>{sessionStorage.removeItem("manager_dialog_access");window.location.assign("https://actividad-comercial-diaria.web.app/");});
 $("globalAdvisorFilter").addEventListener("change",renderAll);
 ["dateFrom","dateTo","advisorFilter","statusFilter","searchFilter"].forEach(id=>$(id).addEventListener(id==="searchFilter"?"input":"change",renderReports));
 $("applyPeriod").addEventListener("click",()=>{
